@@ -172,18 +172,24 @@ Stability tables (`aero.stab`) are populated only for neutral-control runs
 
 ### 4d-ii. Export results to a file
 
-Use `results_to_dataframe()` to convert results to a pandas DataFrame for
-saving to any tabular format:
+`avl()` writes a results file automatically via the `out_format` parameter
+(default: `"csv"`). The file is saved to `out_dir/results.<ext>`.
 
 ```python
-from avl_wrapper import results_to_dataframe
+# CSV — default, written to out/bd/results.csv
+results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0])
 
-df = results_to_dataframe(results)
+# HDF5
+results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="hdf5")
 
-df.to_csv("sweep.csv", index=False)          # CSV
-df.to_hdf("sweep.h5", key="results")         # HDF5
-df.to_parquet("sweep.parquet")               # Parquet
-df.to_json("sweep.json", orient="records")   # JSON
+# Parquet
+results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="parquet")
+
+# JSON
+results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="json")
+
+# DataFrame only — no file written, use results_to_dataframe() yourself
+results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="df")
 ```
 
 The DataFrame has one row per run case. Columns include `filename`, `Alpha`,
@@ -218,7 +224,7 @@ avl-wrapper run my_commands.txt
 
 | Symbol | Description |
 |---|---|
-| `avl(avl_file, alpha, beta, ctrl_sweeps, out_dir)` | Run AVL sweep → `list[StResult]` — primary entry point |
+| `avl(avl_file, alpha, beta, ctrl_sweeps, out_dir, out_format)` | Run AVL sweep → `list[StResult]`; writes `results.<ext>` to `out_dir` (default `"csv"`) |
 | `avl_fileread(path)` | Parse `.avl` geometry → `AvlGeometry` |
 | `avl_fileplot(geom)` | Four-view geometry plot → `Figure` |
 | `aero_filewrite(results)` | Pivot results → `AeroDatabase` lookup tables |

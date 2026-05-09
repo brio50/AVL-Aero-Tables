@@ -7,9 +7,12 @@ import tempfile
 from pathlib import Path
 
 from avl_wrapper import avl_bin as avl_runner
+from avl_wrapper.aero_filewrite import results_to_dataframe
 from avl_wrapper.avl_fileread import AvlGeometry, avl_fileread
 from avl_wrapper.avl_rungen import make_command
 from avl_wrapper.st_fileread import StResult, st_fileread
+
+_FORMATS = {"csv", "hdf5", "parquet", "json", "df"}
 
 
 def _extract_ctrl_names(geometry: AvlGeometry) -> list[str]:
@@ -30,6 +33,7 @@ def run(
     ctrl_sweeps: dict[str, list[float]] | None = None,
     out_dir: Path | None = None,
     binary: Path | None = None,
+    out_format: str = "csv",
 ) -> list[StResult]:
     """Run AVL stability analysis for a sweep of alpha, beta, and deflections.
 
@@ -49,12 +53,19 @@ def run(
         <avl_file_parent>/out/<geometry_name>/.
     binary:
         Path to the AVL binary.  Auto-detected if not provided.
+    out_format:
+        Export format for results saved alongside the .st files.
+        One of ``"csv"`` (default), ``"hdf5"``, ``"parquet"``, ``"json"``,
+        or ``"df"`` (DataFrame in memory only — no file written).
+        The file is written to ``out_dir/results.<ext>``.
 
     Returns
     -------
     list[StResult]
         One StResult per .st output file produced.
     """
+    if out_format not in _FORMATS:
+        raise ValueError(f"out_format {out_format!r} not recognised; choose from {sorted(_FORMATS)}")
     avl_file = Path(avl_file).resolve()
     avl_dir = avl_file.parent
     avl_name = avl_file.stem
@@ -97,4 +108,17 @@ def run(
         for st_file in sorted(staging.glob("*.st")):
             shutil.move(str(st_file), out_dir / st_file.name)
 
-    return st_fileread(out_dir)
+    results = st_fileread(out_dir)
+
+    if out_format != "df":
+        df = results_to_dataframe(results)
+        if out_format == "csv":
+            df.to_csv(out_dir / "results.csv", index=False)
+        elif out_format == "hdf5":
+            df.to_hdf(out_dir / "results.h5", key="results")
+        elif out_format == "parquet":
+            df.to_parquet(out_dir / "results.parquet")
+        elif out_format == "json":
+            df.to_json(out_dir / "results.json", orient="records", indent=2)
+
+    return results
