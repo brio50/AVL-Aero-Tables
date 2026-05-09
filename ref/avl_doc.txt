@@ -1,7 +1,7 @@
- 
-AVL  3.30 User Primer                               last update  18 Aug 10
-Mark Drela, MIT Aero & Astro
+
+AVL  3.50 User Primer                               last update April 23 2025
 Harold Youngren, Aerocraft, Inc.
+Mark Drela, MIT Aero & Astro
 
 
 
@@ -35,8 +35,8 @@ aircraft configuration analysis.  The major features are as follows:
    Duplication of entire surface or body
 
  Singularities
-   Horseshoe vortices   (surfaces)
-   Source+doublet lines (bodies)
+   Horseshoe vortices   (lifting surfaces)
+   Source+doublet lines (slender bodies)
    Finite-core option
 
  Discretization
@@ -67,6 +67,7 @@ aircraft configuration analysis.  The major features are as follows:
    Trefftz-plane
    Derivatives of forces and moments, w.r.t freestream, rotation, controls
    In body or stability axes
+   Flow survey at off-body points (points, lines or grid of points)
 
  Trim calculation
    Operating variables
@@ -107,15 +108,46 @@ A vortex-lattice model like AVL is best suited for aerodynamic configurations
 which consist mainly of thin lifting surfaces at small angles of attack
 and sideslip.  These surfaces and their trailing wakes are represented 
 as single-layer vortex sheets, discretized into horseshoe vortex filaments, 
-whose trailing legs are assumed to be parallel to the x-axis.  AVL provides 
-the capability to also model slender bodies such as fuselages and nacelles 
-via source+doublet filaments.  The resulting force and moment predictions 
-are consistent with slender-body theory, but the experience with this model 
-is relatively limited, and hence modeling of bodies should be done with 
-caution.  If a fuselage is expected to have little influence on the 
-aerodynamic loads, it's simplest to just leave it out of the AVL model.
-However, the two wings should be connected by a fictitious wing portion
-which spans the omitted fuselage.
+whose trailing legs are assumed to be parallel to the x-axis.
+
+The horseshoe vortex model in AVL places vortex singularities on the h.v.
+bound and trailing legs.  The boundary condition for each h.v. is calculated at
+the control point and the user should beware of vortex lines (from other lifting
+surfaces that pass close to any other lifting surface control points.
+Although AVL uses a vortex core desingularization for velocity calculations
+relocating surfaces slightly to avoid these close approaches may be
+appropriate to avoid problems.
+
+AVL provides the capability to model slender bodies such as fuselages and
+nacelles via source+doublet filaments.  The resulting force and moment
+predictions for the body are consistent with slender-body theory.
+
+Users of the slender body model should be aware that there are a few
+limitations that could affect the use of the model:
+
+  1) The slender body boundary conditions are affected only by the freestream
+  and do NOT include induced velocities from the vortex lattice.
+  
+  2) For a case with a fuselage and right and left wings there needs to  halves
+  should be connected by a fictitious wing center surface which which spans
+  the fuselage.
+  
+  3) The slender body model in AVL places source and doublet singularities on a
+  line between the body LE and TE. The flow around the body will be valid at the
+  body radius from the source/doublet line but will not be correct within the
+  body radius close to the singularities.  It is best to locate lifting surface
+  (particularly horseshoe vortex control points) away from the central line.
+  
+  4) If a fuselage is expected to have little influence on the aerodynamic
+  loads, it's often simplest to just leave it out of the AVL model and add a
+  contribution for body moment and stability to the lifting surface result.
+
+  5) A body does not have to close with zero radius (cross-section area).
+  If it does close with zero area it will have zero forces but will produce
+  yaw or pitching moments (forces couples) in crossflow.  A body with a
+  finite aft area will produce forces and moments in crossflow as predicted
+  by slender body theory.
+
 
 Unsteady flow
 -------------
@@ -202,7 +234,7 @@ these all have a common arbitrary prefix "xxx", and the following extensions:
 
 xxx.avl     required main input file defining the configuration geometry
 xxx.mass    optional file giving masses and inertias, and dimensional units
-xxx.run     optional file defining the parameter for some number of run cases
+xxx.run     optional file defining parameters for some number of run cases
 
 The user provides files xxx.avl and xxx.mass, which are typically created
 using any text editor.  Sample files are provided for use as templates.
@@ -293,6 +325,26 @@ unless one is desperate for CPU savings.
 
 
 
+Vortex core scaling factors
+- - - - - - - - - - - - - - 
+
+*****
+
+CORE             !  (keyword)
+0.0  2.0  2.0    ! VRCOREC VRCOREW SRCORE
+
+The CORE keyword allows input of vortex core scaling factors that apply to
+all surface horseshoe vortex trailing legs. Core size based on maximum of
+scale factors * (chord or strip width).
+
+  VRCOREC = vortex core scaling factor based on strip chord (default 0.0)
+  VRCOREW = vortex core scaling factor based on strip width (default 2.0)
+  SRCORE  = source/doublet core scaling factor based on radius or segment
+            length (default 1.0)
+            (SRCORE>0) use core scaling factor based on body radius
+            (SRCORE<0) use core scaling factor based on body segment length
+  
+
 Surface and Body data
 - - - - - - - - - - - 
 The remainder of the file consists of a set of keywords and associated data.  
@@ -311,6 +363,7 @@ of each keyword are actually significant, the rest are just a mnemonic.
       NOWAKE
       NOALBE
       NOLOAD
+      CDCL
 
       SECTION
 
@@ -410,12 +463,25 @@ Lcomp value.  Application examples are:
 - A wing component made up of a wing SURFACE and a winglet SURFACE
 - A T-tail component made up of horizontal and vertical tail SURFACEs.
 
-A common Lcomp value instructs AVL to _not_ use a finite-core model
+A common Lcomp value instructs AVL to _NOT_ use a finite-core model
 for the influence of a horseshoe vortex and a control point which lies
-on the same component, as this would seriously corrupt the calculation.
+on the same component, as this could seriously affect the accuracy of the
+calculation. In this case, the downwash for control points within several
+core radii will be too low as a result of the core model.
 
 If each COMPONENT is specified via only a single SURFACE block,
 then the COMPONENT (or INDEX) declaration is unnecessary.
+
+Note that the best approach for modeling with vortex lattice methods where
+there are surfaces that are nearly coplanar with one another (such as a
+horizontal tail downstream of a wing, or cruciform fuselage surface in line
+with a vertical tail) is to ensure trailing legs of upstream horseshoe
+vortices line up with vortices on downstream surfaces so as to avoid a
+situation where vortex lines closely approach a control point.  This may
+corrupt the calculation. If this cannot be arranged the use of the
+vortex core model can allow a calculation to proceed regardless.  For such
+cases the user might wish to check the effects of core radius on the solution by
+reducing the core radius scale factors to verify sensitivity of the solution.
 
 
 *****
@@ -474,6 +540,11 @@ the need to modify the body shape coordinates.
 *****
 
 ANGLE       |  (keyword)
+2.0         | dAinc
+
+or 
+
+AINC        |  (keyword)
 2.0         | dAinc
 
 The ANGLE keyword allows convenient changing of the incidence angle 
@@ -538,6 +609,43 @@ NOLOAD
 
 *****
 
+CDCL                         |  (keyword)
+CL1 CD1  CL2 CD2  CL3 CD3    |  CD(CL) function parameters
+
+
+The CDCL keyword placed in the SURFACE options specifies a simple
+profile-drag CD(CL) function for all sections in this SURFACE.  
+The function is parabolic between CL1..CL2 and 
+CL2..CL3, with rapid increases in CD below CL1 and above CL3.
+
+The CD-CL polar is based on a simple interpolation with four CL regions:
+ 1) negative stall region
+ 2) parabolic CD(CL) region between negative stall and the drag minimum
+ 3) parabolic CD(CL) region between the drag minimum and positive stall
+ 4) positive stall region
+
+         CLpos,CDpos       <-  Region 4 (quadratic above CLpos)
+CL |   pt3--------      
+   |    /                     
+   |   |                   <-  Region 3 (quadratic above CLcdmin)
+   | pt2 CLcdmin,CDmin  
+   |   |                
+   |    \                  <-  Region 2 (quadratic below CLcdmin)
+   |   pt1_________      
+   |     CLneg,CDneg       <-  Region 1 (quadratic below CLneg)
+   |                             
+   -------------------------
+                   CD
+
+See the SUBROUTINE CDCL header (in cdcl.f) for more details.
+
+The CD(CL) function is interpolated for stations in between
+defining sections.  
+
+
+
+*****
+
 SECTION                             |  (keyword)
 0.0 5.0 0.2   0.50  1.50   5 -2.0   | Xle Yle Zle   Chord Ainc   [ Nspan Sspace ]
 
@@ -570,18 +678,47 @@ and AFIL keywords, described below, are available to define non-flat
 camber lines.  If one of these is used, it must immediately follow 
 the data line of the SECTION keyword.
 
-All the sections in the surface must be defined in order across the span.
+A positive surface-airfoil circulation and a corresponding positive local 
+lift coefficient is defined by righthand rule in direction of successive
+sections. This also defines the "top" side (+y) of the section airfoils as the suction
+side for positive overall lift.  Additionally the section order sets the direction for 
+positive incidence, affecting the direction for section AINC and surface ANGLE.  
+The direction for DESIGN changes (which affect local lincidence) is similarly affected.
+Therefore, to match conventional definitions for camber and incidence, 
+the order of the sections must be left to right across the span.  
+
+NOTE!!
+If the sections are ordered right to left, then the overall airfoils will effectively
+by upside down.  The overall dCL/dalpha will still be positive as usual, but 
+for positive CL the local cl values will be negative.  Needless to say,
+it's best to avoid these complications by ordering the sections left to right
+across the span (root to tip for the right wing).  
+
+The section ordering of a vertical tail is somewhat more arbitrary.  
+But a top to bottom ordering is most convenient, since positive local cl values 
+then produce a positive yaw moment Cn.
+
 
 *****
 
-NACA                      |    (keyword)
+NACA      X1  X2          | (keyword)    [ optional x/c range ]
 4300                      | section NACA camberline
 
-The NACA keyword sets the camber line to the NACA 4-digit shape specified
+The NACA keyword sets the camber line to the NACA 4-digit shape specified.
+
+If present, the optional X1 X2 numerical parameters indicate that only 
+the x/c range X1..X2 from the coordinates is to be assigned to the surface.
+If the surface is a 20%-chord flap, for example, then X1 X2
+would be 0.80 1.00.  This allows the camber shape to be easily 
+assigned to any number of surfaces in piecewise manner.  
+
+If omitted,  X1, X2  default to  0.0, 1.0, which indicates that the
+entire airfoil is to be used to define the camber shape as usual.
+
 
 *****
 
-AIRFOIL   X1  X2          |(keyword)   [ optional x/c range ]
+AIRFOIL   X1  X2          | (keyword)    [ optional x/c range ]
 1.0   0.0                 | x/c(1)  y/c(1)
 0.98  0.002               | x/c(2)  y/c(2)
  .     .                  |  .       .
@@ -596,9 +733,9 @@ as a set of x/c, y/c pairs.
   x/c,y/c =  airfoil coordinates 
 
 The x/c, y/c coordinates run from TE, to LE, back to the TE again 
-in either direction.  These corrdinates are splined, and the slope 
+in either direction.  These coordinates are splined, and the slope 
 of the camber y(x) function is obtained from the middle y/c values 
-between top and bottom.  The number of points N is deterimined 
+between the top and bottom.  The number of points N is deterimined 
 when a line without two readable numbers is encountered.
 
 If present, the optional X1 X2 parameters indicate that only the 
@@ -618,10 +755,17 @@ that the x/c,y/c pairs are generated from a standard (XFOIL-type)
 set of airfoil coordinates contained in the file "filename".  
 The first line of this file is assumed to contain a string
 with the name of the airfoil (as written out with XFOIL's SAVE
-command).   If the path/filename has embedded blanks
+command).   If the path/filename has embedded blanks,
 double quotes should be used to delimit the string.
 
-The optional X1 X2 parameters are used as in AIRFOIL.
+If present, the optional X1 X2 numerical parameters indicate that only 
+the x/c range X1..X2 from the coordinates is to be assigned to the surface.
+If the surface is a 20%-chord flap, for example, then X1 X2
+would be 0.80 1.00.  This allows the camber shape to be easily 
+assigned to any number of surfaces in piecewise manner.  
+
+If omitted,  X1, X2  default to  0.0, 1.0, which indicates that the
+entire airfoil is to be used to define the camber shape as usual.
 
 
 *****
@@ -629,9 +773,8 @@ The optional X1 X2 parameters are used as in AIRFOIL.
 DESIGN                  | (keyword)
 DName  Wdes             | design parameter name,  local weight
 
-This declares that the section angle Ainc is to be virtually 
-perturbed by a design parameter, with name DName and local
-Wdes.  
+This declares that the section angle Ainc is to be virtually perturbed 
+by a design parameter, with name DName and local weight Wdes.  
 
 For example, declarations for design variables "twist1" and "bias1"
 
@@ -663,11 +806,9 @@ CONTROL                              | (keyword)
 elevator  1.0  0.6   0. 1. 0.   1.0  | name, gain,  Xhinge,  XYZhvec,  SgnDup
 
 
-
 The CONTROL keyword declares that a hinge deflection at this section
-is to be governed by one or more control variables.  An arbitrary
-number of control variables can be used, limited only by the array
-limit NDMAX.
+is to be governed by one or more control variables.  An arbitrary number 
+of control variables can be used, limited only by the array limit NDMAX.
 
 The data line quantities are...
 
@@ -677,7 +818,7 @@ The data line quantities are...
            If positive, control surface extent is Xhinge..1  (TE surface)
            If negative, control surface extent is 0..-Xhinge (LE surface)
  XYZhvec  vector giving hinge axis about which surface rotates 
-           + deflection is + rotation about hinge by righthand rule
+           + deflection is + rotation about hinge vector by righthand rule
            Specifying XYZhvec = 0. 0. 0. puts the hinge vector along the hinge
  SgnDup   sign of deflection for duplicated surface
            An elevator would have SgnDup = +1
@@ -782,8 +923,8 @@ two aileron surfaces deflect as follows:
   Right control surface:   1.0*aileron         =  1.0*aileron
   Left  control surface:   1.0*aileron*(-2.0)  = -2.0*aileron
 
-which is the usual way Aileron Differential is implemented if "aileron" is positive.
-To get the same effect with a negative "aileron" control change, 
+which is the usual way Aileron Differential is implemented if "aileron" 
+is positive. To get the same effect with a negative "aileron" control change, 
 the definitions would have to be as follows.
 
 SECTION
@@ -836,16 +977,34 @@ giving the usual thin-airfoil lift slope  dcl/da = 2 pi.
 CDCL                         |  (keyword)
 CL1 CD1  CL2 CD2  CL3 CD3    |  CD(CL) function parameters
 
-
 The CDCL keyword specifies a simple profile-drag CD(CL) function 
 for this section.  The function is parabolic between CL1..CL2 and 
 CL2..CL3, with rapid increases in CD below CL1 and above CL3.
 See the SUBROUTINE CDCL header (in cdcl.f) for more details.
 
+The CD-CL polar is based on a simple interpolation with four CL regions:
+ 1) negative stall region
+ 2) parabolic CD(CL) region between negative stall and the drag minimum
+ 3) parabolic CD(CL) region between the drag minimum and positive stall
+ 4) positive stall region
+
+         CLpos,CDpos       <-  Region 4 (quadratic above CLpos)
+CL |   pt3--------      
+   |    /                     
+   |   |                   <-  Region 3 (quadratic above CLcdmin)
+   | pt2 CLcdmin,CDmin  
+   |   |                
+   |    \                  <-  Region 2 (quadratic below CLcdmin)
+   |   pt1_________      
+   |     CLneg,CDneg       <-  Region 1 (quadratic below CLneg)
+   |                             
+   -------------------------
+                   CD
+
 The CD(CL) function is interpolated for stations in between
 defining sections.  Hence, the CDCL declaration on any surface 
-must be used either for all sections or for none.
-
+must be used either for all sections or for none (unless the SURFACE
+CDCL is specified).
 
 
 Body-definition keywords and data formats
@@ -888,18 +1047,27 @@ Same function as for a surface, described earlier.
 
 *****
 
-BFILE            |  (keyword)
+BFILE    X1  X2  | (keyword)   [ optional x/c range ]
 filename         | filename string
 
 This specifies the shape of the body as an "airfoil" file
-which gives the top or side view of the body, which is
-assumed to have a round cross-section.  Hence, the diameter
-of the body is the difference between the top and bottom 
-Y values.  Bodies which are not round must be approximated
+which gives the side view profile of the body, which is
+assumed to have a round cross-section.  The diameter
+of the body is the thickness of the "airfoil" which is calculated from
+the difference between top and bottom Y coordinates as a function of X.
+Bodies which are not round are approximated
 with an equivalent round body which has roughly the same
 cross-sectional areas. If the path/filename has embedded blanks
 double quotes should be used to delimit the string.
 
+If present, the optional X1 X2 numerical parameters indicate that only 
+the x/c range X1..X2 from the coordinates is to be assigned to the surface.
+If the body is to be defined using only the 0-80% chord points, for example, 
+then X1 X2 would be 0.0 0.80.  This allows the body shape to be truncated if
+needed.  
+
+If omitted,  X1, X2  default to  0.0, 1.0, which indicates that the
+entire "airfoil" is used to define the shape as usual.
 
 
 Vortex Lattice Spacing Distributions
@@ -955,12 +1123,24 @@ from AVL, or any other vortex-lattice method:
 close to a downstream control point, else the solution will be garbage.  
 In practice, this means that surfaces which are lined up along 
 the x direction (i.e. have the same or nearly the same y,z coordinates), 
-MUST have the same spanwise vortex spacing.  AVL relaxes this requirement
-by employing a finite core size for each vortex on a surface which is 
+MUST have the same spanwise vortex spacing.
+
+AVL has the option to relax this requirement by employing a finite core
+size (using the Scully core model) for each vortex on a surface which is 
 influencing a control point in another aurface (unless the two surfaces
 share the same COMPONENT declaration).  This feature can be disabled
 by setting the core size to zero in the OPER sub-menu, Option 
-sub-sub-menu, command C.  This reverts AVL to the standard VL method.
+sub-sub-menu, using option CC or CW to change the vortex core scale factors.
+Separate scale factors for the core radius scaling are used, 
+VRCOREC for scaling the core from chord (default is now 0.0), and VRCOREW
+for scaling the core from the strip width (default is now 2.0).
+Setting VRCOREC and VRCOREW to 0.0 reverts AVL to the standard VL method.
+
+The slender body model also uses a core radius for the source and doublet
+velocity calculations.  The SRCORE (source-doublet core radius scale factor)
+is used where core radius is scaled from the segment length (the default
+value is 0.2).  This may be changed in the OPER O (Options) submenu using the
+CS parameter.
 
 2) Spanwise vortex spacings should be "smooth", with no sudden
 changes in spanwise strip width.  Adjust Nspan and Sspace parameters
@@ -1044,9 +1224,9 @@ rho = 1.225
 #  x,y,z system here must be exactly the same one used in the .avl input file
 #     (same orientation, same origin location, same length units)
 #
-#  mass   x     y     z      Ixx     Iyy    Izz   [  Ixy   Ixz   Iyz ]
-*   1.    1.    1.    1.     1.     1.      1.       1.    1.    1.
-+   0.    0.    0.    0.     0.     0.      0.       0.    0.    0.
+#  mass   x     y     z    [ Ixx     Iyy    Izz     Ixy   Ixz   Iyz ]
+*   1.    1.    1.    1.     1.     1.      1.      1.    1.    1.
++   0.    0.    0.    0.     0.     0.      0.      0.    0.    0.
    58.0   3.34  12.0  1.05   4400   180     4580        ! right wing       
    58.0   3.34 -12.0  1.05   4400   180     4580        ! left wing        
    16.0  -5.2   0.0   0.0       0    80       80        ! fuselage pod
@@ -1063,7 +1243,6 @@ rho = 1.225
     6.0  29.0   0.0   1.0      70     2       72        ! stab
     6.0  33.0   0.0   2.0      35    39        4        ! rudder
     0.0  -8.3   0.0   0.0       0     0        0        ! nose wt.
-
 
 
 Units
@@ -1102,6 +1281,27 @@ be set to 1.0, and the unit name will simply remain as "Lunit",
 "Munit", or "Tunit".
 
 
+The moments of inertia and products of inertia components above are defined as
+
+  Ixx  =  int (y^2 + z^2) dm
+  Iyy  =  int (x^2 + z^2) dm
+  Izz  =  int (x^2 + y^2) dm
+  Ixy  =  int  x y  dm
+  Ixz  =  int  x y  dm
+  Iyz  =  int  x y  dm
+
+where the integral is over all the mass elements dm with locations x,y,z.
+The symmetric moment of inertia tensor is given in terms of these
+components as follows.
+
+                         2 
+              | 0 -z  y |          | Ixx -Ixy -Ixz |
+  =           |         |          |               |
+  I  =  - int | z  0 -x | dm   =   |-Ixy  Iyy -Iyz |
+              |         |          |               |
+              |-y  x  0 |          |-Ixz -Iyz  Izz |
+
+
 
 Constants
 - - - - -
@@ -1117,31 +1317,33 @@ to all subsequent data.  If such a line is absent, these default to 1.
 A line which begins with a "+" specifies added constants to be applied
 to all subsequent data.  If such a line is absent, these default to 0.
 
-Lines whith only numbers are interpreted as mass, position, and inertia data.
+Lines with only numbers are interpreted as mass, position, and inertia data.
 Each such line contains values for 
 
-  mass   x     y     z      Ixx     Iyy      Izz    Ixz
+  mass   x     y     z      Ixx    Iyy    Izz    Ixz    Ixy    Iyz 
 
 as described in the file comments above.  Note that the inertias are
 taken about that item's own mass centroid given by x,y,z.  The finer
 the mass breakdown, the less important these self-inertias become.
+The inertia values on each line are optional, and any ones which 
+are absent will be assumed to be zero.
 
 Additional multiplier or adder lines can be put anywhere in the data lines,
 and these then re-define these mulipliers and adders for all subsequent lines.
 For example:
 
-#  mass   x     y     z      Ixx     Iyy      Izz    Ixz
+#  mass   x     y     z      Ixx     Iyy     Izz    Ixz
 
-*   1.2   1.    1.    1.     1.     1.        1.     1.
-+   0.    0.2   0.    0.     0.     0.        0.     0. 
-   58.0   3.34  12.0  1.05   4400   180       4580    0.   ! right wing       
-   58.0   3.34 -12.0  1.05   4400   180       4580    0.   ! left wing        
+*   1.2   1.    1.    1.     1.     1.       1.     1.
++   0.    0.2   0.    0.     0.     0.       0.     0. 
+   58.0   3.34  12.0  1.05   4400   180      4580    0.   ! right wing       
+   58.0   3.34 -12.0  1.05   4400   180      4580    0.   ! left wing        
 
-*   1.    1.    1.    1.     1.     1.        1.     1.
-+   0.    0.    0.    0.     0.     0.        0.     0. 
-   16.0  -5.2   0.0   0.0        0    80         80    0.  ! fuselage pod
-   18.0  13.25  0.0   0.0        0   700        700    0.  ! boom+rods
-   22.0  -7.4   0.0   0.0        0     0          0    0.  ! battery
+*   1.    1.    1.    1.     1.     1.       1.     1.
++   0.    0.    0.    0.     0.     0.       0.     0. 
+   16.0  -5.2   0.0   0.0        0    80        80    0.  ! fuselage pod
+   18.0  13.25  0.0   0.0        0   700       700    0.  ! boom+rods
+   22.0  -7.4   0.0   0.0        0     0         0    0.  ! battery
  
 
 Data lines 1-2 have all their masses scaled up by 1.2, and their locations
@@ -1240,11 +1442,12 @@ The OPER command will then bring up the main operating menu:
 
   ST  stability derivatives    FT  total   forces        
   SB  body-axis derivatives    FN  surface forces        
-  RE  reference quantities     FS  strip   forces        
+  RE  reference quantities     FS  strip   forces (FSB bodyaxes)
   DE  design changes           FE  element forces        
   O ptions                     FB  body forces           
                                HM  hinge moments         
-                               VM  strip shear,moment    
+  OB offbody flow survey       VM  strip shear,moment    
+  MRF  machine-readable format CPOM OML surface pressures
 
  .OPER (case 1/7)   c>  
 
@@ -1394,23 +1597,83 @@ Flow Solution
 - - - - - - -
 Once all the appropriate constraints are set up, the solution
 is executed with the X command.  If the variable/constraint
-system is ill-posed, the solution will probably not converge.
+system is ill-posed, the solution probably will not converge.
+A sample execute command is shown below, for a converged solution
+the residuals should be small, approaching 0.0.
+
+.OPER (case 1/5)   c>  x
+  Building normalwash AIC matrix...
+  Factoring normalwash AIC matrix...
+  Building source+doublet strength AIC matrix...
+  Building source+doublet velocity AIC matrix...
+  Building bound-vortex velocity matrix...
+
+ iter d(alpha)   d(beta)    d(pb/2V)   d(qc/2V)   d(rb/2V)   flap       aileron    elevator   rudder     
+   1 -0.000E+00 -0.000E+00 -0.536E-33  0.421E-34  0.280E-32 -0.000E+00 -0.630E-15 -0.152E+01  0.203E-14
+   2 -0.000E+00 -0.000E+00 -0.169E-32 -0.249E-22  0.281E-32 -0.000E+00  0.679E-15 -0.120E-03 -0.153E-14
+   3 -0.000E+00 -0.000E+00 -0.356E-32  0.249E-22 -0.561E-32 -0.000E+00 -0.131E-14 -0.957E-08 -0.910E-15
 
 
 Output
 - - - -
-Everytime a calculation is executed, the integrated forces are displayed 
+Every time a calculation is executed, the integrated forces are displayed 
 for the entire configuration.  Forces for the individual surfaces,
 strips, or vortex elements can be dsplayed with the FN, FS, FE commands.
 The element force printout is rather voluminous and often not very 
 informative.  Forces on bodies can be displayed using the FB command.
 
-The force and moment directions are in stability axes x,y,z, which 
-are tilted up by the angle alpha from the body axes X,Y,Z:
+A sample integrated forces output is:
+#===================================================================
 
- | x |     | cos(a)    sin(a)| | X |
- | y |  =  |        1        | | Y |
- | z |     |-sin(a)    cos(a)| | Z |
+ ---------------------------------------------------------------
+ Vortex Lattice Output -- Total Forces
+
+ Configuration: Supra 3.4m F3J                                              
+     # Surfaces =   7
+     # Strips   =  88
+     # Vortices = 604
+
+  Sref =  1034.0       Cref =  7.6000       Bref =  133.86             | Reference Data
+  Xref =  3.7500       Yref =  0.0000       Zref =  0.0000             | Moment Reference Point
+
+ Standard axis orientation,  X fwd, Z down                             | Axes definition
+
+ Run case: 0 deg bank                                                  
+
+  Alpha =   5.00000     pb/2V =   0.00000     p'b/2V =   0.00000       |
+  Beta  =   0.00000     qc/2V =   0.00000                              | Flow Conditions
+  Mach  =     0.000     rb/2V =   0.00000     r'b/2V =  -0.00000       |
+
+  CXtot =   0.04474     Cltot =  -0.00000     Cl'tot =  -0.00000       | Force Coefficients
+  CYtot =   0.00000     Cmtot =  -0.00000                              | BA_Forces  BA_Moments  SA_Moments
+  CZtot =  -0.82783     Cntot =  -0.00000     Cn'tot =  -0.00000       |
+
+  CLtot =   0.82858                                                    | 
+  CDtot =   0.02758                                                    | SA Forces (near-field)
+  CDvis =   0.01500     CDind = 0.0125826                              | 
+  CLff  =   0.82777     CDff  = 0.0124898    | Trefftz                 | Trefftz Plane (far-field)
+  CYff  =  -0.00000         e =    1.0077    | Plane                   |
+
+#===================================================================
+
+The forces and moments are calculated using two methods, near-field which integrates
+forces on the horseshoe vortices and far-field Trefftz plane (forces only, in wind axes).
+
+The near-field force and moments are displayed in x,y,z body axes (BA) and
+in stability axes (SA).  Note that pitch moment Cmtot is the same for BA and SA.
+
+The basic orientation of body axes and stability axes changes the signs of the X and Z
+directions, to NASA Standard X fwd, Z down or to Geometric X aft, Z up.
+
+
+Body, Stability and Wind Axes
+- - - - - - - - - - - - - - -
+
+Stability axes x,y,z, are tilted up by the angle alpha from the body axes X,Y,Z:
+
+ | x |     | cos(a)  0  sin(a)| | X |
+ | y |  =  |   0     1    0   | | Y |
+ | z |     |-sin(a)  0  cos(a)| | Z |
 
 
 The following standard normalizations are used,  with  Q = 0.5 rho V^2 ...
@@ -1423,8 +1686,10 @@ The following standard normalizations are used,  with  Q = 0.5 rho V^2 ...
  Cm = M_y / (Q Sref Cref)       pitch moment
  Cn = M_z / (Q Sref Bref)       yaw   moment
 
-The CD,CY,CL forces are positive in the direction of the x,y,z axes, 
-respectively.  The moments can be defined in four possible ways:
+The CD,CY,CL forces are positive in the direction of the x,y,z axes,
+respectively.
+
+The moments can be defined in four possible ways:
 
              Body axes     Stability axes
           ---------------  --------------
@@ -1448,18 +1713,18 @@ CD and CY are not the true "drag" and "side-force" aligned with
 the relative wind direction.  Likewise for moments Cl and Cm.  
 The wind-axes directions are given by
 
- | x |          | cos(b) sin(b)    | | x |
- | y |       =  |-sin(b) cos(b)    | | y |
- | z |_wind     |                1 | | z |
+ | x |          | cos(b) -sin(b)  0 | | x |
+ | y |       =  | sin(b)  cos(b)  0 | | y |
+ | z |_wind     |   0      0      1 | | z |
 
                 | cos(b)cos(a)   sin(b)   cos(b)sin(a)| | X |
-             =  |-sin(b)cos(a)   cos(b)  -sin(b)sin(a)| | Y |
+             =  | sin(b)cos(a)   cos(b)  -sin(b)sin(a)| | Y |
                 |      -sin(a)     0            cos(a)| | Z |
 
-hence
+hence, s
 
- CD_wind =  CD cos(b) + CY sin(b)
- CY_wind =  CY cos(b) - CD sin(b)
+ CD_wind =  CD cos(b) - CY sin(b)
+ CY_wind =  CY cos(b) + CD sin(b)
  CL_wind =  CL
 
  Cl_wind =  Cl cos(b) + Cm sin(b)
@@ -1496,7 +1761,68 @@ current conditions.  Derivatives with respect to control
 variables and design parameters are also displayed if
 they are available.
 
-Command SB generates the stability derivative matrix
+A sample ST output for the supra.avl test case follows. This shows
+non-dimensional force and moment derivatives for alpha, beta
+(per radian) and angular rates p,q,r (per non-dimensional rate,
+in radians).  The control derivatives (defined in this case for
+flap, aileron, elevator and rudder) are defined per degree (same
+as the control deflections are specified).
+
+If design variables are defined the derivatives wrt these are
+shown (per degree, same as the inputs).
+
+For convenience the Neutral Point (Xnp) is calculated (from CLa
+and CMa) and the spiral stability parameter is displayed.
+
+---------------------------------------------------------------
+ Stability-axis derivatives...
+
+                             alpha                beta
+                  ----------------    ----------------
+ z' force CL |    CLa =   5.876685    CLb =   0.000001
+ y  force CY |    CYa =  -0.000001    CYb =  -0.253317
+ x  force CD |    CDa =   0.130783    CDb =   0.000000
+ x' mom.  Cl'|    Cla =  -0.000002    Clb =  -0.137396
+ y  mom.  Cm |    Cma =  -0.725928    Cmb =   0.000000
+ z' mom.  Cn'|    Cna =   0.000000    Cnb =   0.053058
+
+                     roll rate  p'      pitch rate  q'        yaw rate  r'
+                  ----------------    ----------------    ----------------
+ z' force CL |    CLp =   0.000004    CLq =   7.942760    CLr =  -0.000000
+ y  force CY |    CYp =  -0.177359    CYq =  -0.000000    CYr =   0.177809
+ x  force CD |    CDp =   0.000000    CDq =   0.222424    CDr =   0.000000
+ x' mom.  Cl'|    Clp =  -0.653164    Clq =  -0.000001    Clr =   0.145204
+ y  mom.  Cm |    Cmp =   0.000000    Cmq = -16.979937    Cmr =  -0.000000
+ z' mom.  Cn'|    Cnp =  -0.058073    Cnq =   0.000000    Cnr =  -0.042629
+
+                  flap         d01     aileron      d02     elevator     d03     rudder       d04 
+                  ----------------    ----------------    ----------------    ----------------
+ z' force CL |   CLd01 =   0.052930   CLd02 =  -0.000000   CLd03 =   0.007076   CLd04 =   0.000000
+ y  force CY |   CYd01 =  -0.000000   CYd02 =   0.003350   CYd03 =  -0.000000   CYd04 =  -0.002944
+ x  force CD |   CDd01 =   0.002717   CDd02 =  -0.000000   CDd03 =   0.000222   CDd04 =  -0.000000
+ x' mom.  Cl'|   Cld01 =  -0.000000   Cld02 =   0.010522   Cld03 =  -0.000000   Cld04 =  -0.000129
+ y  mom.  Cm |   Cmd01 =  -0.000164   Cmd02 =   0.000000   Cmd03 =  -0.030358   Cmd04 =  -0.000000
+ z' mom.  Cn'|   Cnd01 =  -0.000000   Cnd02 =   0.000512   Cnd03 =  -0.000000   Cnd04 =   0.000925
+ Trefftz drag| CDffd01 =   0.001130 CDffd02 =   0.000000 CDffd03 =   0.000219 CDffd04 =  -0.000000
+ span eff.   |    ed01 =   0.003645    ed02 =  -0.000000    ed03 =  -0.010185    ed04 =   0.000000
+
+                  twist        g01 
+                  ----------------
+ z' force CL |   CLg01 =   0.023494
+ y  force CY |   CYg01 =  -0.000000
+ x  force CD |   CDg01 =   0.000252
+ x' mom.  Cl'|   Clg01 =  -0.000000
+ y  mom.  Cm |   Cmg01 =   0.000913
+ z' mom.  Cn'|   Cng01 =  -0.000000
+ Trefftz drag| CDffg01 =   0.000502
+ span eff.   |    eg01 =   0.001231
+
+ Neutral point  Xnp =   4.688804
+
+ Clb Cnr / Clr Cnb  =   0.760233    (  > 1 if spirally stable )
+ ---------------------------------------------------------------
+
+The alternative command SB generates a stability derivative matrix
 in the body axes (AVL's X,Y,Z coordinates).
 
 
@@ -1506,6 +1832,7 @@ Flow Results Plotting
 The T command starts up the Trefftz Plane plot menu:
 
  ======================================================
+   T plot YZ trace of loading 
    Y plot data vs Y
    Z plot data vs Z
    P erpendicular cl plot toggle (currently  T)
@@ -1575,6 +1902,43 @@ So to summarize the relevance of cl and clT:
   -> cl is probably a better indicator of stall.  clT is probably meaningless.
 
 
+Off-body Flow Survey
+---------------------
+
+The OB command starts up the Off-Body (flow survey) menu:
+
+  ======================================
+    # off-body points:    0 max: 1000
+
+    I nput off-body xyz points
+    L ine of off-body points
+    G rid of off-body points
+    R ead  off-body xyz points
+    W rite off-body xyz points
+    S how  off-body points 
+    C lear off-body points 
+    T ranslate off-body points 
+    P lot flow survey velocities
+    F low survey output
+    X execute flow survey
+
+ ..Select action   c>  
+
+Most of these options are self-explanatory.
+
+Once off-body points are specified (individual points, lines of points or
+grid of points) the X command calculates the flow at the points.  The results
+are displayed or can be written to a file.
+
+A line of points is specified by the two endpoints and the number of points on
+the line.  A grid of points is specified with four corner points and the number
+of points on sides #1-#2 and #3-#4 and then, finally, the number of points
+on sides #2-#3 and #4-#1.  Point order for grids is important do define the
+transfinite mesh of points interpolated from the corner points.
+
+The flow survey velocity vectors can be displayed on a geometry plot using the
+plot option.  An OB option is available in the OPER/G submenu to toggle the
+display of flow survey velocity vectors.
 
 
 Trimmed Flight Condition Setup
@@ -1744,12 +2108,9 @@ integer index, followed by X.  For example,
 
 Any one computed run case can of course be examined via the listings or plotting.
 
-An alternative to converging each run case separately, one can 
-issue the XX command, which will converge ALL the run cases. 
-It is a good idea to converge all the cases before saving the 
-run case file with the S command, so that all the parameters
-in the xxx.run file have their converged values.
-
+Alternatively, one can issue the XX command, which will converge ALL the run cases. 
+It is a good idea to converge all the cases in this manner before saving the run case 
+file with the S command, so that the converged parameter values go into the xxx.run file.
 
 
 
