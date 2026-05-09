@@ -7,6 +7,7 @@ import pytest
 
 from avl_wrapper.avl_aerogen import _extract_ctrl_names, run
 from avl_wrapper.avl_fileread import avl_fileread
+from avl_wrapper.st_fileread import StResult
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
 BD_AVL = EXAMPLES / "bd.avl"
@@ -132,6 +133,57 @@ def test_run_default_out_dir_is_relative_to_avl(tmp_path):
 
     expected = tmp_path / "out" / "bd"
     assert expected.is_dir()
+
+
+# ---------------------------------------------------------------------------
+# out_format — unit tests (runner + st_fileread both mocked)
+# ---------------------------------------------------------------------------
+
+
+def _fake_results() -> list[StResult]:
+    r = StResult(filename="case_0001.st")
+    r.data = {"Alpha": 5.0, "Beta": 0.0, "CLtot": 0.58447}
+    return [r]
+
+
+def _run_with_format(out_dir, fmt):
+    mock_result = _make_mock_result()
+    with patch("avl_wrapper.avl_aerogen.avl_runner.run", return_value=mock_result):
+        with patch("avl_wrapper.avl_aerogen.st_fileread", return_value=_fake_results()):
+            run(BD_AVL, alpha=[5.0], beta=[0.0], out_dir=out_dir, out_format=fmt)
+
+
+def test_out_format_csv_creates_file(tmp_path):
+    _run_with_format(tmp_path / "out", "csv")
+    assert (tmp_path / "out" / "results.csv").exists()
+
+
+def test_out_format_hdf5_creates_file(tmp_path):
+    pytest.importorskip("tables", reason="HDF5 requires the 'tables' package")
+    _run_with_format(tmp_path / "out", "hdf5")
+    assert (tmp_path / "out" / "results.h5").exists()
+
+
+def test_out_format_parquet_creates_file(tmp_path):
+    pytest.importorskip("pyarrow", reason="Parquet requires 'pyarrow'")
+    _run_with_format(tmp_path / "out", "parquet")
+    assert (tmp_path / "out" / "results.parquet").exists()
+
+
+def test_out_format_json_creates_file(tmp_path):
+    _run_with_format(tmp_path / "out", "json")
+    assert (tmp_path / "out" / "results.json").exists()
+
+
+def test_out_format_df_writes_no_file(tmp_path):
+    _run_with_format(tmp_path / "out", "df")
+    out = tmp_path / "out"
+    assert not any(out.glob("results.*"))
+
+
+def test_out_format_invalid_raises(tmp_path):
+    with pytest.raises(ValueError, match="not recognised"):
+        _run_with_format(tmp_path / "out", "xlsx")
 
 
 # ---------------------------------------------------------------------------
