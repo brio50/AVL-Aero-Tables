@@ -170,6 +170,26 @@ print(aero.ctrl["CLtot_d03_elevator"].data.shape)  # (10, 5, 3) — alpha × bet
 Stability tables (`aero.stab`) are populated only for neutral-control runs
 (all deflections = 0). Control tables (`aero.ctrl`) cover all runs.
 
+### 4d-ii. Export results to a file
+
+Use `results_to_dataframe()` to convert results to a pandas DataFrame for
+saving to any tabular format:
+
+```python
+from avl_wrapper import results_to_dataframe
+
+df = results_to_dataframe(results)
+
+df.to_csv("sweep.csv", index=False)          # CSV
+df.to_hdf("sweep.h5", key="results")         # HDF5
+df.to_parquet("sweep.parquet")               # Parquet
+df.to_json("sweep.json", orient="records")   # JSON
+```
+
+The DataFrame has one row per run case. Columns include `filename`, `Alpha`,
+`Beta`, all stability derivatives, all control derivatives, and control surface
+deflections.
+
 ### 4e. Plot the aero database
 
 ```python
@@ -204,6 +224,7 @@ avl-wrapper run my_commands.txt
 | `aero_filewrite(results)` | Pivot results → `AeroDatabase` lookup tables |
 | `aero_fileplot(aero, beta_ref)` | Plot `AeroDatabase` → `list[Figure]` |
 | `st_fileread(path)` | Parse `.st` files from a directory → `list[StResult]` |
+| `results_to_dataframe(results)` | Convert `list[StResult]` → `pd.DataFrame` for CSV / HDF5 / Parquet export |
 
 ---
 
