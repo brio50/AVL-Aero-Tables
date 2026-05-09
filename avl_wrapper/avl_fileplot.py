@@ -1,3 +1,135 @@
-# Port of avl_fileplot.m
-# Plots AVL geometry using matplotlib.
-raise NotImplementedError("avl_fileplot.py not yet ported from avl_fileplot.m")
+"""Plot AVL geometry using matplotlib (port of avl_fileplot.m)."""
+
+from __future__ import annotations
+
+import numpy as np
+
+from avl_wrapper.avl_fileread import AvlGeometry
+
+
+def _trans(surf_or_body) -> tuple[float, float, float]:
+    t = surf_or_body.Trans
+    if t is None or len(t) < 3:
+        return 0.0, 0.0, 0.0
+    return float(t[0]), float(t[1]), float(t[2])
+
+
+def _plot_on(axes, geometry: AvlGeometry) -> None:
+    """Draw all geometry elements on every axes in *axes*."""
+    import matplotlib.pyplot as plt  # noqa: F401 — needed for Axes3D side-effect
+
+    hdr = geometry.header
+
+    for ax in axes:
+        ax.scatter(
+            [hdr.Xref], [hdr.Yref], [hdr.Zref],
+            s=60, c="k", zorder=5, label="CG",
+        )
+
+    # Body (fuselage)
+    if geometry.body is not None:
+        body = geometry.body
+        xt, yt, zt = _trans(body)
+        xb = np.array(body.Bfile_X) + xt
+        yb = np.array(body.Bfile_Y) + yt
+        n = len(xb)
+        if n >= 2:
+            zb = np.full(n, zt)
+            half = n // 2
+            cl_x = xb[:half]
+            cl_y = np.full(half, yt)
+            cl_z = np.full(half, zt)
+            for ax in axes:
+                # Body profile line and centerline
+                ax.plot(xb, yb, zb, "-g", linewidth=0.8, label="body_line")
+                ax.plot(cl_x, cl_y, cl_z, "-r", linewidth=0.8, label="center_line")
+                # Circular cross-sections (every other station)
+                for i in range(0, half, 2):
+                    r = (abs(yb[i]) + abs(yb[n - 1 - i])) / 2.0
+                    theta = np.linspace(0, 2 * np.pi, 33)
+                    xs = np.full_like(theta, cl_x[i])
+                    ys = cl_y[i] + r * np.cos(theta)
+                    zs = cl_z[i] + r * np.sin(theta)
+                    ax.plot(xs, ys, zs, "-m", linewidth=0.5)
+
+    # Lifting surfaces
+    for surf in geometry.surface.values():
+        sec = surf.SECTION
+        n_sec = len(sec.Xle)
+        if n_sec == 0:
+            continue
+        xt, yt, zt = _trans(surf)
+        dainc = surf.dAinc or 0.0
+        mirror = isinstance(surf.Ydupl, float) and surf.Ydupl == 0.0
+
+        x_le = np.array(sec.Xle) + xt
+        y_le = np.array(sec.Yle) + yt
+        z_le = np.array(sec.Zle) + zt
+        chord = np.array(sec.Chord)
+        ainc = np.array(sec.Ainc) + dainc
+        x_te = x_le + chord
+        z_te = z_le + chord * np.sin(np.radians(ainc))
+
+        for ax in axes:
+            # Chord lines per section
+            for k in range(n_sec):
+                ax.plot(
+                    [x_le[k], x_te[k]], [y_le[k], y_le[k]], [z_le[k], z_te[k]],
+                    "-m", linewidth=0.5,
+                )
+                if mirror:
+                    ax.plot(
+                        [x_le[k], x_te[k]], [-y_le[k], -y_le[k]], [z_le[k], z_te[k]],
+                        "-m", linewidth=0.5,
+                    )
+            # Leading edge
+            ax.plot(x_le, y_le, z_le, "-g", linewidth=1.2)
+            # Trailing edge
+            ax.plot(x_te, y_le, z_te, "-g", linewidth=1.2)
+            if mirror:
+                ax.plot(x_le, -y_le, z_le, "-g", linewidth=1.2)
+                ax.plot(x_te, -y_le, z_te, "-g", linewidth=1.2)
+
+
+def avl_fileplot(geometry: AvlGeometry):
+    """Plot AVL geometry in four views: isometric, top, front, and side.
+
+    Parameters
+    ----------
+    geometry:
+        Parsed AvlGeometry from avl_fileread().
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+        Figure with four 3-D subplot panels.
+    """
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 — registers projection
+
+    fig = plt.figure(figsize=(12, 10))
+    fig.suptitle(geometry.header.name)
+
+    view_specs = [
+        ("Isometric", 30.0, -37.5),
+        ("Top",       90.0, -90.0),
+        ("Front",      0.0,  90.0),
+        ("Side",       0.0,   0.0),
+    ]
+    axes = []
+    for idx, (title, elev, azim) in enumerate(view_specs, start=1):
+        ax = fig.add_subplot(2, 2, idx, projection="3d")
+        ax.set_title(title)
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
+        ax.view_init(elev=elev, azim=azim)
+        axes.append(ax)
+
+    _plot_on(axes, geometry)
+
+    for ax in axes:
+        ax.set_box_aspect([1, 1, 1])
+
+    fig.tight_layout()
+    return fig

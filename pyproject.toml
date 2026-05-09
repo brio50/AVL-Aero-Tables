@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python-avl-wrapper"
-version = "0.1.0"
+version = "1.0.0"
 description = "Python wrapper for AVL (Athena Vortex Lattice) by Mark Drela and Harold Youngren (MIT)"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -16,6 +16,9 @@ dependencies = [
     "matplotlib",
     "scipy",
 ]
+
+[project.scripts]
+avl-wrapper = "avl_wrapper.avl_bin:main"
 
 [project.optional-dependencies]
 dev = [

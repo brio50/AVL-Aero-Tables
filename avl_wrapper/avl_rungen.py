@@ -1,3 +1,157 @@
-# Port of avl_rungen.m
-# Generates AVL .run file content for a sweep of alpha/beta/deflection cases.
-raise NotImplementedError("avl_rungen.py not yet ported from avl_rungen.m")
+"""Generate AVL run-case and command files for alpha/beta/deflection sweeps."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+
+def make_reset_run(
+    avl_name: str,
+    ctrl_names: list[str],
+    *,
+    Mach: float = 0.0,
+    CDoref: float = 0.0,
+    Xref: float = 0.0,
+    Yref: float = 0.0,
+    Zref: float = 0.0,
+    Lunit: str = "Lunit",
+    Munit: str = "Munit",
+    Tunit: str = "Tunit",
+) -> str:
+    """Return the content of a reset run-case file (all states zeroed).
+
+    The reset run case is loaded into AVL before each sweep point to ensure
+    a clean starting state.  ctrl_names is the ordered list of control surface
+    names (e.g. ["flap", "aileron", "elevator", "rudder"]).
+    """
+    lines: list[str] = [
+        "",
+        " ---------------------------------------------",
+        f" Run case  1:  Reset {avl_name}",
+        "",
+    ]
+    for name in ["alpha", "beta", "pb/2V", "qc/2V", "rb/2V"]:
+        lines.append(f" {name:<12} ->  {name:<11} =  {0:.5f}")
+    for ctrl in ctrl_names:
+        lines.append(f" {ctrl:<12} ->  {ctrl:<11} =  {0:.5f}")
+    lines.append(" ")
+
+    scalar_rows: list[tuple[str, float, str]] = [
+        ("alpha",     0.0,    "deg"),
+        ("beta",      0.0,    "deg"),
+        ("pb/2V",     0.0,    ""),
+        ("qc/2V",     0.0,    ""),
+        ("rb/2V",     0.0,    ""),
+        ("CL",        0.0,    ""),
+        ("CDo",       CDoref, ""),
+        ("bank",      0.0,    "deg"),
+        ("elevation", 0.0,    "deg"),
+        ("heading",   0.0,    "deg"),
+        ("Mach",      Mach,   ""),
+        ("velocity",  0.0,    f"{Lunit}/{Tunit}"),
+        ("density",   1.0,    f"{Munit}/{Tunit}^3"),
+        ("grav.acc.", 1.0,    f"{Lunit}/{Tunit}^2"),
+        ("turn_rad.", 0.0,    Lunit),
+        ("load_fac.", 1.0,    ""),
+        ("X_cg",      Xref,   Lunit),
+        ("Y_cg",      Yref,   Lunit),
+        ("Z_cg",      Zref,   Lunit),
+        ("mass",      1.0,    Munit),
+        ("Ixx",       1.0,    f"{Munit}-{Lunit}^2"),
+        ("Iyy",       1.0,    f"{Munit}-{Lunit}^2"),
+        ("Izz",       1.0,    f"{Munit}-{Lunit}^2"),
+        ("Ixy",       0.0,    f"{Munit}-{Lunit}^2"),
+        ("Iyz",       0.0,    f"{Munit}-{Lunit}^2"),
+        ("Izx",       0.0,    f"{Munit}-{Lunit}^2"),
+        ("visc CL_a", 0.0,    ""),
+        ("visc CL_u", 0.0,    ""),
+        ("visc CM_a", 0.0,    ""),
+        ("visc CM_u", 0.0,    ""),
+    ]
+    for param, val, unit in scalar_rows:
+        lines.append(f" {param:<10}=   {val:.5f}     {unit}")
+
+    return "\n".join(lines) + "\n"
+
+
+def make_command(
+    avl_name: str,
+    alpha: list[float],
+    beta: list[float],
+    ctrl_names: list[str],
+    ctrl_sweeps: dict[str, list[float]],
+    out_dir: Path,
+) -> str:
+    """Return the AVL interactive command script for a sweep.
+
+    Parameters
+    ----------
+    avl_name:
+        Geometry file stem without extension (e.g. "bd").
+    alpha:
+        List of angle-of-attack values in degrees.
+    beta:
+        List of sideslip angle values in degrees.
+    ctrl_names:
+        Ordered list of control-surface names matching AVL's D1, D2, … indices.
+    ctrl_sweeps:
+        Mapping from control-surface name to its deflection sweep values.
+        Only surfaces present in this dict are swept; others stay at zero.
+        An empty dict produces one run per (alpha, beta) point.
+    out_dir:
+        Directory where .st output files will be written.  May be an absolute
+        or relative path — keep it short; AVL has an ~80-char filename limit.
+    """
+    out_dir = Path(out_dir)
+    lines: list[str] = []
+
+    lines.append(f"LOAD {avl_name}")
+    lines.append("PLOP")
+    lines.append("G")
+    lines.append("")
+    lines.append("OPER")
+
+    case_num = 0
+
+    if ctrl_sweeps:
+        swept_surfaces = [
+            (ctrl_names.index(name) + 1, name, defl_vals)
+            for name, defl_vals in ctrl_sweeps.items()
+            if name in ctrl_names
+        ]
+        for a in alpha:
+            for b in beta:
+                for surf_idx, ctrl, defl_values in swept_surfaces:
+                    for defl in defl_values:
+                        case_num += 1
+                        st_path = out_dir / f"case_{case_num:04d}.st"
+                        lines.append(f"A A {a:f}")
+                        lines.append(f"B B {b:f}")
+                        lines.append(f"D{surf_idx} D{surf_idx} {defl:g}")
+                        lines.append("i")
+                        lines.append("x")
+                        lines.append("st")
+                        lines.append(str(st_path))
+                        lines.append("")
+                        lines.append("CINI")
+                        lines.append("OPER")
+    else:
+        for a in alpha:
+            for b in beta:
+                case_num += 1
+                st_path = out_dir / f"case_{case_num:04d}.st"
+                lines.append(f"A A {a:f}")
+                lines.append(f"B B {b:f}")
+                lines.append("i")
+                lines.append("x")
+                lines.append("st")
+                lines.append(str(st_path))
+                lines.append("")
+                lines.append("CINI")
+                lines.append("OPER")
+
+    lines.append("")
+    lines.append("Quit")
+    lines.append("")
+
+    return "\n".join(lines)
