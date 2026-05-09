@@ -108,7 +108,7 @@ pip install -e .
 from avl_wrapper import sweep
 
 results = sweep.run(
-    avl_file="avl/bd.avl",
+    avl_file="examples/bd.avl",
     alpha=range(-6, 13),
     beta=[-6, 0, 6],
 )
@@ -120,4 +120,4 @@ results.plot()
 ## References
 
 - AVL homepage: https://web.mit.edu/drela/Public/web/avl/
-- AVL user guide: [`ref/avl_doc.txt`](ref/avl_doc.txt)
+- AVL user guide: [`docs/avl_doc.txt`](docs/avl_doc.txt)

@@ -5,7 +5,7 @@ import pytest
 
 from avl_wrapper.avl_fileread import avl_fileread
 
-AVL_DIR = Path(__file__).parent.parent / "avl"
+AVL_DIR = Path(__file__).parent.parent / "examples"
 ALL_AVL_FILES = sorted(AVL_DIR.glob("*.avl"))
 
 
