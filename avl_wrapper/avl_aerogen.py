@@ -12,7 +12,7 @@ from avl_wrapper.avl_fileread import AvlGeometry, avl_fileread
 from avl_wrapper.avl_rungen import make_command
 from avl_wrapper.st_fileread import StResult, st_fileread
 
-_FORMATS = {"csv", "hdf5", "json", "df"}
+_FORMATS = {"csv", "json", "df"}
 
 
 def _extract_ctrl_names(geometry: AvlGeometry) -> list[str]:
@@ -55,9 +55,8 @@ def run(
         Path to the AVL binary.  Auto-detected if not provided.
     out_format:
         Export format for results saved alongside the .st files.
-        One of ``"csv"`` (default), ``"hdf5"``, ``"json"``,
+        One of ``"csv"`` (default), ``"json"``,
         or ``"df"`` (DataFrame in memory only — no file written).
-        HDF5 requires ``pip install tables``.
         The file is written to ``out_dir/results.<ext>``.
 
     Returns
@@ -115,8 +114,6 @@ def run(
         df = results_to_dataframe(results)
         if out_format == "csv":
             df.to_csv(out_dir / "results.csv", index=False)
-        elif out_format == "hdf5":
-            df.to_hdf(out_dir / "results.h5", key="results")
         elif out_format == "json":
             df.to_json(out_dir / "results.json", orient="records", indent=2)
 

@@ -158,11 +158,6 @@ def test_out_format_csv_creates_file(tmp_path):
     assert (tmp_path / "out" / "results.csv").exists()
 
 
-def test_out_format_hdf5_creates_file(tmp_path):
-    pytest.importorskip("tables", reason="HDF5 requires the 'tables' package")
-    _run_with_format(tmp_path / "out", "hdf5")
-    assert (tmp_path / "out" / "results.h5").exists()
-
 
 
 def test_out_format_json_creates_file(tmp_path):

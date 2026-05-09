@@ -182,9 +182,6 @@ results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0])
 # JSON
 results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="json")
 
-# HDF5 — requires: pip install "python-avl-wrapper[hdf5]"
-results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="hdf5")
-
 # DataFrame only — no file written
 results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="df")
 ```
