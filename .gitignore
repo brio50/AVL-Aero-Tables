@@ -22,6 +22,7 @@ build/
 # AVL outputs
 out/
 *.st
+!tests/data/*.st
 
 # macOS
 .DS_Store

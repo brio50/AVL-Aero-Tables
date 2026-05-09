@@ -4,7 +4,7 @@ import pytest
 
 from avl_wrapper.st_fileread import st_fileread
 
-FIXTURES = Path(__file__).parent / "fixtures"
+FIXTURES = Path(__file__).parent / "data"
 
 
 def test_single_file_returns_one_result():

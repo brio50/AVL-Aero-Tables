@@ -24,7 +24,7 @@ examples/             # AVL geometry + run files (bd.avl, supra.avl, etc.)
 docs/                 # AVL user documentation
 out/                  # AVL .st output files (generated at runtime, not committed)
 tests/
-  fixtures/           # hand-generated .st fixture files for unit testing
+  data/               # hand-generated .st data files for unit testing
   test_avl_fileread.py
   test_st_fileread.py
   test_avl_rungen.py
