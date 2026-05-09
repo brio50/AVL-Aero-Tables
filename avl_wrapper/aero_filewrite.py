@@ -92,6 +92,13 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
         raise ValueError("results is empty")
 
     r0 = results[0]
+    for r in results:
+        for key in ("Alpha", "Beta"):
+            if key not in r.data:
+                raise ValueError(
+                    f"StResult from {r.filename!r} is missing {key!r} — "
+                    "was the .st file parsed correctly?"
+                )
     alpha_arr = _sorted_unique([r.data["Alpha"] for r in results])
     beta_arr = _sorted_unique([r.data["Beta"] for r in results])
 

@@ -10,7 +10,7 @@ from avl_wrapper.aero_filewrite import COEF_NAMES, AeroDatabase
 def aero_fileplot(
     aero: AeroDatabase,
     beta_ref: float = 0.0,
-):
+) -> "list[matplotlib.figure.Figure]":
     """Plot stability and control coefficient tables from an AeroDatabase.
 
     Produces two sets of figures:
@@ -39,7 +39,7 @@ def aero_fileplot(
     """
     import matplotlib.pyplot as plt
 
-    figs: list = []
+    figs: list[plt.Figure] = []
 
     # ------------------------------------------------------------------
     # 1. Stability figure (alpha × beta for each coefficient)

@@ -7,16 +7,15 @@ import numpy as np
 from avl_wrapper.avl_fileread import AvlGeometry
 
 
-def _trans(surf_or_body) -> tuple[float, float, float]:
+def _trans(surf_or_body: object) -> tuple[float, float, float]:
     t = surf_or_body.Trans
     if t is None or len(t) < 3:
         return 0.0, 0.0, 0.0
     return float(t[0]), float(t[1]), float(t[2])
 
 
-def _plot_on(axes, geometry: AvlGeometry) -> None:
+def _plot_on(axes: list, geometry: AvlGeometry) -> None:
     """Draw all geometry elements on every axes in *axes*."""
-    import matplotlib.pyplot as plt  # noqa: F401 — needed for Axes3D side-effect
 
     hdr = geometry.header
 
@@ -91,7 +90,7 @@ def _plot_on(axes, geometry: AvlGeometry) -> None:
                 ax.plot(x_te, -y_le, z_te, "-g", linewidth=1.2)
 
 
-def avl_fileplot(geometry: AvlGeometry):
+def avl_fileplot(geometry: AvlGeometry) -> "matplotlib.figure.Figure":
     """Plot AVL geometry in four views: isometric, top, front, and side.
 
     Parameters

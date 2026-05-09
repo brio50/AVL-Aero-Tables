@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -31,7 +32,7 @@ class AvlSection:
     Ainc: list[float] = field(default_factory=list)
     Nspan: list[float] = field(default_factory=list)
     Sspan: list[float] = field(default_factory=list)
-    NACA: list[float | None] = field(default_factory=list)
+    NACA: list[str | None] = field(default_factory=list)
     Afile: list[str | None] = field(default_factory=list)
     CLaf: list[float | None] = field(default_factory=list)
 
@@ -182,7 +183,6 @@ def avl_fileread(avl_file: str | Path) -> AvlGeometry:
                                 body.Bfile_X.append(float(bparts[0]))
                                 body.Bfile_Y.append(float(bparts[1]))
                     else:
-                        import warnings
                         warnings.warn(f"Body file not found: {bfil_path}")
                 i += 1
             # i now points at "SURFACE" (or end of file) — refresh for fall-through
@@ -279,7 +279,13 @@ def avl_fileread(avl_file: str | Path) -> AvlGeometry:
             ctrl.Gain[ctrl_num - 1][sect_num - 1] = float(parts[1])
             ctrl.Xhinge[ctrl_num - 1][sect_num - 1] = float(parts[2])
             ctrl.XYZhvec[ctrl_num - 1][sect_num - 1] = float(parts[3])
-            ctrl.SgnDup[ctrl_num - 1][sect_num - 1] = float(parts[6]) if len(parts) > 6 else float(parts[-1])
+            if len(parts) < 6:
+                raise ValueError(
+                    f"CONTROL line has {len(parts)} tokens, expected at least 6 "
+                    f"(name gain xhinge XYZhvec[0-2] [SgnDup]): {eval_lines[i]!r}"
+                )
+            # SgnDup is optional; omitted means +1.0 (positive duplication)
+            ctrl.SgnDup[ctrl_num - 1][sect_num - 1] = float(parts[6]) if len(parts) > 6 else 1.0
 
         elif tline.upper() == "CLAF":
             i += 1
