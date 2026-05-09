@@ -87,6 +87,16 @@ avl_aerogen.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
 
 ---
 
+## Future work
+
+- **scipy interpolation**: add `scipy.interpolate.RegularGridInterpolator` support to
+  `AeroDatabase` so users can query coefficients at arbitrary (alpha, beta, defl) points
+  between breakpoints, not just at exact breakpoint values.  The numpy arrays in
+  `StabTable` and `CtrlTable` are already shaped correctly for `RegularGridInterpolator`.
+  Expose as an `interpolate(coef, alpha, beta, defl=0.0)` method or standalone helper.
+
+---
+
 ## Development setup
 
 ```bash

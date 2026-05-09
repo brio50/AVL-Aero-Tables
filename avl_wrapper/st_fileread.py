@@ -44,6 +44,27 @@ def _parse_st_file(path: Path) -> StResult:
     return result
 
 
+def results_to_dataframe(results: list[StResult]) -> "pd.DataFrame":
+    """Convert a list of StResult to a pandas DataFrame (one row per case).
+
+    Each row contains the filename plus every key from StResult.data
+    (Alpha, Beta, CLtot, control deflections, stability derivatives, etc.).
+    This is the recommended format for saving results to CSV, HDF5, Parquet,
+    or any other tabular format.
+
+    Example
+    -------
+    >>> results = avl("examples/bd.avl", alpha=[0, 5], beta=[0])
+    >>> df = results_to_dataframe(results)
+    >>> df.to_csv("sweep.csv", index=False)
+    >>> df.to_hdf("sweep.h5", key="results")
+    """
+    import pandas as pd
+
+    rows = [{"filename": r.filename, **r.data} for r in results]
+    return pd.DataFrame(rows)
+
+
 def st_fileread(path: str | Path) -> list[StResult]:
     """Parse .st files and return a list of StResult (one per file).
 

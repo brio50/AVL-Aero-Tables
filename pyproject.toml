@@ -12,6 +12,7 @@ license = { text = "MIT" }
 authors = [{ name = "Brian Borra" }]
 dependencies = [
     "numpy",
+    "pandas",
     "matplotlib",
 ]
 

@@ -2,7 +2,9 @@ from pathlib import Path
 
 import pytest
 
-from avl_wrapper.st_fileread import st_fileread
+import pandas as pd
+
+from avl_wrapper.st_fileread import results_to_dataframe, st_fileread
 
 FIXTURES = Path(__file__).parent / "data"
 
@@ -72,3 +74,35 @@ def test_directory_read():
     results = st_fileread(FIXTURES)
     assert len(results) == 1  # only one .st fixture currently
     assert results[0].filename == "bd_alpha5_beta0.st"
+
+
+# ---------------------------------------------------------------------------
+# results_to_dataframe
+# ---------------------------------------------------------------------------
+
+def test_results_to_dataframe_returns_dataframe():
+    results = st_fileread(FIXTURES / "bd_alpha5_beta0.st")
+    df = results_to_dataframe(results)
+    assert isinstance(df, pd.DataFrame)
+
+
+def test_results_to_dataframe_one_row_per_result():
+    results = st_fileread(FIXTURES / "bd_alpha5_beta0.st")
+    df = results_to_dataframe(results)
+    assert len(df) == len(results)
+
+
+def test_results_to_dataframe_columns_include_filename_and_data():
+    results = st_fileread(FIXTURES / "bd_alpha5_beta0.st")
+    df = results_to_dataframe(results)
+    assert "filename" in df.columns
+    assert "Alpha" in df.columns
+    assert "CLtot" in df.columns
+
+
+def test_results_to_dataframe_values():
+    results = st_fileread(FIXTURES / "bd_alpha5_beta0.st")
+    df = results_to_dataframe(results)
+    assert df["Alpha"].iloc[0] == pytest.approx(5.0)
+    assert df["CLtot"].iloc[0] == pytest.approx(0.58447)
+    assert df["filename"].iloc[0] == "bd_alpha5_beta0.st"
