@@ -164,11 +164,6 @@ def test_out_format_hdf5_creates_file(tmp_path):
     assert (tmp_path / "out" / "results.h5").exists()
 
 
-def test_out_format_parquet_creates_file(tmp_path):
-    pytest.importorskip("pyarrow", reason="Parquet requires 'pyarrow'")
-    _run_with_format(tmp_path / "out", "parquet")
-    assert (tmp_path / "out" / "results.parquet").exists()
-
 
 def test_out_format_json_creates_file(tmp_path):
     _run_with_format(tmp_path / "out", "json")

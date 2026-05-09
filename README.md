@@ -179,16 +179,13 @@ Stability tables (`aero.stab`) are populated only for neutral-control runs
 # CSV — default, written to out/bd/results.csv
 results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0])
 
-# HDF5
-results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="hdf5")
-
-# Parquet
-results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="parquet")
-
 # JSON
 results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="json")
 
-# DataFrame only — no file written, use results_to_dataframe() yourself
+# HDF5 — requires: pip install "python-avl-wrapper[hdf5]"
+results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="hdf5")
+
+# DataFrame only — no file written
 results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="df")
 ```
 

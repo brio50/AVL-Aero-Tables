@@ -20,6 +20,7 @@ dependencies = [
 avl-wrapper = "avl_wrapper.avl_bin:main"
 
 [project.optional-dependencies]
+hdf5 = ["tables"]
 dev = [
     "pytest",
     "ruff",
