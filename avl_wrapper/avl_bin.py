@@ -12,6 +12,13 @@ def find_avl() -> Path:
 
     Checks ~/bin/avl first (documented install location), then falls back to
     anything named avl* on PATH.
+
+    Example
+    -------
+    >>> from avl_wrapper.avl_bin import find_avl
+    >>> binary = find_avl()
+    >>> binary.name
+    'avl'
     """
     local = Path.home() / "bin" / "avl"
     if local.is_file() and local.stat().st_mode & 0o111:
@@ -28,7 +35,15 @@ def find_avl() -> Path:
 
 
 def verify(binary: Path | None = None) -> Path:
-    """Verify that the AVL binary launches successfully and return its path."""
+    """Verify that the AVL binary launches successfully and return its path.
+
+    Example
+    -------
+    >>> from avl_wrapper.avl_bin import verify
+    >>> binary = verify()
+    >>> binary.is_file()
+    True
+    """
     binary = binary or find_avl()
     result = subprocess.run(
         [str(binary)],
@@ -79,5 +94,14 @@ def run_file(
     binary: Path | None = None,
     cwd: Path | None = None,
 ) -> subprocess.CompletedProcess:
-    """Read command_file and feed it to AVL via stdin."""
+    """Read command_file and feed it to AVL via stdin.
+
+    Example
+    -------
+    >>> from pathlib import Path
+    >>> from avl_wrapper.avl_bin import run_file
+    >>> result = run_file(Path("commands.txt"), cwd=Path("examples"))
+    >>> result.returncode
+    0
+    """
     return run(Path(command_file).read_text(), binary=binary, cwd=cwd)

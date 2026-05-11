@@ -23,6 +23,21 @@ def make_reset_run(
     The reset run case is loaded into AVL before each sweep point to ensure
     a clean starting state.  ctrl_names is the ordered list of control surface
     names (e.g. ["flap", "aileron", "elevator", "rudder"]).
+
+    Example
+    -------
+    >>> from avl_wrapper.avl_rungen import make_reset_run
+    >>> text = make_reset_run(
+    ...     "bd",
+    ...     ["flap", "aileron", "elevator", "rudder"],
+    ...     CDoref=0.017,
+    ...     Xref=3.4,
+    ...     Zref=0.5,
+    ... )
+    >>> "Run case  1:  Reset bd" in text
+    True
+    >>> " CDo       =   0.01700" in text
+    True
     """
     lines: list[str] = [
         "",
