@@ -38,6 +38,10 @@ docs = [
 where = ["."]
 include = ["avl_wrapper*"]
 
+[tool.pytest.ini_options]
+addopts = "--doctest-modules"
+testpaths = ["tests", "avl_wrapper"]
+
 [tool.ruff]
 line-length = 88
 target-version = "py312"
