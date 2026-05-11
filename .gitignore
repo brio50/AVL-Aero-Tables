@@ -27,5 +27,10 @@ out/
 # Docs build
 docs/_build/
 
+# Doctest-generated artifacts
+geometry.png
+stability.png
+sweep.csv
+
 # macOS
 .DS_Store
