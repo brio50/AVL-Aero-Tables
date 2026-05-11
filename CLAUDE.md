@@ -89,6 +89,8 @@ avl_aerogen.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
 
 ## Future work
 
+- **sphinx-multiversion**: add versioned docs with a version-switcher dropdown. When a second release is tagged, add `sphinx-multiversion` to `[docs]` extras, add `"sphinx_multiversion"` to `extensions` in `docs/conf.py`, and replace `sphinx-build` with `sphinx-multiversion` in `.github/workflows/docs.yml`. Each `git tag vX.Y.Z` then gets its own subdirectory on GitHub Pages.
+
 - **scipy interpolation**: add `scipy.interpolate.RegularGridInterpolator` support to
   `AeroDatabase` so users can query coefficients at arbitrary (alpha, beta, defl) points
   between breakpoints, not just at exact breakpoint values.  The numpy arrays in

@@ -7,7 +7,7 @@ name = "python-avl-wrapper"
 version = "1.0.0"
 description = "Python wrapper for AVL (Athena Vortex Lattice) by Mark Drela and Harold Youngren (MIT)"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Brian Borra" }]
 dependencies = [
@@ -24,6 +24,15 @@ dev = [
     "pytest",
     "ruff",
 ]
+docs = [
+    "sphinx>=7",
+    "sphinx-book-theme",
+    "myst-parser",
+    "sphinx-copybutton",
+    "sphinxcontrib-mermaid",
+    "sphinx-design",
+    "sphinx-autobuild",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -31,7 +40,7 @@ include = ["avl_wrapper*"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]

@@ -24,5 +24,8 @@ out/
 *.st
 !tests/data/*.st
 
+# Docs build
+docs/_build/
+
 # macOS
 .DS_Store

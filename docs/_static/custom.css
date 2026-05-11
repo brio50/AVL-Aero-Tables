@@ -1,0 +1,6 @@
+a.external::after {
+    content: " ↗";
+    font-size: 0.75em;
+    vertical-align: super;
+    opacity: 0.6;
+}

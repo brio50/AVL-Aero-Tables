@@ -47,7 +47,7 @@ def _parse_st_file(path: Path) -> StResult:
 def st_fileread(path: str | Path) -> list[StResult]:
     """Parse .st files and return a list of StResult (one per file).
 
-    Accepts either a directory (reads all *.st files) or a single .st file.
+    Accepts either a directory (reads all ``*.st`` files) or a single ``.st`` file.
     """
     path = Path(path)
     if path.is_dir():

@@ -1,0 +1,16 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "sphinx-autobuild",
+            "type": "shell",
+            "command": "rm -rf ${workspaceFolder}/docs/_build && ${workspaceFolder}/.venv/bin/sphinx-autobuild -aE docs docs/_build/html",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        }
+    ]
+}
