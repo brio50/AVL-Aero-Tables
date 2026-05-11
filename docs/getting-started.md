@@ -167,13 +167,14 @@ results = avl_sweep("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="d
 from avl_wrapper import aero_fileplot
 
 figs = aero_fileplot(aero, beta_ref=0.0)
-figs[0].savefig("bd_stab.png", dpi=150)
-figs[1].savefig("bd_ctrl.png", dpi=150)
+figs[0].savefig("bd_stab.png", dpi=150)   # stability coefficients
+figs[1].savefig("bd_ctrl_CLtot.png", dpi=150)  # CLtot control derivatives
+# figs[2..6] — CYtot, CDtot, Cltot, Cmtot, Cntot
 ```
 
 ![Bubble Dancer stability derivatives](_static/img/bd_stab.png)
 
-![Bubble Dancer control derivatives](_static/img/bd_ctrl.png)
+![Bubble Dancer CLtot control derivatives](_static/img/bd_ctrl_fig1.png)
 
 ### CLI
 

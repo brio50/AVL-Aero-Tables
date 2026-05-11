@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from avl_wrapper.avl_fileread import AvlBody, AvlGeometry, AvlSurface
 
 if TYPE_CHECKING:
-    import matplotlib.pyplot as plt
+    from matplotlib.figure import Figure
 
 
 def _trans(surf_or_body: AvlSurface | AvlBody) -> tuple[float, float, float]:
@@ -19,7 +19,7 @@ def _trans(surf_or_body: AvlSurface | AvlBody) -> tuple[float, float, float]:
     return float(t[0]), float(t[1]), float(t[2])
 
 
-def _plot_on(axes: list, geometry: AvlGeometry) -> None:
+def _plot_on(axes: list[Any], geometry: AvlGeometry) -> None:
     """Draw all geometry elements on every axes in *axes*."""
 
     hdr = geometry.header
@@ -101,7 +101,7 @@ def _plot_on(axes: list, geometry: AvlGeometry) -> None:
                 ax.plot(x_te, -y_le, z_te, "-g", linewidth=1.2)
 
 
-def avl_fileplot(geometry: AvlGeometry) -> plt.Figure:
+def avl_fileplot(geometry: AvlGeometry) -> "Figure":
     """Plot AVL geometry in four views: isometric, top, front, and side.
 
     Parameters

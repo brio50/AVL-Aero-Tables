@@ -64,7 +64,7 @@ def run(
     command_text: str,
     binary: Path | None = None,
     cwd: Path | None = None,
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     """Feed command_text to AVL via stdin and return the completed process.
 
     Set cwd to the directory containing the .avl file so that AVL's
@@ -93,7 +93,7 @@ def run_file(
     command_file: Path,
     binary: Path | None = None,
     cwd: Path | None = None,
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     """Read command_file and feed it to AVL via stdin.
 
     Example

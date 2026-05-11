@@ -23,6 +23,8 @@ avl-wrapper = "avl_wrapper.avl_cli:main"
 dev = [
     "pytest",
     "ruff",
+    "mypy",
+    "pandas-stubs",
 ]
 docs = [
     "sphinx>=7",
@@ -45,6 +47,15 @@ testpaths = ["tests", "avl_wrapper"]
 [tool.ruff]
 line-length = 88
 target-version = "py312"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = false
+
+[[tool.mypy.overrides]]
+module = "mpl_toolkits.*"
+ignore_missing_imports = true
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]

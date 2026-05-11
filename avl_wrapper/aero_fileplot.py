@@ -9,13 +9,13 @@ import numpy as np
 from avl_wrapper.aero_filewrite import COEF_NAMES, AeroDatabase
 
 if TYPE_CHECKING:
-    import matplotlib.pyplot as plt
+    from matplotlib.figure import Figure
 
 
 def aero_fileplot(
     aero: AeroDatabase,
     beta_ref: float = 0.0,
-) -> list[plt.Figure]:
+) -> "list[Figure]":
     """Plot stability and control coefficient tables from an AeroDatabase.
 
     Produces two sets of figures:
@@ -47,16 +47,24 @@ def aero_fileplot(
     >>> from avl_wrapper import avl_sweep
     >>> from avl_wrapper.aero_filewrite import aero_filewrite
     >>> from avl_wrapper.aero_fileplot import aero_fileplot
-    >>> results = avl_sweep("examples/bd.avl", alpha=[-5, 0, 5, 10], beta=[0])
+    >>> results = avl_sweep(
+    ...     "examples/bd.avl",
+    ...     alpha=[-5, 0, 5, 10],
+    ...     beta=[-5, 0, 5],
+    ...     ctrl_sweeps={"elevator": [-10, 0, 10]},
+    ... )
     >>> db = aero_filewrite(results)
     >>> figs = aero_fileplot(db)
+    >>> len(figs)  # stability + one figure per coefficient
+    7
     >>> figs[0].get_suptitle()
     'Stability coefficients'
-    >>> figs[0].savefig("stability.png")
+    >>> figs[1].get_suptitle()
+    'CLtot  —  beta = 0.0 deg'
     """
     import matplotlib.pyplot as plt
 
-    figs: list[plt.Figure] = []
+    figs: list[Figure] = []
 
     # ------------------------------------------------------------------
     # 1. Stability figure (alpha × beta for each coefficient)
@@ -71,7 +79,7 @@ def aero_fileplot(
         for i, coef in enumerate(stab_coefs, start=1):
             stab_tbl = aero.stab[coef]
             ax = fig_stab.add_subplot(n_rows, n_cols, i, projection="3d")
-            alpha_g, beta_g = np.meshgrid(stab_tbl.alpha, stab_tbl.beta, indexing="ij")  # type: ignore[call-overload]
+            alpha_g, beta_g = np.meshgrid(stab_tbl.alpha, stab_tbl.beta, indexing="ij")
             ax.plot_surface(alpha_g, beta_g, stab_tbl.data, cmap="viridis", alpha=0.85)
             ax.set_xlabel("Alpha (deg)")
             ax.set_ylabel("Beta (deg)")
@@ -111,7 +119,7 @@ def aero_fileplot(
         for j, key in enumerate(ctrl_keys, start=1):
             ctrl_tbl = aero.ctrl[key]
             ax = fig_ctrl.add_subplot(n_rows, n_cols, j, projection="3d")
-            alpha_g, defl_g = np.meshgrid(ctrl_tbl.alpha, ctrl_tbl.defl, indexing="ij")  # type: ignore[call-overload]
+            alpha_g, defl_g = np.meshgrid(ctrl_tbl.alpha, ctrl_tbl.defl, indexing="ij")
             z = ctrl_tbl.data[:, bi, :]
             ax.plot_surface(alpha_g, defl_g, z, cmap="plasma", alpha=0.85)
             ax.set_xlabel("Alpha (deg)")
