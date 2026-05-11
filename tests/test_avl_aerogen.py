@@ -55,14 +55,18 @@ def _make_mock_result(returncode: int = 0) -> MagicMock:
 
 def test_run_calls_avl_runner(tmp_path):
     mock_result = _make_mock_result()
-    with patch("avl_wrapper.avl_aerogen.avl_runner.run", return_value=mock_result) as mock_run:
+    with patch(
+        "avl_wrapper.avl_aerogen.avl_runner.run", return_value=mock_result
+    ) as mock_run:
         run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path / "out")
     mock_run.assert_called_once()
 
 
 def test_run_passes_avl_dir_as_cwd(tmp_path):
     mock_result = _make_mock_result()
-    with patch("avl_wrapper.avl_aerogen.avl_runner.run", return_value=mock_result) as mock_run:
+    with patch(
+        "avl_wrapper.avl_aerogen.avl_runner.run", return_value=mock_result
+    ) as mock_run:
         run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path / "out")
     _, kwargs = mock_run.call_args
     assert kwargs["cwd"] == BD_AVL.parent
@@ -158,8 +162,6 @@ def test_out_format_csv_creates_file(tmp_path):
     assert (tmp_path / "out" / "results.csv").exists()
 
 
-
-
 def test_out_format_json_creates_file(tmp_path):
     _run_with_format(tmp_path / "out", "json")
     assert (tmp_path / "out" / "results.json").exists()
@@ -183,6 +185,7 @@ def test_out_format_invalid_raises(tmp_path):
 
 def _avl_installed() -> bool:
     from avl_wrapper.avl_bin import find_avl
+
     try:
         find_avl()
         return True

@@ -10,9 +10,11 @@ Nothing on this page is implemented yet. These are proposals and sketches only.
 
 The sketch below outlines a potential graphical interface — a browser-based or desktop UI for setting up geometry, configuring sweeps, and exploring aero database results without writing Python directly.
 
-![AVL UI concept sketch](_static/AVL.png)
-
-A PDF version of the sketch is also available: [AVL.pdf](_static/AVL.pdf)
+```{raw} html
+<object data="_static/AVL.pdf" type="application/pdf" width="100%" height="700px">
+  <a href="_static/AVL.pdf">Download UI concept sketch (PDF)</a>
+</object>
+```
 
 ## Planned features
 

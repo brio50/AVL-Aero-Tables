@@ -65,7 +65,9 @@ def run(
         One StResult per .st output file produced.
     """
     if out_format not in _FORMATS:
-        raise ValueError(f"out_format {out_format!r} not recognised; choose from {sorted(_FORMATS)}")
+        raise ValueError(
+            f"out_format {out_format!r} not recognised; choose from {sorted(_FORMATS)}"
+        )
     avl_file = Path(avl_file).resolve()
     avl_dir = avl_file.parent
     avl_name = avl_file.stem

@@ -60,10 +60,10 @@ sequenceDiagram
 
 avl_aerogen
 avl_fileread
-avl_fileplot
+avl_rungen
+avl_bin
 st_fileread
 aero_filewrite
+avl_fileplot
 aero_fileplot
-avl_bin
-avl_rungen
 ```

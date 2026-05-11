@@ -22,8 +22,8 @@ class StabTable:
 
     coef: str
     alpha: np.ndarray  # shape (n_alpha,), sorted unique
-    beta: np.ndarray   # shape (n_beta,),  sorted unique
-    data: np.ndarray   # shape (n_alpha, n_beta), NaN where unfilled
+    beta: np.ndarray  # shape (n_beta,),  sorted unique
+    data: np.ndarray  # shape (n_alpha, n_beta), NaN where unfilled
 
 
 @dataclass
@@ -31,8 +31,8 @@ class CtrlTable:
     """3-D coefficient lookup table indexed by (alpha, beta, deflection)."""
 
     coef: str
-    surface: str      # e.g. "d01_flap"
-    ctrl_name: str    # e.g. "flap"
+    surface: str  # e.g. "d01_flap"
+    ctrl_name: str  # e.g. "flap"
     alpha: np.ndarray
     beta: np.ndarray
     defl: np.ndarray  # shape (n_defl,), sorted unique deflections
@@ -156,7 +156,7 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
     return db
 
 
-def results_to_dataframe(results: list[StResult]) -> "pd.DataFrame":
+def results_to_dataframe(results: list[StResult]) -> "pd.DataFrame":  # noqa: F821
     """Convert a list of StResult to a pandas DataFrame (one row per case).
 
     Each row contains the filename plus every key from StResult.data

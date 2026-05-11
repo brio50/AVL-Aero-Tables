@@ -85,7 +85,7 @@ class AvlGeometry:
 
 
 def _to_valid_key(name: str) -> str:
-    """Convert a surface name to a valid Python identifier (mirrors MATLAB genvarname)."""
+    """Convert a surface name to a valid Python identifier (mirrors MATLAB genvarname)."""  # noqa: E501
     key = name.strip().replace(" ", "_").replace("-", "_")
     if key and key[0].isdigit():
         key = "x" + key
@@ -285,11 +285,15 @@ def avl_fileread(avl_file: str | Path) -> AvlGeometry:
                     f"(name gain xhinge XYZhvec[0-2] [SgnDup]): {eval_lines[i]!r}"
                 )
             # SgnDup is optional; omitted means +1.0 (positive duplication)
-            ctrl.SgnDup[ctrl_num - 1][sect_num - 1] = float(parts[6]) if len(parts) > 6 else 1.0
+            ctrl.SgnDup[ctrl_num - 1][sect_num - 1] = (
+                float(parts[6]) if len(parts) > 6 else 1.0
+            )
 
         elif tline.upper() == "CLAF":
             i += 1
-            geom.surface[surf_name].SECTION.CLaf[sect_num - 1] = _floats(eval_lines[i])[0]
+            geom.surface[surf_name].SECTION.CLaf[sect_num - 1] = _floats(eval_lines[i])[
+                0
+            ]
 
         i += 1
 

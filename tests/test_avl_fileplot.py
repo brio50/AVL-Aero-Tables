@@ -10,8 +10,8 @@ matplotlib.use("Agg")  # headless — must be set before importing pyplot
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 
-from avl_wrapper.avl_fileread import avl_fileread
 from avl_wrapper.avl_fileplot import avl_fileplot
+from avl_wrapper.avl_fileread import avl_fileread
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
 BD_AVL = EXAMPLES / "bd.avl"

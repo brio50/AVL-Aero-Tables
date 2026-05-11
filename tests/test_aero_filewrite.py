@@ -134,14 +134,11 @@ def test_non_neutral_does_not_fill_stab_table():
 
 def test_multiple_alphas_stab_shape_and_values():
     results = [
-        _make_result(a, 0.0, coef_vals={"CLtot": a * 0.1})
-        for a in [-5.0, 0.0, 5.0]
+        _make_result(a, 0.0, coef_vals={"CLtot": a * 0.1}) for a in [-5.0, 0.0, 5.0]
     ]
     db = aero_filewrite(results)
     assert db.stab["CLtot"].data.shape == (3, 1)
-    np.testing.assert_allclose(
-        db.stab["CLtot"].data[:, 0], [-0.5, 0.0, 0.5], atol=1e-9
-    )
+    np.testing.assert_allclose(db.stab["CLtot"].data[:, 0], [-0.5, 0.0, 0.5], atol=1e-9)
 
 
 # ---------------------------------------------------------------------------
@@ -150,7 +147,9 @@ def test_multiple_alphas_stab_shape_and_values():
 
 
 def test_ctrl_table_defl_breakpoints():
-    results = [_make_result(0.0, 0.0, deflections={"flap": d}) for d in [-5.0, 0.0, 5.0]]
+    results = [
+        _make_result(0.0, 0.0, deflections={"flap": d}) for d in [-5.0, 0.0, 5.0]
+    ]
     db = aero_filewrite(results)
     key = "CLtot_d01_flap"
     np.testing.assert_array_equal(db.ctrl[key].defl, [-5.0, 0.0, 5.0])
@@ -192,8 +191,16 @@ def test_ctrl_table_surface_and_ctrl_name():
 def test_no_controls_empty_ctrl_dict():
     r = StResult(filename="bare.st")
     r.controls = {}
-    r.data = {"Alpha": 0.0, "Beta": 0.0, "CLtot": 0.5, "CYtot": 0.0,
-               "CDtot": 0.02, "Cltot": 0.0, "Cmtot": -0.1, "Cntot": 0.0}
+    r.data = {
+        "Alpha": 0.0,
+        "Beta": 0.0,
+        "CLtot": 0.5,
+        "CYtot": 0.0,
+        "CDtot": 0.02,
+        "Cltot": 0.0,
+        "Cmtot": -0.1,
+        "Cntot": 0.0,
+    }
     db = aero_filewrite([r])
     assert db.ctrl == {}
 
@@ -201,8 +208,16 @@ def test_no_controls_empty_ctrl_dict():
 def test_no_controls_stab_table_filled():
     r = StResult(filename="bare.st")
     r.controls = {}
-    r.data = {"Alpha": 0.0, "Beta": 0.0, "CLtot": 0.42, "CYtot": 0.0,
-               "CDtot": 0.02, "Cltot": 0.0, "Cmtot": -0.1, "Cntot": 0.0}
+    r.data = {
+        "Alpha": 0.0,
+        "Beta": 0.0,
+        "CLtot": 0.42,
+        "CYtot": 0.0,
+        "CDtot": 0.02,
+        "Cltot": 0.0,
+        "Cmtot": -0.1,
+        "Cntot": 0.0,
+    }
     db = aero_filewrite([r])
     assert db.stab["CLtot"].data[0, 0] == pytest.approx(0.42)
 

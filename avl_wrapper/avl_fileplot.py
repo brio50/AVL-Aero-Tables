@@ -21,8 +21,13 @@ def _plot_on(axes: list, geometry: AvlGeometry) -> None:
 
     for ax in axes:
         ax.scatter(
-            [hdr.Xref], [hdr.Yref], [hdr.Zref],
-            s=60, c="k", zorder=5, label="CG",
+            [hdr.Xref],
+            [hdr.Yref],
+            [hdr.Zref],
+            s=60,
+            c="k",
+            zorder=5,
+            label="CG",
         )
 
     # Body (fuselage)
@@ -73,13 +78,19 @@ def _plot_on(axes: list, geometry: AvlGeometry) -> None:
             # Chord lines per section
             for k in range(n_sec):
                 ax.plot(
-                    [x_le[k], x_te[k]], [y_le[k], y_le[k]], [z_le[k], z_te[k]],
-                    "-m", linewidth=0.5,
+                    [x_le[k], x_te[k]],
+                    [y_le[k], y_le[k]],
+                    [z_le[k], z_te[k]],
+                    "-m",
+                    linewidth=0.5,
                 )
                 if mirror:
                     ax.plot(
-                        [x_le[k], x_te[k]], [-y_le[k], -y_le[k]], [z_le[k], z_te[k]],
-                        "-m", linewidth=0.5,
+                        [x_le[k], x_te[k]],
+                        [-y_le[k], -y_le[k]],
+                        [z_le[k], z_te[k]],
+                        "-m",
+                        linewidth=0.5,
                     )
             # Leading edge
             ax.plot(x_le, y_le, z_le, "-g", linewidth=1.2)
@@ -90,7 +101,7 @@ def _plot_on(axes: list, geometry: AvlGeometry) -> None:
                 ax.plot(x_te, -y_le, z_te, "-g", linewidth=1.2)
 
 
-def avl_fileplot(geometry: AvlGeometry) -> "matplotlib.figure.Figure":
+def avl_fileplot(geometry: AvlGeometry) -> "matplotlib.figure.Figure":  # noqa: F821
     """Plot AVL geometry in four views: isometric, top, front, and side.
 
     Parameters
@@ -111,9 +122,9 @@ def avl_fileplot(geometry: AvlGeometry) -> "matplotlib.figure.Figure":
 
     view_specs = [
         ("Isometric", 30.0, -37.5),
-        ("Top",       90.0, -90.0),
-        ("Front",      0.0,  90.0),
-        ("Side",       0.0,   0.0),
+        ("Top", 90.0, -90.0),
+        ("Front", 0.0, 90.0),
+        ("Side", 0.0, 0.0),
     ]
     axes = []
     for idx, (title, elev, azim) in enumerate(view_specs, start=1):

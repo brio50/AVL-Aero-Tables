@@ -80,6 +80,7 @@ def run_file(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="avl-wrapper",
@@ -87,10 +88,16 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     sub = p.add_subparsers(dest="command", required=True)
 
-    verify_p = sub.add_parser("verify", help="Check that the AVL binary is installed and works")
-    verify_p.add_argument("--binary", type=Path, default=None, help="Path to AVL binary")
+    verify_p = sub.add_parser(
+        "verify", help="Check that the AVL binary is installed and works"
+    )
+    verify_p.add_argument(
+        "--binary", type=Path, default=None, help="Path to AVL binary"
+    )
 
-    run_p = sub.add_parser("run", help="Feed a pre-built AVL command file to the AVL binary")
+    run_p = sub.add_parser(
+        "run", help="Feed a pre-built AVL command file to the AVL binary"
+    )
     run_p.add_argument("command_file", type=Path, help="AVL command script to execute")
     run_p.add_argument("--binary", type=Path, default=None, help="Path to AVL binary")
 

@@ -118,3 +118,23 @@ The AVL binary must be installed at `~/bin/avl` (see README.md for build
 instructions).  Integration tests are skipped automatically if the binary is
 absent.
 
+---
+
+## PR workflow
+
+Before opening a pull request, run these in order:
+
+```bash
+# 1. Auto-fix and format
+.venv/bin/ruff check --fix avl_wrapper/ tests/
+.venv/bin/ruff format avl_wrapper/ tests/
+
+# 2. Full test suite
+.venv/bin/pytest
+```
+
+Remaining `ruff` violations after `--fix` are either `E501` (long lines — wrap
+manually) or `F821` false positives on quoted forward-reference annotations
+(`"matplotlib.figure.Figure"`, `"pd.DataFrame"`); the latter are intentional
+and should be left alone.
+

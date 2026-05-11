@@ -1,14 +1,11 @@
 """Tests for avl.py: binary discovery, verification, and CLI."""
 
-import subprocess
-import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from avl_wrapper.avl_bin import _build_parser, find_avl, main, run, verify
-
 
 # ---------------------------------------------------------------------------
 # find_avl
@@ -80,7 +77,9 @@ def test_run_calls_binary_with_stdin():
 
     with (
         patch("avl_wrapper.avl_bin.find_avl", return_value=Path("/bin/avl")),
-        patch("avl_wrapper.avl_bin.subprocess.run", return_value=mock_result) as mock_run,
+        patch(
+            "avl_wrapper.avl_bin.subprocess.run", return_value=mock_result
+        ) as mock_run,
     ):
         run("quit\n")
         mock_run.assert_called_once()
@@ -103,7 +102,10 @@ def test_cli_verify_subcommand_success():
 
 def test_cli_verify_subcommand_failure():
     with (
-        patch("avl_wrapper.avl_bin.verify", side_effect=FileNotFoundError("AVL binary not found")),
+        patch(
+            "avl_wrapper.avl_bin.verify",
+            side_effect=FileNotFoundError("AVL binary not found"),
+        ),
     ):
         code = main(["verify"])
         assert code == 1

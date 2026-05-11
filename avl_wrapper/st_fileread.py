@@ -11,7 +11,7 @@ from pathlib import Path
 class StResult:
     filename: str
     controls: dict[str, str] = field(default_factory=dict)  # "d01" -> "flap"
-    data: dict[str, float] = field(default_factory=dict)    # "CLa" -> 5.631
+    data: dict[str, float] = field(default_factory=dict)  # "CLa" -> 5.631
 
 
 def _sanitize(name: str) -> str:
@@ -31,8 +31,13 @@ def _parse_st_file(path: Path) -> StResult:
 
         if tok == "=" and idx > 0 and idx + 1 < len(tokens):
             # "Clb Cnr / Clr Cnb = <value>" — 5-token compound name
-            if (idx >= 5 and tokens[idx - 5] == "Clb" and tokens[idx - 4] == "Cnr"
-                    and tokens[idx - 3] == "/" and tokens[idx - 2] == "Clr"):
+            if (
+                idx >= 5
+                and tokens[idx - 5] == "Clb"
+                and tokens[idx - 4] == "Cnr"
+                and tokens[idx - 3] == "/"
+                and tokens[idx - 2] == "Clr"
+            ):
                 var = "Clb_Cnr_div_Clr_Cnb"
             else:
                 var = _sanitize(tokens[idx - 1])

@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import matplotlib
-import numpy as np
-import pytest
 
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 
-from avl_wrapper.aero_filewrite import AeroDatabase, CtrlTable, StabTable, aero_filewrite
 from avl_wrapper.aero_fileplot import aero_fileplot
+from avl_wrapper.aero_filewrite import (
+    AeroDatabase,
+    aero_filewrite,
+)
 from avl_wrapper.st_fileread import StResult
 
 # ---------------------------------------------------------------------------
@@ -27,11 +28,20 @@ def _make_result(
     r = StResult(filename="case.st")
     r.controls = {"d01": "elevator"}
     r.data = {
-        "Alpha": alpha, "Beta": beta,
-        "Sref": 100.0, "Cref": 5.0, "Bref": 20.0,
-        "Xref": 2.0, "Yref": 0.0, "Zref": 0.0,
+        "Alpha": alpha,
+        "Beta": beta,
+        "Sref": 100.0,
+        "Cref": 5.0,
+        "Bref": 20.0,
+        "Xref": 2.0,
+        "Yref": 0.0,
+        "Zref": 0.0,
         "CLtot": 0.5 + alpha * 0.05,
-        "CYtot": 0.0, "CDtot": 0.02, "Cltot": 0.0, "Cmtot": -0.05, "Cntot": 0.0,
+        "CYtot": 0.0,
+        "CDtot": 0.02,
+        "Cltot": 0.0,
+        "Cmtot": -0.05,
+        "Cntot": 0.0,
         "elevator": 0.0,
     }
     if deflections:
@@ -111,9 +121,14 @@ def test_no_ctrl_only_stability_figure():
     r = StResult(filename="bare.st")
     r.controls = {}
     r.data = {
-        "Alpha": 0.0, "Beta": 0.0,
-        "CLtot": 0.5, "CYtot": 0.0, "CDtot": 0.02,
-        "Cltot": 0.0, "Cmtot": -0.05, "Cntot": 0.0,
+        "Alpha": 0.0,
+        "Beta": 0.0,
+        "CLtot": 0.5,
+        "CYtot": 0.0,
+        "CDtot": 0.02,
+        "Cltot": 0.0,
+        "Cmtot": -0.05,
+        "Cntot": 0.0,
     }
     aero = aero_filewrite([r])
     figs = aero_fileplot(aero)
@@ -151,7 +166,9 @@ def test_ctrl_figure_title_contains_coef_name():
     ctrl_titles = [f.texts[0].get_text() for f in figs[1:]]
     # each ctrl figure title should contain a coefficient name
     for title in ctrl_titles:
-        assert any(c in title for c in ("CLtot", "CYtot", "CDtot", "Cltot", "Cmtot", "Cntot"))
+        assert any(
+            c in title for c in ("CLtot", "CYtot", "CDtot", "Cltot", "Cmtot", "Cntot")
+        )
     for f in figs:
         plt.close(f)
 
