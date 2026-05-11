@@ -98,9 +98,13 @@ def run_file(
 
     Example
     -------
+    >>> import tempfile
     >>> from pathlib import Path
     >>> from avl_wrapper.avl_bin import run_file
-    >>> result = run_file(Path("commands.txt"), cwd=Path("examples"))
+    >>> with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+    ...     _ = f.write("LOAD bd\\nQuit\\n")
+    ...     cmd_path = Path(f.name)
+    >>> result = run_file(cmd_path, cwd=Path("examples"))
     >>> result.returncode
     0
     """

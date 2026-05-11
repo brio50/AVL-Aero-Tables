@@ -96,7 +96,7 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
     -------
     >>> from avl_wrapper import avl_sweep
     >>> from avl_wrapper.aero_filewrite import aero_filewrite
-    >>> results = avl_sweep.run("examples/bd.avl", alpha=[-5, 0, 5, 10], beta=[0])
+    >>> results = avl_sweep("examples/bd.avl", alpha=[-5, 0, 5, 10], beta=[0])
     >>> db = aero_filewrite(results)
     >>> db.stab["CLtot"].data.shape
     (4, 1)
@@ -185,8 +185,9 @@ def results_to_dataframe(results: list[StResult]) -> pd.DataFrame:
     >>> from avl_wrapper.aero_filewrite import results_to_dataframe
     >>> results = avl_sweep("examples/bd.avl", alpha=[0, 5], beta=[0])
     >>> df = results_to_dataframe(results)
+    >>> "Alpha" in df.columns and "CLtot" in df.columns
+    True
     >>> df.to_csv("sweep.csv", index=False)
-    >>> df.to_hdf("sweep.h5", key="results")
     """
     import pandas as pd
 

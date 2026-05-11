@@ -57,7 +57,7 @@ def run(
     Example
     -------
     >>> from avl_wrapper import avl_sweep
-    >>> results = avl_sweep.run(
+    >>> results = avl_sweep(
     ...     "examples/bd.avl",
     ...     alpha=[-5, 0, 5, 10],
     ...     beta=[0],

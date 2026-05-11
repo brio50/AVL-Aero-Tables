@@ -47,7 +47,7 @@ def aero_fileplot(
     >>> from avl_wrapper import avl_sweep
     >>> from avl_wrapper.aero_filewrite import aero_filewrite
     >>> from avl_wrapper.aero_fileplot import aero_fileplot
-    >>> results = avl_sweep.run("examples/bd.avl", alpha=[-5, 0, 5, 10], beta=[0])
+    >>> results = avl_sweep("examples/bd.avl", alpha=[-5, 0, 5, 10], beta=[0])
     >>> db = aero_filewrite(results)
     >>> figs = aero_fileplot(db)
     >>> figs[0].get_suptitle()
