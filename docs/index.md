@@ -8,9 +8,9 @@ A Python wrapper for [AVL](https://web.mit.edu/drela/Public/web/avl/) (Athena Vo
 
 AVL is a vortex lattice method (VLM) solver for aerodynamic and flight-dynamic analysis of fixed-wing aircraft. It is developed and maintained by Mark Drela and Harold Youngren at MIT and is widely used in preliminary design for its speed and accuracy at low computational cost.
 
-```{important}
+:::{important}
 Before using this wrapper, read the upstream AVL documentation. Understanding AVL's geometry format, reference quantities, and output conventions is essential for setting up runs correctly and interpreting results.
-```
+:::
 
 - [AVL User Primer](https://web.mit.edu/drela/Public/web/avl/AVL_User_Primer.pdf) — start here; covers geometry input, run cases, and output quantities
 - [AVL homepage](https://web.mit.edu/drela/Public/web/avl/) — source code, full user guide, and release notes

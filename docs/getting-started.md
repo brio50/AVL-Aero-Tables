@@ -16,9 +16,9 @@ ln -sf /opt/homebrew/Cellar/gcc/15.2.0_1/bin/gfortran-15 ~/bin/gfortran
 export PATH="$HOME/bin:$PATH"  # add to ~/.zshrc
 ```
 
-```{warning}
+:::{warning}
 The gcc version in the symlink path (`15.2.0_1`) changes with each Homebrew update. Run `ls /opt/homebrew/Cellar/gcc/` to find the current version before copying the command.
-```
+:::
 
 Download `avl3.52.tgz` from <https://web.mit.edu/drela/Public/web/avl/>, extract, then:
 
@@ -50,9 +50,9 @@ avl-wrapper verify
 # AVL 3.52 found at /Users/you/bin/avl — OK
 ```
 
-```{tip}
+:::{tip}
 Run `avl-wrapper verify` after any system update or PATH change to confirm the binary is still reachable.
-```
+:::
 
 ### 2. Install the Python package
 
@@ -122,9 +122,9 @@ results = avl_sweep(
 print(f"{len(results)} cases (4 alpha × 5 elevator deflections)")
 ```
 
-```{note}
+:::{note}
 Surfaces in `ctrl_sweeps` are swept **independently**, not combinatorially. Two surfaces with five deflection points each produces 10 runs, not 25.
-```
+:::
 
 ### Build an aero database
 
@@ -144,9 +144,9 @@ print(aero.stab["CLtot"].data.shape)               # (10, 5) — alpha × beta
 print(aero.ctrl["CLtot_d03_elevator"].data.shape)  # (10, 5, 3) — alpha × beta × defl
 ```
 
-```{important}
+:::{important}
 Stability tables (`aero.stab`) are populated **only for neutral-control runs** (all deflections = 0). Include `0.0` in every `ctrl_sweeps` deflection list or stability tables will be empty.
-```
+:::
 
 ### Export results to a file
 

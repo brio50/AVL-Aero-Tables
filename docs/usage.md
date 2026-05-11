@@ -63,14 +63,14 @@ results = avl_sweep(
 )
 ```
 
-```{warning}
+:::{warning}
 Control surface names must match the `CONTROL` entries in the `.avl` file exactly. A `KeyError` is raised if a name is not found. Use `geom.ctrl_names` to list the available names:
 
 ```python
 geom = avl_fileread("examples/bd.avl")
 geom.ctrl_names  # ['flap', 'aileron', 'elevator', 'rudder']
 ```
-```
+:::
 
 ### Output format
 
@@ -100,9 +100,9 @@ results = avl_sweep("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="/tmp
 
 `aero_filewrite()` pivots a `list[StResult]` into an `AeroDatabase` with separate numpy arrays for stability and control derivatives.
 
-```{important}
+:::{important}
 Stability tables are populated **only for neutral-control runs** (all deflections = 0). Include `0.0` in every `ctrl_sweeps` deflection list or stability tables will be empty.
-```
+:::
 
 ```python
 from avl_wrapper import aero_filewrite

@@ -2,9 +2,9 @@
 
 Ideas and design concepts for future development of `avl-wrapper`.
 
-```{note}
+:::{note}
 Nothing on this page is implemented yet. These are proposals and sketches only.
-```
+:::
 
 ## UI Concept
 
