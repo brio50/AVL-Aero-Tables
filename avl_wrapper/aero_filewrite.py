@@ -181,6 +181,8 @@ def results_to_dataframe(results: list[StResult]) -> pd.DataFrame:
 
     Example
     -------
+    >>> from avl_wrapper import avl_sweep
+    >>> from avl_wrapper.aero_filewrite import results_to_dataframe
     >>> results = avl_sweep("examples/bd.avl", alpha=[0, 5], beta=[0])
     >>> df = results_to_dataframe(results)
     >>> df.to_csv("sweep.csv", index=False)

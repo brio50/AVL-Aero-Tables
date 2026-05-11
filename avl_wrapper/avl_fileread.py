@@ -89,7 +89,15 @@ class AvlGeometry:
 
     @property
     def ctrl_names(self) -> list[str]:
-        """Return ordered unique control-surface names across all surfaces."""
+        """Return ordered unique control-surface names across all surfaces.
+
+        Example
+        -------
+        >>> from avl_wrapper.avl_fileread import avl_fileread
+        >>> geom = avl_fileread("examples/bd.avl")
+        >>> geom.ctrl_names
+        ['flap', 'aileron', 'elevator', 'rudder']
+        """
         all_names = (
             ctrl.name
             for surf in self.surface.values()
