@@ -14,6 +14,7 @@ sequenceDiagram
     participant FW as aero_filewrite
     participant FP as avl_fileplot
     participant AP as aero_fileplot
+    participant CL as avl_cli
 
     User->>AE: avl(avl_file, alpha, beta, ctrl_sweeps)
     AE->>FR: avl_fileread(avl_file)
@@ -31,6 +32,11 @@ sequenceDiagram
     end
     AE-->>User: list[StResult]
 
+    User->>CL: avl-wrapper verify / run
+    CL->>BN: verify() / run_file()
+    BN-->>CL: result
+    CL-->>User: exit code
+
     User->>FW: aero_filewrite(results)
     FW-->>User: AeroDatabase
 
@@ -46,11 +52,12 @@ sequenceDiagram
 | {doc}`avl_aerogen` | Top-level orchestrator — the `avl()` entry point | Yes |
 | {doc}`avl_fileread` | Parses `.avl` geometry file → `AvlGeometry` | Yes |
 | {doc}`avl_rungen` | Builds the AVL stdin command script | Internal |
-| {doc}`avl_bin` | Invokes the AVL Fortran binary via subprocess; CLI entry point | Indirect |
+| {doc}`avl_bin` | Locates, verifies, and invokes the AVL Fortran binary via subprocess | Indirect |
 | {doc}`st_fileread` | Parses `.st` output files → `list[StResult]` | Yes (advanced) |
 | {doc}`aero_filewrite` | Exports results to CSV/JSON; pivots `list[StResult]` → `AeroDatabase` | Yes |
 | {doc}`avl_fileplot` | Four-view geometry plot → `Figure` | Yes |
 | {doc}`aero_fileplot` | 3-D surface plots of `AeroDatabase` → `list[Figure]` | Yes |
+| {doc}`avl_cli` | `avl-wrapper` CLI entry point (`verify`, `run` subcommands) | CLI only |
 
 ````
 
@@ -66,4 +73,5 @@ st_fileread
 aero_filewrite
 avl_fileplot
 aero_fileplot
+avl_cli
 ```

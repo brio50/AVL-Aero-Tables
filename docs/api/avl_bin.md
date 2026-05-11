@@ -1,6 +1,6 @@
 # avl_bin
 
-Locates, verifies, and invokes the AVL Fortran binary via subprocess. Also provides the `avl-wrapper` CLI entry point.
+Locates, verifies, and invokes the AVL Fortran binary via subprocess.
 
 ```{eval-rst}
 .. automodule:: avl_wrapper.avl_bin

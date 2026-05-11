@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-avl-wrapper = "avl_wrapper.avl_bin:main"
+avl-wrapper = "avl_wrapper.avl_cli:main"
 
 [project.optional-dependencies]
 dev = [

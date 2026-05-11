@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import argparse
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 
@@ -74,57 +72,3 @@ def run_file(
 ) -> subprocess.CompletedProcess:
     """Read command_file and feed it to AVL via stdin."""
     return run(Path(command_file).read_text(), binary=binary, cwd=cwd)
-
-
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
-
-
-def _build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(
-        prog="avl-wrapper",
-        description="Python wrapper for AVL (Athena Vortex Lattice)",
-    )
-    sub = p.add_subparsers(dest="command", required=True)
-
-    verify_p = sub.add_parser(
-        "verify", help="Check that the AVL binary is installed and works"
-    )
-    verify_p.add_argument(
-        "--binary", type=Path, default=None, help="Path to AVL binary"
-    )
-
-    run_p = sub.add_parser(
-        "run", help="Feed a pre-built AVL command file to the AVL binary"
-    )
-    run_p.add_argument("command_file", type=Path, help="AVL command script to execute")
-    run_p.add_argument("--binary", type=Path, default=None, help="Path to AVL binary")
-
-    return p
-
-
-def main(argv: list[str] | None = None) -> int:
-    parser = _build_parser()
-    args = parser.parse_args(argv)
-
-    if args.command == "verify":
-        try:
-            binary = verify(args.binary)
-            print(f"AVL binary OK: {binary}")
-            return 0
-        except (FileNotFoundError, RuntimeError) as exc:
-            print(f"ERROR: {exc}", file=sys.stderr)
-            return 1
-
-    if args.command == "run":
-        result = run_file(args.command_file, binary=args.binary)
-        sys.stdout.write(result.stdout)
-        sys.stderr.write(result.stderr)
-        return result.returncode
-
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
