@@ -15,7 +15,7 @@ avl_wrapper/          # Python package
   st_fileread.py      # parse .st stability output files → list[StResult]
   avl_rungen.py       # generate AVL run-case and command file strings
   avl_bin.py          # find/verify/invoke the AVL binary; CLI entry point
-  avl_aerogen.py      # top-level sweep orchestration → list[StResult]
+  avl_sweep.py        # top-level sweep orchestration → list[StResult]
   avl_fileplot.py     # four-view geometry plot → Figure
   aero_filewrite.py   # pivot list[StResult] → AeroDatabase (numpy tables)
   aero_fileplot.py    # 3-D surface plots of AeroDatabase tables
@@ -29,7 +29,7 @@ tests/
   test_st_fileread.py
   test_avl_rungen.py
   test_avl.py
-  test_avl_aerogen.py
+  test_avl_aerogen.py  # (tests avl_sweep.py)
   test_avl_fileplot.py
   test_aero_filewrite.py
   test_aero_fileplot.py
@@ -43,7 +43,7 @@ tests/
 User code / CLI
     │
     ▼
-avl_aerogen.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
+avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
     │
     ├─ avl_fileread(avl_file)          → AvlGeometry (header, surfaces, body)
     │   └─ extracts control surface names (ctrl_names, ordered)
@@ -68,7 +68,7 @@ avl_aerogen.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
   All flight condition data (Alpha, Beta, control deflections) is inside the .st
   file itself, so numeric names lose no information.
 
-- **Staging in /tmp**: `avl_aerogen.run()` writes .st files to a short
+- **Staging in /tmp**: `avl_sweep.run()` writes .st files to a short
   `tempfile.TemporaryDirectory(prefix="avl_")` path to stay under the 80-char
   limit, then moves them to the caller's `out_dir`.
 

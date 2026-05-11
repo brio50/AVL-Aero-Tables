@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
-from avl_wrapper.avl_fileread import AvlGeometry
+from avl_wrapper.avl_fileread import AvlBody, AvlGeometry, AvlSurface
+
+if TYPE_CHECKING:
+    import matplotlib.pyplot as plt
 
 
-def _trans(surf_or_body: object) -> tuple[float, float, float]:
-    t = surf_or_body.Trans
+def _trans(surf_or_body: AvlSurface | AvlBody) -> tuple[float, float, float]:
+    t = surf_or_body.trans
     if t is None or len(t) < 3:
         return 0.0, 0.0, 0.0
     return float(t[0]), float(t[1]), float(t[2])
@@ -34,8 +39,8 @@ def _plot_on(axes: list, geometry: AvlGeometry) -> None:
     if geometry.body is not None:
         body = geometry.body
         xt, yt, zt = _trans(body)
-        xb = np.array(body.Bfile_X) + xt
-        yb = np.array(body.Bfile_Y) + yt
+        xb = np.array(body.bfile_x) + xt
+        yb = np.array(body.bfile_y) + yt
         n = len(xb)
         if n >= 2:
             zb = np.full(n, zt)
@@ -44,10 +49,8 @@ def _plot_on(axes: list, geometry: AvlGeometry) -> None:
             cl_y = np.full(half, yt)
             cl_z = np.full(half, zt)
             for ax in axes:
-                # Body profile line and centerline
                 ax.plot(xb, yb, zb, "-g", linewidth=0.8, label="body_line")
                 ax.plot(cl_x, cl_y, cl_z, "-r", linewidth=0.8, label="center_line")
-                # Circular cross-sections (every other station)
                 for i in range(0, half, 2):
                     r = (abs(yb[i]) + abs(yb[n - 1 - i])) / 2.0
                     theta = np.linspace(0, 2 * np.pi, 33)
@@ -58,24 +61,23 @@ def _plot_on(axes: list, geometry: AvlGeometry) -> None:
 
     # Lifting surfaces
     for surf in geometry.surface.values():
-        sec = surf.SECTION
-        n_sec = len(sec.Xle)
+        sections = surf.sections
+        n_sec = len(sections)
         if n_sec == 0:
             continue
         xt, yt, zt = _trans(surf)
-        dainc = surf.dAinc or 0.0
-        mirror = isinstance(surf.Ydupl, float) and surf.Ydupl == 0.0
+        dainc = surf.dainc or 0.0
+        mirror = isinstance(surf.ydupl, float) and surf.ydupl == 0.0
 
-        x_le = np.array(sec.Xle) + xt
-        y_le = np.array(sec.Yle) + yt
-        z_le = np.array(sec.Zle) + zt
-        chord = np.array(sec.Chord)
-        ainc = np.array(sec.Ainc) + dainc
+        x_le = np.array([s.xle for s in sections]) + xt
+        y_le = np.array([s.yle for s in sections]) + yt
+        z_le = np.array([s.zle for s in sections]) + zt
+        chord = np.array([s.chord for s in sections])
+        ainc = np.array([s.ainc for s in sections]) + dainc
         x_te = x_le + chord
         z_te = z_le + chord * np.sin(np.radians(ainc))
 
         for ax in axes:
-            # Chord lines per section
             for k in range(n_sec):
                 ax.plot(
                     [x_le[k], x_te[k]],
@@ -92,16 +94,14 @@ def _plot_on(axes: list, geometry: AvlGeometry) -> None:
                         "-m",
                         linewidth=0.5,
                     )
-            # Leading edge
             ax.plot(x_le, y_le, z_le, "-g", linewidth=1.2)
-            # Trailing edge
             ax.plot(x_te, y_le, z_te, "-g", linewidth=1.2)
             if mirror:
                 ax.plot(x_le, -y_le, z_le, "-g", linewidth=1.2)
                 ax.plot(x_te, -y_le, z_te, "-g", linewidth=1.2)
 
 
-def avl_fileplot(geometry: AvlGeometry) -> "matplotlib.figure.Figure":  # noqa: F821
+def avl_fileplot(geometry: AvlGeometry) -> plt.Figure:
     """Plot AVL geometry in four views: isometric, top, front, and side.
 
     Parameters

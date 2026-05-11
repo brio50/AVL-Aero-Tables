@@ -2,15 +2,20 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
 from avl_wrapper.aero_filewrite import COEF_NAMES, AeroDatabase
+
+if TYPE_CHECKING:
+    import matplotlib.pyplot as plt
 
 
 def aero_fileplot(
     aero: AeroDatabase,
     beta_ref: float = 0.0,
-) -> "list[matplotlib.figure.Figure]":  # noqa: F821
+) -> list[plt.Figure]:
     """Plot stability and control coefficient tables from an AeroDatabase.
 
     Produces two sets of figures:
@@ -32,7 +37,7 @@ def aero_fileplot(
 
     Returns
     -------
-    list[matplotlib.figure.Figure]
+    list[plt.Figure]
         Stability figure first, then one control figure per coefficient.
         Returns an empty list for any set that cannot be plotted (e.g. no
         control surfaces).
@@ -52,10 +57,10 @@ def aero_fileplot(
         fig_stab.suptitle("Stability coefficients")
 
         for i, coef in enumerate(stab_coefs, start=1):
-            tbl = aero.stab[coef]
+            stab_tbl = aero.stab[coef]
             ax = fig_stab.add_subplot(n_rows, n_cols, i, projection="3d")
-            alpha_g, beta_g = np.meshgrid(tbl.alpha, tbl.beta, indexing="ij")
-            ax.plot_surface(alpha_g, beta_g, tbl.data, cmap="viridis", alpha=0.85)
+            alpha_g, beta_g = np.meshgrid(stab_tbl.alpha, stab_tbl.beta, indexing="ij")  # type: ignore[call-overload]
+            ax.plot_surface(alpha_g, beta_g, stab_tbl.data, cmap="viridis", alpha=0.85)
             ax.set_xlabel("Alpha (deg)")
             ax.set_ylabel("Beta (deg)")
             ax.set_zlabel(coef)
@@ -68,14 +73,7 @@ def aero_fileplot(
     # ------------------------------------------------------------------
     # 2. Control figures (alpha × deflection at beta_ref)
     # ------------------------------------------------------------------
-    # Collect unique control surfaces from ctrl table keys
-    ctrl_surfaces: list[str] = []
-    seen: dict[str, None] = {}
-    for key in aero.ctrl:
-        tbl = aero.ctrl[key]
-        if tbl.surface not in seen:
-            seen[tbl.surface] = None
-            ctrl_surfaces.append(tbl.surface)
+    ctrl_surfaces = list(dict.fromkeys(t.surface for t in aero.ctrl.values()))
 
     if not ctrl_surfaces:
         return figs
@@ -99,15 +97,15 @@ def aero_fileplot(
         fig_ctrl.suptitle(f"{coef}  —  beta = {beta_actual:.1f} deg")
 
         for j, key in enumerate(ctrl_keys, start=1):
-            tbl = aero.ctrl[key]
+            ctrl_tbl = aero.ctrl[key]
             ax = fig_ctrl.add_subplot(n_rows, n_cols, j, projection="3d")
-            alpha_g, defl_g = np.meshgrid(tbl.alpha, tbl.defl, indexing="ij")
-            z = tbl.data[:, bi, :]
+            alpha_g, defl_g = np.meshgrid(ctrl_tbl.alpha, ctrl_tbl.defl, indexing="ij")  # type: ignore[call-overload]
+            z = ctrl_tbl.data[:, bi, :]
             ax.plot_surface(alpha_g, defl_g, z, cmap="plasma", alpha=0.85)
             ax.set_xlabel("Alpha (deg)")
-            ax.set_ylabel(f"{tbl.ctrl_name} (deg)")
+            ax.set_ylabel(f"{ctrl_tbl.ctrl_name} (deg)")
             ax.set_zlabel(coef)
-            ax.set_title(tbl.surface)
+            ax.set_title(ctrl_tbl.surface)
             ax.view_init(elev=30, azim=-37.5)
 
         fig_ctrl.tight_layout()

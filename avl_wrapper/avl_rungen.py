@@ -103,55 +103,52 @@ def make_command(
         or relative path — keep it short; AVL has an ~80-char filename limit.
     """
     out_dir = Path(out_dir)
-    lines: list[str] = []
+    lines: list[str] = [f"LOAD {avl_name}", "PLOP", "G", "", "OPER"]
 
-    lines.append(f"LOAD {avl_name}")
-    lines.append("PLOP")
-    lines.append("G")
-    lines.append("")
-    lines.append("OPER")
+    ctrl_points: list[tuple[int, float]] = [
+        (ctrl_names.index(name) + 1, defl)
+        for name, defl_vals in ctrl_sweeps.items()
+        if name in ctrl_names
+        for defl in defl_vals
+    ]
 
     case_num = 0
-
-    if ctrl_sweeps:
-        swept_surfaces = [
-            (ctrl_names.index(name) + 1, name, defl_vals)
-            for name, defl_vals in ctrl_sweeps.items()
-            if name in ctrl_names
-        ]
-        for a in alpha:
-            for b in beta:
-                for surf_idx, ctrl, defl_values in swept_surfaces:
-                    for defl in defl_values:
-                        case_num += 1
-                        st_path = out_dir / f"case_{case_num:04d}.st"
-                        lines.append(f"A A {a:f}")
-                        lines.append(f"B B {b:f}")
-                        lines.append(f"D{surf_idx} D{surf_idx} {defl:g}")
-                        lines.append("i")
-                        lines.append("x")
-                        lines.append("st")
-                        lines.append(str(st_path))
-                        lines.append("")
-                        lines.append("CINI")
-                        lines.append("OPER")
-    else:
-        for a in alpha:
-            for b in beta:
+    for a in alpha:
+        for b in beta:
+            if ctrl_points:
+                for surf_idx, defl in ctrl_points:
+                    case_num += 1
+                    st_path = out_dir / f"case_{case_num:04d}.st"
+                    lines.extend(
+                        [
+                            f"A A {a:f}",
+                            f"B B {b:f}",
+                            f"D{surf_idx} D{surf_idx} {defl:g}",
+                            "i",
+                            "x",
+                            "st",
+                            str(st_path),
+                            "",
+                            "CINI",
+                            "OPER",
+                        ]
+                    )
+            else:
                 case_num += 1
                 st_path = out_dir / f"case_{case_num:04d}.st"
-                lines.append(f"A A {a:f}")
-                lines.append(f"B B {b:f}")
-                lines.append("i")
-                lines.append("x")
-                lines.append("st")
-                lines.append(str(st_path))
-                lines.append("")
-                lines.append("CINI")
-                lines.append("OPER")
+                lines.extend(
+                    [
+                        f"A A {a:f}",
+                        f"B B {b:f}",
+                        "i",
+                        "x",
+                        "st",
+                        str(st_path),
+                        "",
+                        "CINI",
+                        "OPER",
+                    ]
+                )
 
-    lines.append("")
-    lines.append("Quit")
-    lines.append("")
-
+    lines.extend(["", "Quit", ""])
     return "\n".join(lines)

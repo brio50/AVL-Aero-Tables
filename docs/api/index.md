@@ -1,12 +1,12 @@
 # API Reference
 
-The diagram below traces a full analysis run — from calling `avl()` through to plotting the aero database. `avl_aerogen` is the orchestrator; all other components are either called by it internally or by the user directly afterward.
+The diagram below traces a full analysis run — from calling `avl_sweep()` through to plotting the aero database. `avl_sweep` is the orchestrator; all other components are either called by it internally or by the user directly afterward.
 
 ````{div} full-width
 ```{mermaid}
 sequenceDiagram
     actor User
-    participant AE as avl_aerogen
+    participant AE as avl_sweep
     participant FR as avl_fileread
     participant RG as avl_rungen
     participant BN as avl_bin
@@ -16,7 +16,7 @@ sequenceDiagram
     participant AP as aero_fileplot
     participant CL as avl_cli
 
-    User->>AE: avl(avl_file, alpha, beta, ctrl_sweeps)
+    User->>AE: avl_sweep(avl_file, alpha, beta, ctrl_sweeps)
     AE->>FR: avl_fileread(avl_file)
     FR-->>AE: AvlGeometry
     AE->>RG: make_command(avl_name, alpha, beta, ctrl_names, ctrl_sweeps, staging)
@@ -49,7 +49,7 @@ sequenceDiagram
 
 | Component | Role | Public? |
 |---|---|---|
-| {doc}`avl_aerogen` | Top-level orchestrator — the `avl()` entry point | Yes |
+| {doc}`avl_sweep` | Top-level orchestrator — the `avl_sweep()` entry point | Yes |
 | {doc}`avl_fileread` | Parses `.avl` geometry file → `AvlGeometry` | Yes |
 | {doc}`avl_rungen` | Builds the AVL stdin command script | Internal |
 | {doc}`avl_bin` | Locates, verifies, and invokes the AVL Fortran binary via subprocess | Indirect |
@@ -65,7 +65,7 @@ sequenceDiagram
 :maxdepth: 1
 :hidden:
 
-avl_aerogen
+avl_sweep
 avl_fileread
 avl_rungen
 avl_bin

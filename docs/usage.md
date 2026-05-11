@@ -7,7 +7,7 @@
 `avl_fileread()` parses an `.avl` file into an `AvlGeometry` dataclass containing a header, surfaces, and optional body definitions.
 
 ```python
-from avl_wrapper import avl_fileread
+from avl_wrapper import avl_sweep_fileread
 
 geom = avl_fileread("examples/bd.avl")
 
@@ -26,7 +26,7 @@ geom.surface.keys()  # dict_keys(['Wing', 'Horizontal_tail', 'Vertical_tail'])
 `avl_fileplot()` returns a matplotlib `Figure` with four orthographic views.
 
 ```python
-from avl_wrapper import avl_fileplot
+from avl_wrapper import avl_sweep_fileplot
 
 fig = avl_fileplot(geom)
 fig.savefig("geometry.png", dpi=150)
@@ -39,9 +39,9 @@ fig.savefig("geometry.png", dpi=150)
 The primary entry point is `avl()`. At minimum, supply an `.avl` file, `alpha`, and `beta` lists.
 
 ```python
-from avl_wrapper import avl
+from avl_wrapper import avl_sweep
 
-results = avl(
+results = avl_sweep(
     avl_file="examples/bd.avl",
     alpha=[-4.0, 0.0, 4.0, 8.0],
     beta=[0.0],
@@ -53,7 +53,7 @@ results = avl(
 `ctrl_sweeps` maps control surface names to deflection lists. Surfaces are swept **independently**, not combinatorially — matching the original MATLAB behaviour.
 
 ```python
-results = avl(
+results = avl_sweep(
     avl_file="examples/bd.avl",
     alpha=[-4.0, 0.0, 4.0, 8.0],
     beta=[0.0],
@@ -64,7 +64,12 @@ results = avl(
 ```
 
 ```{warning}
-Control surface names must match the `CONTROL` entries in the `.avl` file exactly. A `KeyError` is raised if a name is not found. Call `avl_fileread()` first and inspect the geometry to confirm available names.
+Control surface names must match the `CONTROL` entries in the `.avl` file exactly. A `KeyError` is raised if a name is not found. Use `geom.ctrl_names` to list the available names:
+
+```python
+geom = avl_fileread("examples/bd.avl")
+geom.ctrl_names  # ['flap', 'aileron', 'elevator', 'rudder']
+```
 ```
 
 ### Output format
@@ -78,7 +83,7 @@ The `out_format` parameter controls what file is written alongside the `.st` out
 | `"df"` | Returns a DataFrame; no file written |
 
 ```python
-results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="json")
+results = avl_sweep("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="json")
 ```
 
 ### Output directory
@@ -86,7 +91,7 @@ results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="json")
 By default, `.st` files go to `<avl_file_parent>/out/<geometry_name>/`. Override with `out_dir`:
 
 ```python
-results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="/tmp/my_run")
+results = avl_sweep("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="/tmp/my_run")
 ```
 
 ## Aero database

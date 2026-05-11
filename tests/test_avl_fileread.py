@@ -34,32 +34,37 @@ def test_bubble_dancer_surfaces():
 def test_bubble_dancer_wing_sections():
     g = avl_fileread(AVL_DIR / "bd.avl")
     wing = g.surface["Wing"]
-    assert wing.Nchord == pytest.approx(6.0)
-    assert wing.Ydupl == pytest.approx(0.0)
-    sec = wing.SECTION
-    assert len(sec.Xle) == 6
-    assert sec.Xle == pytest.approx([-3.41, -3.25, -2.5, -1.788, -0.95, 0.0])
-    assert sec.Yle == pytest.approx([0.0, 18.0, 41.66, 55.75, 57.64, 58.3])
-    assert sec.Chord == pytest.approx([10.5, 10.0, 8.0, 5.5, 4.4, 3.375])
+    assert wing.nchord == pytest.approx(6.0)
+    assert wing.ydupl == pytest.approx(0.0)
+    assert len(wing.sections) == 6
+    assert [s.xle for s in wing.sections] == pytest.approx(
+        [-3.41, -3.25, -2.5, -1.788, -0.95, 0.0]
+    )
+    assert [s.yle for s in wing.sections] == pytest.approx(
+        [0.0, 18.0, 41.66, 55.75, 57.64, 58.3]
+    )
+    assert [s.chord for s in wing.sections] == pytest.approx(
+        [10.5, 10.0, 8.0, 5.5, 4.4, 3.375]
+    )
 
 
 def test_bubble_dancer_controls():
     g = avl_fileread(AVL_DIR / "bd.avl")
-    wing_ctrl = g.surface["Wing"].CONTROL
-    assert wing_ctrl.Name[0][0] == "flap"
-    assert wing_ctrl.Name[0][4] == "aileron"
+    wing = g.surface["Wing"]
+    assert wing.sections[0].controls[0].name == "flap"
+    assert wing.sections[4].controls[0].name == "aileron"
 
-    htail_ctrl = g.surface["Horizontal_tail"].CONTROL
-    assert htail_ctrl.Name[0][0] == "elevator"
+    htail = g.surface["Horizontal_tail"]
+    assert htail.sections[0].controls[0].name == "elevator"
 
-    vtail_ctrl = g.surface["Vertical_tail"].CONTROL
-    assert vtail_ctrl.Name[0][0] == "rudder"
+    vtail = g.surface["Vertical_tail"]
+    assert vtail.sections[0].controls[0].name == "rudder"
 
 
 def test_bubble_dancer_body():
     g = avl_fileread(AVL_DIR / "bd.avl")
     assert g.body is not None
-    assert g.body.Trans == pytest.approx([-12.5, 0.0, -1.4])
+    assert g.body.trans == pytest.approx([-12.5, 0.0, -1.4])
 
 
 @pytest.mark.parametrize("avl_file", ALL_AVL_FILES, ids=lambda p: p.name)

@@ -73,7 +73,7 @@ pip install python-avl-wrapper
 ### Read and plot the geometry
 
 ```python
-from avl_wrapper import avl_fileread, avl_fileplot
+from avl_wrapper import avl_sweep_fileread, avl_fileplot
 
 geom = avl_fileread("examples/bd.avl")
 
@@ -90,9 +90,9 @@ fig.savefig("bd_geometry.png", dpi=150)
 ### Run an alpha / beta sweep
 
 ```python
-from avl_wrapper import avl
+from avl_wrapper import avl_sweep
 
-results = avl(
+results = avl_sweep(
     avl_file="examples/bd.avl",
     alpha=list(range(-6, 13, 2)),   # -6 to +12 deg, 2 deg steps
     beta=[0.0],
@@ -113,7 +113,7 @@ for r in results[:3]:
 ### Sweep control surfaces
 
 ```python
-results = avl(
+results = avl_sweep(
     avl_file="examples/bd.avl",
     alpha=[-4.0, 0.0, 4.0, 8.0],
     beta=[0.0],
@@ -131,7 +131,7 @@ Surfaces in `ctrl_sweeps` are swept **independently**, not combinatorially. Two 
 ```python
 from avl_wrapper import aero_filewrite
 
-results = avl(
+results = avl_sweep(
     avl_file="examples/bd.avl",
     alpha=list(range(-6, 13, 2)),
     beta=[-6.0, -3.0, 0.0, 3.0, 6.0],
@@ -152,13 +152,13 @@ Stability tables (`aero.stab`) are populated **only for neutral-control runs** (
 
 ```python
 # CSV — written to out/bd/results.csv  (default)
-results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0])
+results = avl_sweep("examples/bd.avl", alpha=[-4, 0, 4], beta=[0])
 
 # JSON
-results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="json")
+results = avl_sweep("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="json")
 
 # DataFrame only — no file written
-results = avl("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="df")
+results = avl_sweep("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="df")
 ```
 
 ### Plot the aero database

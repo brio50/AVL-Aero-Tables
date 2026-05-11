@@ -4,10 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date as _date
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from avl_wrapper.st_fileread import StResult
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 COEF_NAMES = ("CLtot", "CYtot", "CDtot", "Cltot", "Cmtot", "Cntot")
 REF_FIELDS = ("Sref", "Cref", "Bref", "Xref", "Yref", "Zref")
@@ -80,7 +84,7 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
     Parameters
     ----------
     results:
-        Output from avl_aerogen.run() or st_fileread().
+        Output from avl_sweep.run() or st_fileread().
 
     Returns
     -------
@@ -156,7 +160,7 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
     return db
 
 
-def results_to_dataframe(results: list[StResult]) -> "pd.DataFrame":  # noqa: F821
+def results_to_dataframe(results: list[StResult]) -> pd.DataFrame:
     """Convert a list of StResult to a pandas DataFrame (one row per case).
 
     Each row contains the filename plus every key from StResult.data
@@ -166,7 +170,7 @@ def results_to_dataframe(results: list[StResult]) -> "pd.DataFrame":  # noqa: F8
 
     Example
     -------
-    >>> results = avl("examples/bd.avl", alpha=[0, 5], beta=[0])
+    >>> results = avl_sweep("examples/bd.avl", alpha=[0, 5], beta=[0])
     >>> df = results_to_dataframe(results)
     >>> df.to_csv("sweep.csv", index=False)
     >>> df.to_hdf("sweep.h5", key="results")

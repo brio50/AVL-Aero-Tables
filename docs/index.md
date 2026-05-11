@@ -20,11 +20,11 @@ Before using this wrapper, read the upstream AVL documentation. Understanding AV
 Five functions cover the full workflow — from reading a geometry file through plotting a finished aero database:
 
 ```python
-from avl_wrapper import avl_fileread, avl_fileplot, avl, aero_filewrite, aero_fileplot
+from avl_wrapper import avl_fileread, avl_fileplot, avl_sweep, aero_filewrite, aero_fileplot
 
 geom    = avl_fileread("examples/bd.avl")           # parse geometry
 fig     = avl_fileplot(geom)                        # four view plot
-results = avl("examples/bd.avl", alpha, beta)       # run AVL sweep
+results = avl_sweep("examples/bd.avl", alpha, beta) # run AVL sweep
 aero    = aero_filewrite(results)                   # build lookup tables
 figs    = aero_fileplot(aero)                       # plot aero database
 ```

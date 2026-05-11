@@ -5,25 +5,15 @@ from __future__ import annotations
 import shutil
 import tempfile
 from pathlib import Path
+from typing import Literal
 
 from avl_wrapper import avl_bin as avl_runner
 from avl_wrapper.aero_filewrite import results_to_dataframe
-from avl_wrapper.avl_fileread import AvlGeometry, avl_fileread
+from avl_wrapper.avl_fileread import avl_fileread
 from avl_wrapper.avl_rungen import make_command
 from avl_wrapper.st_fileread import StResult, st_fileread
 
-_FORMATS = {"csv", "json", "df"}
-
-
-def _extract_ctrl_names(geometry: AvlGeometry) -> list[str]:
-    """Return ordered unique control-surface names from the geometry."""
-    seen: dict[str, None] = {}
-    for surf in geometry.surface.values():
-        for section_names in surf.CONTROL.Name:
-            for name in section_names:
-                if name:
-                    seen[name] = None
-    return list(seen)
+_FORMATS = frozenset(("csv", "json", "df"))
 
 
 def run(
@@ -33,7 +23,7 @@ def run(
     ctrl_sweeps: dict[str, list[float]] | None = None,
     out_dir: Path | None = None,
     binary: Path | None = None,
-    out_format: str = "csv",
+    out_format: Literal["csv", "json", "df"] = "csv",
 ) -> list[StResult]:
     """Run AVL stability analysis for a sweep of alpha, beta, and deflections.
 
@@ -84,7 +74,6 @@ def run(
         stale.unlink()
 
     geometry = avl_fileread(avl_file)
-    ctrl_names = _extract_ctrl_names(geometry)
 
     # AVL has an ~80-char Fortran string limit for filenames.  Stage .st files
     # in a short /tmp directory, then move them to the caller's out_dir.
@@ -94,7 +83,7 @@ def run(
             avl_name,
             list(alpha),
             list(beta),
-            ctrl_names,
+            geometry.ctrl_names,
             ctrl_sweeps,
             staging,
         )
