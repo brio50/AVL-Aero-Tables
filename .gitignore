@@ -32,5 +32,9 @@ geometry.png
 stability.png
 sweep.csv
 
+# Orphaned/intermediate doc images
+docs/_static/img/bd_aero.png
+docs/_static/img/bd_ctrl_C*.png
+
 # macOS
 .DS_Store
