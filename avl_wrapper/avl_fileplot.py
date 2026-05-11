@@ -149,7 +149,7 @@ def avl_fileplot(geometry: AvlGeometry) -> plt.Figure:
     _plot_on(axes, geometry)
 
     for ax in axes:
-        ax.set_box_aspect([1, 1, 1])
+        ax.set_aspect("equal")
 
     fig.tight_layout()
     return fig
