@@ -54,6 +54,15 @@ def run(
 
     Set cwd to the directory containing the .avl file so that AVL's
     'LOAD <name>' resolves correctly.
+
+    Example
+    -------
+    >>> from pathlib import Path
+    >>> from avl_wrapper.avl_bin import find_avl, run
+    >>> binary = find_avl()
+    >>> result = run("LOAD bd\\nQuit\\n", cwd=Path("examples"))
+    >>> result.returncode
+    0
     """
     binary = binary or find_avl()
     return subprocess.run(

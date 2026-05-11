@@ -53,6 +53,20 @@ def run(
     -------
     list[StResult]
         One StResult per .st output file produced.
+
+    Example
+    -------
+    >>> from avl_wrapper import avl_sweep
+    >>> results = avl_sweep.run(
+    ...     "examples/bd.avl",
+    ...     alpha=[-5, 0, 5, 10],
+    ...     beta=[0],
+    ...     ctrl_sweeps={"elevator": [-10, 0, 10]},
+    ... )
+    >>> len(results)  # 4 alpha × 3 elevator deflections
+    12
+    >>> results[0].data["Alpha"]
+    -5.0
     """
     if out_format not in _FORMATS:
         raise ValueError(

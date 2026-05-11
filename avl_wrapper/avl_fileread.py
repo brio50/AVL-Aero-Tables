@@ -120,7 +120,19 @@ def _floats(line: str) -> list[float]:
 
 
 def avl_fileread(avl_file: str | Path) -> AvlGeometry:
-    """Parse an AVL geometry file and return an AvlGeometry dataclass tree."""
+    """Parse an AVL geometry file and return an AvlGeometry dataclass tree.
+
+    Example
+    -------
+    >>> from avl_wrapper.avl_fileread import avl_fileread
+    >>> geom = avl_fileread("examples/bd.avl")
+    >>> geom.header.name
+    'Bubble Dancer RES'
+    >>> list(geom.surface.keys())
+    ['Wing', 'Horizontal_tail', 'Vertical_tail']
+    >>> geom.ctrl_names
+    ['flap', 'aileron', 'elevator', 'rudder']
+    """
     avl_file = Path(avl_file)
 
     eval_lines = [

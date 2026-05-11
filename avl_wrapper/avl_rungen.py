@@ -101,6 +101,23 @@ def make_command(
     out_dir:
         Directory where .st output files will be written.  May be an absolute
         or relative path — keep it short; AVL has an ~80-char filename limit.
+
+    Example
+    -------
+    >>> from pathlib import Path
+    >>> from avl_wrapper.avl_rungen import make_command
+    >>> cmd = make_command(
+    ...     "bd",
+    ...     alpha=[0.0, 5.0],
+    ...     beta=[0.0],
+    ...     ctrl_names=["flap", "aileron", "elevator", "rudder"],
+    ...     ctrl_sweeps={},
+    ...     out_dir=Path("/tmp/avl_out"),
+    ... )
+    >>> cmd.splitlines()[0]
+    'LOAD bd'
+    >>> cmd.count("A A")  # one alpha line per case
+    2
     """
     out_dir = Path(out_dir)
     lines: list[str] = [f"LOAD {avl_name}", "PLOP", "G", "", "OPER"]

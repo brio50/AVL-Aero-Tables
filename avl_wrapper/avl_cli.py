@@ -36,6 +36,16 @@ def main(argv: list[str] | None = None) -> int:
 
     ``run <command_file>``
         Feed a pre-built AVL command script to the binary via stdin.
+
+    Example
+    -------
+    .. code-block:: shell
+
+        # Verify the AVL binary is installed and functional
+        avl-wrapper verify
+
+        # Feed a pre-built command script to the binary
+        avl-wrapper run path/to/commands.txt
     """
     parser = _build_parser()
     args = parser.parse_args(argv)

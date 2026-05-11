@@ -53,6 +53,21 @@ def st_fileread(path: str | Path) -> list[StResult]:
     """Parse .st files and return a list of StResult (one per file).
 
     Accepts either a directory (reads all ``*.st`` files) or a single ``.st`` file.
+
+    Example
+    -------
+    >>> from avl_wrapper.st_fileread import st_fileread
+    >>> results = st_fileread("tests/data/bd_alpha5_beta0.st")
+    >>> len(results)
+    1
+    >>> results[0].filename
+    'bd_alpha5_beta0.st'
+    >>> results[0].data["Alpha"]
+    5.0
+    >>> results[0].data["CLtot"]
+    0.58447
+    >>> results[0].controls
+    {'d01': 'flap', 'd02': 'aileron', 'd03': 'elevator', 'd04': 'rudder'}
     """
     path = Path(path)
     if path.is_dir():

@@ -113,6 +113,16 @@ def avl_fileplot(geometry: AvlGeometry) -> plt.Figure:
     -------
     matplotlib.figure.Figure
         Figure with four 3-D subplot panels.
+
+    Example
+    -------
+    >>> from avl_wrapper.avl_fileread import avl_fileread
+    >>> from avl_wrapper.avl_fileplot import avl_fileplot
+    >>> geom = avl_fileread("examples/bd.avl")
+    >>> fig = avl_fileplot(geom)
+    >>> fig.get_axes()[0].get_title()
+    'Isometric'
+    >>> fig.savefig("geometry.png")
     """
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 — registers projection

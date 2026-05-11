@@ -91,6 +91,17 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
     AeroDatabase
         Structured lookup tables keyed by coefficient name (and surface name
         for control tables).
+
+    Example
+    -------
+    >>> from avl_wrapper import avl_sweep
+    >>> from avl_wrapper.aero_filewrite import aero_filewrite
+    >>> results = avl_sweep.run("examples/bd.avl", alpha=[-5, 0, 5, 10], beta=[0])
+    >>> db = aero_filewrite(results)
+    >>> db.stab["CLtot"].data.shape
+    (4, 1)
+    >>> list(db.stab)
+    ['CLtot', 'CYtot', 'CDtot', 'Cltot', 'Cmtot', 'Cntot']
     """
     if not results:
         raise ValueError("results is empty")
