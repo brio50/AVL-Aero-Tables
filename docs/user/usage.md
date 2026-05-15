@@ -2,14 +2,29 @@
 
 ## Walkthrough: Bubble Dancer
 
-[`bd.avl`](https://github.com/brio50/avl-aero-tables/blob/master/examples/bd.avl) is a sailplane with four control surfaces — flap, aileron, elevator, and rudder. This walkthrough follows the full pipeline from geometry to aero database.
+The Bubble Dancer (`examples/bd/`) is the canonical reference example — a sailplane with a fuselage body, four control surfaces (flap, aileron, elevator, rudder), external airfoil coordinate files, and a mass/inertia file. Its directory structure is the recommended pattern for any custom geometry:
+
+```{code-block} text
+:class: no-copybutton
+📁 examples/bd/
+├── 📄 bd.avl          ← geometry: surfaces, sections, control hinges, reference quantities
+├── 📄 bd.mass         ← mass & inertia: CG location, mass, Ixx/Iyy/Izz
+├── 📄 fuseBD.dat      ← fuselage body cross-section coordinates (referenced by bd.avl)
+├── 📄 ag35.dat        ← airfoil coordinates (referenced by bd.avl AFIL entries)
+├── 📄 ag36.dat
+└── 📄 ag37.dat
+```
+
+Keep all these files together. `avl_sweep` sets AVL's working directory to the folder containing the `.avl` file, so every relative path inside it (`fuseBD.dat`, `ag35.dat`, etc.) resolves automatically — you never need to copy files or set `cwd` yourself.
+
+This walkthrough follows the full pipeline from geometry to aero database.
 
 ### Read and plot the geometry
 
 ```python
 from avl_aero_tables import avl_fileread, avl_fileplot
 
-geom = avl_fileread("examples/bd.avl")
+geom = avl_fileread("examples/bd/bd.avl")
 
 print(geom.header.name)          # Bubble Dancer RES
 print(list(geom.surface.keys())) # ['Wing', 'Horizontal_tail', 'Vertical_tail']
@@ -27,9 +42,10 @@ fig.savefig("bd_geometry.png", dpi=150)
 from avl_aero_tables import avl_sweep
 
 results = avl_sweep(
-    avl_file="examples/bd.avl",
+    avl_file="examples/bd/bd.avl",
     alpha=list(range(-6, 13, 2)),   # -6 to +12 deg, 2 deg steps
     beta=[0.0],
+    mass_file="bd.mass",            # bare filename → resolves to examples/bd/bd.mass
 )
 
 print(f"{len(results)} cases computed")
@@ -49,12 +65,17 @@ AVL sweep complete → /your/project/out/bd/2026-05-15-143022  (10 cases)
 
 ```python
 results = avl_sweep(
-    avl_file="examples/bd.avl",
+    avl_file="examples/bd/bd.avl",
     alpha=[-4.0, 0.0, 4.0, 8.0],
     beta=[0.0],
     ctrl_sweeps={"elevator": [-10.0, -5.0, 0.0, 5.0, 10.0]},
 )
 print(f"{len(results)} cases (4 alpha × 5 elevator deflections)")
+```
+
+```
+AVL sweep complete → /your/project/out/bd/2026-05-15-143022  (20 cases)
+20 cases (4 alpha × 5 elevator deflections)
 ```
 
 ```{note}
@@ -67,16 +88,22 @@ Surfaces in `ctrl_sweeps` are swept **independently**, not combinatorially. Two 
 from avl_aero_tables import aero_filewrite
 
 results = avl_sweep(
-    avl_file="examples/bd.avl",
-    alpha=list(range(-6, 13, 2)),
-    beta=[-6.0, -3.0, 0.0, 3.0, 6.0],
-    ctrl_sweeps={"elevator": [-10.0, 0.0, 10.0]},
+    avl_file="examples/bd/bd.avl",
+    alpha=list(range(-5, 16, 5)),
+    beta=list(range(-5, 6, 5)),
+    ctrl_sweeps={
+        "flap":     [-10.0, 0.0, 10.0],
+        "aileron":  [-15.0, 0.0, 15.0],
+        "elevator": [-20.0, 0.0, 20.0],
+        "rudder":   [-20.0, 0.0, 20.0],
+    },
+    mass_file="bd.mass",
 )
 
 aero = aero_filewrite(results)
 
-print(aero.stab["CLtot"].data.shape)               # (10, 5) — alpha × beta
-print(aero.ctrl["CLtot_d03_elevator"].data.shape)  # (10, 5, 3) — alpha × beta × defl
+print(aero.stab["CLtot"].data.shape)               # (5, 3) — alpha × beta
+print(aero.ctrl["CLtot_d03_elevator"].data.shape)  # (5, 3, 3) — alpha × beta × defl
 ```
 
 ```{important}
@@ -89,14 +116,35 @@ Stability tables (`aero.stab`) are populated **only for neutral-control runs** (
 from avl_aero_tables import aero_fileplot
 
 figs = aero_fileplot(aero, beta_ref=0.0)
-figs[0].savefig("bd_stab.png", dpi=150)        # stability coefficients
-figs[1].savefig("bd_ctrl_CLtot.png", dpi=150)  # CLtot control derivatives
-# figs[2..6] — CYtot, CDtot, Cltot, Cmtot, Cntot
+names = ["bd_stab", "bd_ctrl_CLtot", "bd_ctrl_CYtot",
+         "bd_ctrl_CDtot", "bd_ctrl_Cltot", "bd_ctrl_Cmtot", "bd_ctrl_Cntot"]
+for fig, name in zip(figs, names):
+    fig.savefig(f"{name}.png", dpi=150)
 ```
 
+````{tab-set}
+```{tab-item} Stability
 ![Bubble Dancer stability derivatives](../_static/img/bd_stab.png)
-
-![Bubble Dancer CLtot control derivatives](../_static/img/bd_ctrl_fig1.png)
+```
+```{tab-item} CL
+![CLtot control derivatives](../_static/img/bd_ctrl_CLtot.png)
+```
+```{tab-item} CY
+![CYtot control derivatives](../_static/img/bd_ctrl_CYtot.png)
+```
+```{tab-item} CD
+![CDtot control derivatives](../_static/img/bd_ctrl_CDtot.png)
+```
+```{tab-item} Cl
+![Cltot control derivatives](../_static/img/bd_ctrl_Cltot.png)
+```
+```{tab-item} Cm
+![Cmtot control derivatives](../_static/img/bd_ctrl_Cmtot.png)
+```
+```{tab-item} Cn
+![Cntot control derivatives](../_static/img/bd_ctrl_Cntot.png)
+```
+````
 
 ---
 
@@ -109,7 +157,7 @@ figs[1].savefig("bd_ctrl_CLtot.png", dpi=150)  # CLtot control derivatives
 ```python
 from avl_aero_tables import avl_fileread
 
-geom = avl_fileread("examples/bd.avl")
+geom = avl_fileread("examples/bd/bd.avl")
 
 # Header fields
 geom.header.name    # geometry name string
@@ -134,16 +182,17 @@ fig.savefig("geometry.png", dpi=150)
 
 ### Custom geometry — recommended project layout
 
-Keep your `.avl` file, `.mass` file, and any external airfoil coordinate files (`.dat`) together in one directory. `avl_sweep` sets AVL's working directory to the folder containing the `.avl` file, so all relative paths inside it resolve correctly regardless of where you run Python from.
+Mirror the `examples/bd/` structure: keep the `.avl` file, `.mass` file, and all coordinate files (`.dat`) **together in one subdirectory**. `avl_sweep` sets AVL's working directory to the folder containing the `.avl` file, so every relative path referenced inside it resolves automatically regardless of where you run Python from.
 
 ```{code-block} text
 :class: no-copybutton
 📁 my_project/
 ├── 📁 geometry/
-│   ├── 📄 my_aircraft.avl
-│   ├── 📄 my_aircraft.mass   ← optional; mass & inertia breakdown
-│   └── 📄 naca2412.dat       ← optional; external airfoil coordinates
-├── 📁 out/                   ← generated at runtime
+│   ├── 📄 my_aircraft.avl      ← geometry: surfaces, sections, control hinges
+│   ├── 📄 my_aircraft.mass     ← CG, mass, Ixx/Iyy/Izz  (passed via mass_file=)
+│   ├── 📄 wing_airfoil.dat     ← airfoil coordinates   (AFIL entry in .avl)
+│   └── 📄 fuselage.dat         ← body cross-sections   (BFIL entry in .avl)
+├── 📁 out/                     ← generated at runtime
 │   └── 📁 my_aircraft/
 │       └── 📁 2026-05-15-143022/
 └── 📄 analysis.py
@@ -157,7 +206,7 @@ results = avl_sweep(
     avl_file="geometry/my_aircraft.avl",
     alpha=list(range(-6, 13, 2)),
     beta=[-6.0, 0.0, 6.0],
-    mass_file="my_aircraft.mass",   # bare filename → resolves relative to geometry/
+    mass_file="my_aircraft.mass",   # bare filename → resolves to geometry/my_aircraft.mass
 )
 ```
 
@@ -171,7 +220,7 @@ The primary entry point is `avl_sweep()`. At minimum, supply an `.avl` file, `al
 from avl_aero_tables import avl_sweep
 
 results = avl_sweep(
-    avl_file="examples/bd.avl",
+    avl_file="examples/bd/bd.avl",
     alpha=[-4.0, 0.0, 4.0, 8.0],
     beta=[0.0],
 )
@@ -183,7 +232,7 @@ results = avl_sweep(
 
 ```python
 results = avl_sweep(
-    avl_file="examples/bd.avl",
+    avl_file="examples/bd/bd.avl",
     alpha=[-4.0, 0.0, 4.0, 8.0],
     beta=[0.0],
     ctrl_sweeps={
@@ -196,7 +245,7 @@ results = avl_sweep(
 Control surface names must match the `CONTROL` entries in the `.avl` file exactly. A `KeyError` is raised if a name is not found. Use `geom.ctrl_names` to list the available names:
 
 ```python
-geom = avl_fileread("examples/bd.avl")
+geom = avl_fileread("examples/bd/bd.avl")
 geom.ctrl_names  # ['flap', 'aileron', 'elevator', 'rudder']
 ```
 ````
@@ -207,21 +256,21 @@ Pass a `.mass` file to load CG and inertia properties before the sweep. AVL rece
 
 ```python
 results = avl_sweep(
-    avl_file="examples/bd.avl",
+    avl_file="examples/bd/bd.avl",
     alpha=list(range(-6, 13, 2)),
     beta=[0.0],
-    mass_file="examples/bd.mass",   # bare filename resolves relative to the .avl directory
+    mass_file="bd.mass",   # bare filename → resolves to examples/bd/bd.mass
 )
 ```
 
-A bare filename resolves relative to the directory containing the `.avl` file. An absolute path also works — keep it short to stay within AVL's ~80-character Fortran string limit.
+A **bare filename** (no directory component) resolves relative to the directory containing the `.avl` file — the same directory AVL uses as its working directory. An absolute path also works. Keep paths short: AVL has an ~80-character Fortran string limit for filenames passed as CLI arguments.
 
 ### Custom AVL binary
 
 By default, `avl_sweep` auto-detects the AVL binary (`~/bin/avl`, then PATH). Override with `binary`:
 
 ```python
-results = avl_sweep("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], binary="/opt/avl/avl")
+results = avl_sweep("examples/bd/bd.avl", alpha=[-4, 0, 4], beta=[0], binary="/opt/avl/avl")
 ```
 
 ### Output format
@@ -235,7 +284,7 @@ The `out_format` parameter controls what file is written alongside the `.st` out
 | `"df"` | Returns a DataFrame; no file written |
 
 ```python
-results = avl_sweep("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="json")
+results = avl_sweep("examples/bd/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="json")
 ```
 
 ### Output directory
@@ -266,7 +315,7 @@ Copy that line, adjust paths as needed, and run it from the directory containing
 To write to a fixed location instead — useful in scripts where you want to overwrite the previous result — pass `out_dir` explicitly. Stale `.st` files are removed before the new run:
 
 ```python
-results = avl_sweep("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="out/bd/latest")
+results = avl_sweep("examples/bd/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="out/bd/latest")
 ```
 
 ## Aero database

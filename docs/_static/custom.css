@@ -28,6 +28,11 @@ div.highlight-bash::after         { content: "bash"; }
 div.highlight-powershell::after   { content: "powershell"; }
 div.highlight-python::after       { content: "python"; }
 
+/* Give the sweep internals diagram room to breathe */
+.mermaid-sweep svg {
+    min-height: 600px;
+}
+
 /* Wrap the test-link column in requirements tables */
 .req-table td:last-child,
 .req-table th:last-child {

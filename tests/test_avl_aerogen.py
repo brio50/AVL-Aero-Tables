@@ -1,5 +1,6 @@
 """Tests for avl_sweep: orchestration of AVL sweep runs."""
 
+import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -232,3 +233,34 @@ def test_integration_bd_with_mass_file(tmp_path):
     )
     assert len(results) == 2
     assert "CLtot" in results[0].data
+
+
+@pytest.mark.req("req-sweep-14")
+@pytest.mark.skipif(not _avl_installed(), reason="AVL binary not installed")
+def test_perf_bd_full_aero_table(tmp_path):
+    alpha = list(range(-5, 16, 5))   # [-5, 0, 5, 10, 15]
+    beta  = list(range(-5, 6, 5))    # [-5, 0, 5]
+    sweeps = {
+        "flap":     [-10.0, 0.0, 10.0],
+        "aileron":  [-15.0, 0.0, 15.0],
+        "elevator": [-20.0, 0.0, 20.0],
+        "rudder":   [-20.0, 0.0, 20.0],
+    }
+    expected = len(alpha) * len(beta) * sum(len(v) for v in sweeps.values())  # 180
+
+    t0 = time.perf_counter()
+    results = run(
+        BD_AVL,
+        alpha=alpha,
+        beta=beta,
+        ctrl_sweeps=sweeps,
+        mass_file="bd.mass",
+        out_dir=tmp_path / "out",
+        out_format="df",
+    )
+    elapsed = time.perf_counter() - t0
+
+    ms_per_case = elapsed / expected * 1000
+    print(f"\nbd full sweep: {expected} cases in {elapsed:.1f}s ({ms_per_case:.0f} ms/case)")
+    assert len(results) == expected
+    assert ms_per_case < 250, f"{ms_per_case:.0f} ms/case exceeds 250 ms/case budget"

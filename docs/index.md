@@ -33,14 +33,14 @@ Five functions cover the full workflow — from reading a geometry file through 
 ```python
 from avl_aero_tables import avl_fileread, avl_fileplot, avl_sweep, aero_filewrite, aero_fileplot
 
-geom    = avl_fileread("examples/bd.avl")           # parse geometry
+geom    = avl_fileread("examples/bd/bd.avl")           # parse geometry
 fig     = avl_fileplot(geom)                        # four view of geometry
-results = avl_sweep("examples/bd.avl", alpha, beta) # run AVL sweep
+results = avl_sweep("examples/bd/bd.avl", alpha, beta) # run AVL sweep
 aero    = aero_filewrite(results)                   # build aero lookup tables
 figs    = aero_fileplot(aero)                       # plot aero tables
 ```
 
-See {doc}`user/install` to get up and running, then {doc}`user/usage` for the full walkthrough.
+See {doc}`user/install` to get up and running, then {doc}`user/quickstart` for the full walkthrough.
 
 ```{toctree}
 :hidden:
@@ -48,7 +48,8 @@ See {doc}`user/install` to get up and running, then {doc}`user/usage` for the fu
 :caption: Users
 
 user/install
-user/usage
+user/quickstart
+user/concepts
 user/reference/index
 ```
 

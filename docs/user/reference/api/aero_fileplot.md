@@ -11,51 +11,26 @@ Generates 3-D surface plots of an `AeroDatabase` — one figure for stability de
 
 ## Example output
 
-### figs[0] — Stability coefficients vs alpha × beta
-
-```{image} /_static/img/bd_stab.png
-:alt: Stability coefficients vs alpha and beta (bd.avl)
-:width: 100%
+````{tab-set}
+```{tab-item} Stability
+![Stability coefficients vs alpha × beta](/_static/img/bd_stab.png)
 ```
-
-### figs[1] — CLtot vs alpha × deflection
-
-```{image} /_static/img/bd_ctrl_fig1.png
-:alt: CLtot control derivatives (bd.avl)
-:width: 100%
+```{tab-item} CL
+![CLtot control derivatives](/_static/img/bd_ctrl_CLtot.png)
 ```
-
-### figs[2] — CYtot
-
-```{image} /_static/img/bd_ctrl_fig2.png
-:alt: CYtot control derivatives (bd.avl)
-:width: 100%
+```{tab-item} CY
+![CYtot control derivatives](/_static/img/bd_ctrl_CYtot.png)
 ```
-
-### figs[3] — CDtot
-
-```{image} /_static/img/bd_ctrl_fig3.png
-:alt: CDtot control derivatives (bd.avl)
-:width: 100%
+```{tab-item} CD
+![CDtot control derivatives](/_static/img/bd_ctrl_CDtot.png)
 ```
-
-### figs[4] — Cltot
-
-```{image} /_static/img/bd_ctrl_fig4.png
-:alt: Cltot control derivatives (bd.avl)
-:width: 100%
+```{tab-item} Cl
+![Cltot control derivatives](/_static/img/bd_ctrl_Cltot.png)
 ```
-
-### figs[5] — Cmtot
-
-```{image} /_static/img/bd_ctrl_fig5.png
-:alt: Cmtot control derivatives (bd.avl)
-:width: 100%
+```{tab-item} Cm
+![Cmtot control derivatives](/_static/img/bd_ctrl_Cmtot.png)
 ```
-
-### figs[6] — Cntot
-
-```{image} /_static/img/bd_ctrl_fig6.png
-:alt: Cntot control derivatives (bd.avl)
-:width: 100%
+```{tab-item} Cn
+![Cntot control derivatives](/_static/img/bd_ctrl_Cntot.png)
 ```
+````

@@ -40,11 +40,10 @@ html_theme_options = {
     "use_repository_button": True,
     "use_issues_button": True,
     "use_download_button": True,
+    "show_toc_level": 2,
 }
 
 # -- Extensions -----------------------------------------------------------
-
-mermaid_height = "1500px"
 
 copybutton_selector = "div:not(.no-copybutton) > div.highlight > pre"
 
