@@ -11,6 +11,7 @@ from avl_aero_tables.st_fileread import StResult
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
 BD_AVL = EXAMPLES / "bd" / "bd.avl"
+BD_MASS = EXAMPLES / "bd" / "bd.mass"
 
 
 # ---------------------------------------------------------------------------
@@ -134,6 +135,7 @@ def test_run_command_contains_alpha(tmp_path):
     assert "A A 7.500000" in captured["cmd"]
 
 
+@pytest.mark.req("req-sweep-8")
 def test_run_default_out_dir_is_timestamped(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     mock_result = _make_mock_result()
@@ -215,3 +217,18 @@ def test_integration_bd_single_point(tmp_path):
     assert pytest.approx(5.0, abs=0.1) == r.data["Alpha"]
     assert "CLtot" in r.data
     assert "CLa" in r.data
+
+
+@pytest.mark.req("req-sweep-13")
+@pytest.mark.skipif(not _avl_installed(), reason="AVL binary not installed")
+def test_integration_bd_with_mass_file(tmp_path):
+    """Mass file (bare filename) resolves relative to the .avl directory."""
+    results = run(
+        BD_AVL,
+        alpha=[0.0, 5.0],
+        beta=[0.0],
+        mass_file="bd.mass",
+        out_dir=tmp_path / "out",
+    )
+    assert len(results) == 2
+    assert "CLtot" in results[0].data

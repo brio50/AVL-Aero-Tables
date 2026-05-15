@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - 2026-05-15
 
+### Fixed
+- All usage guide and docstring examples corrected from `"examples/bd.avl"` to `"examples/bd/bd.avl"` — paths were stale since the 1.1.0 examples reorganization into per-aircraft subdirectories; copy-paste code would have raised `FileNotFoundError`
+- `avl-upstream.md` incorrectly stated `.mass` files are "Not used by avl-aero-tables" — corrected to document the `mass_file=` parameter added in 1.1.0
+- `docs/dev/reqs/sweep.csv` req-sweep-8 had a dead test link (`test_run_default_out_dir_is_relative_to_avl`) and wrong description — corrected to match the actual test name and behavior (CWD-relative timestamped directory, not avl_dir-relative)
+
 ### Added
 - `mass_file` parameter on `avl_sweep()` — pass a `.mass` file path to load mass and inertia properties via the AVL CLI before the sweep; a bare filename resolves relative to the `.avl` directory
 - `sweep.log` written to each output directory — records the stdin commands piped to AVL with a replay comment on the first line showing the exact shell invocation
