@@ -17,6 +17,22 @@ The Bubble Dancer (`examples/bd/`) is the canonical reference example — a sail
 
 Keep all these files together. `avl_sweep` sets AVL's working directory to the folder containing the `.avl` file, so every relative path inside it (`fuseBD.dat`, `ag35.dat`, etc.) resolves automatically.
 
+For your own geometry, mirror this pattern:
+
+```{code-block} text
+:class: no-copybutton
+📁 my_project/
+├── 📁 geometry/
+│   ├── 📄 my_aircraft.avl      ← geometry: surfaces, sections, control hinges
+│   ├── 📄 my_aircraft.mass     ← CG, mass, Ixx/Iyy/Izz  (passed via mass_file=)
+│   ├── 📄 wing_airfoil.dat     ← airfoil coordinates   (AFIL entry in .avl)
+│   └── 📄 fuselage.dat         ← body cross-sections   (BFIL entry in .avl)
+├── 📁 out/                     ← generated at runtime
+│   └── 📁 my_aircraft/
+│       └── 📁 2026-05-15-143022/
+└── 📄 analysis.py
+```
+
 ### Read & Plot Geometry
 
 ```python
@@ -76,7 +92,7 @@ AVL sweep complete → /your/project/out/bd/2026-05-15-143022  (20 cases)
 20 cases (4 alpha × 5 elevator deflections)
 ```
 
-See {doc}`../concepts` for how `ctrl_sweeps` counts cases and why `0.0` must be included for stability tables.
+See {doc}`concepts` for how `ctrl_sweeps` counts cases and why `0.0` must be included for stability tables.
 
 ### Build Aero Database
 

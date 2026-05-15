@@ -8,10 +8,3 @@ Generates a four-view geometry plot (isometric, top, front, side) from an `AvlGe
    :undoc-members: False
    :show-inheritance:
 ```
-
-## Example output
-
-```{image} /_static/img/bd_geometry.png
-:alt: Four-view geometry plot of the Bubble Dancer (bd.avl)
-:width: 100%
-```
