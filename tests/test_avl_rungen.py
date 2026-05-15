@@ -1,4 +1,5 @@
 import pytest
+
 """Tests for avl_rungen: run-case and command file generation."""
 
 from pathlib import Path

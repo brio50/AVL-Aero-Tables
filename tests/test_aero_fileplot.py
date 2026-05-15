@@ -1,9 +1,9 @@
 """Tests for aero_fileplot: plotting AeroDatabase tables."""
 
 from __future__ import annotations
-import pytest
 
 import matplotlib
+import pytest
 
 matplotlib.use("Agg")
 

@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-05-09 to 2025-05-15
+## [1.0.0] - 2026-05-09 to 2026-05-15
 
 ### Added
 - `docs/dev/requirements.md` — per-module behavioral requirements derived from the test suite, rendered as eight `csv-table` sections (one per module)

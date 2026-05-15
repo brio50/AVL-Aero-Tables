@@ -185,7 +185,7 @@ def results_to_dataframe(results: list[StResult]) -> pd.DataFrame:
     >>> from avl_aero_tables import avl_sweep
     >>> from avl_aero_tables.aero_filewrite import results_to_dataframe
     >>> results = avl_sweep("examples/bd.avl", alpha=[0, 5], beta=[0])  # doctest: +ELLIPSIS
-    AVL sweep complete → ...  (2 cases)
+    AVL sweep complete → ...
     >>> df = results_to_dataframe(results)
     >>> "Alpha" in df.columns and "CLtot" in df.columns
     True
