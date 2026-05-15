@@ -9,5 +9,4 @@ The user guide below covers AVL's geometry format, run-case syntax, output quant
 ---
 
 ```{literalinclude} avl_doc.txt
-:class: full-width
 ```

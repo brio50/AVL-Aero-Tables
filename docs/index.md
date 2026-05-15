@@ -10,10 +10,11 @@ AVL is a vortex lattice method (VLM) solver for aerodynamic and flight-dynamic a
 
 :::{important}
 Before using this wrapper, read the upstream AVL documentation. Understanding AVL's geometry format, reference quantities, and output conventions is essential for setting up runs correctly and interpreting results.
-:::
 
-- [AVL User Primer](https://web.mit.edu/drela/Public/web/avl/AVL_User_Primer.pdf) — start here; covers geometry input, run cases, and output quantities
-- [AVL homepage](https://web.mit.edu/drela/Public/web/avl/) — source code, full user guide, and release notes
+- [AVL User Primer [.pdf]](https://web.mit.edu/drela/Public/web/avl/AVL_User_Primer.pdf) — start here; covers geometry input, run cases, and output quantities
+- [MIT AVL Homepage](https://web.mit.edu/drela/Public/web/avl/) — source code, full user guide, and release notes
+
+:::
 
 ## What it does
 
@@ -23,10 +24,10 @@ Five functions cover the full workflow — from reading a geometry file through 
 from avl_wrapper import avl_fileread, avl_fileplot, avl_sweep, aero_filewrite, aero_fileplot
 
 geom    = avl_fileread("examples/bd.avl")           # parse geometry
-fig     = avl_fileplot(geom)                        # four view plot
+fig     = avl_fileplot(geom)                        # four view of geometry
 results = avl_sweep("examples/bd.avl", alpha, beta) # run AVL sweep
-aero    = aero_filewrite(results)                   # build lookup tables
-figs    = aero_fileplot(aero)                       # plot aero database
+aero    = aero_filewrite(results)                   # build aero lookup tables
+figs    = aero_fileplot(aero)                       # plot aero tables
 ```
 
 See {doc}`getting-started` to install and run the full walkthrough.
@@ -38,8 +39,7 @@ See {doc}`getting-started` to install and run the full walkthrough.
 
 getting-started
 usage
-api/index
-reference/avl-upstream
+reference/index
 ```
 
 ```{toctree}

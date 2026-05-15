@@ -1,4 +1,4 @@
-# API Reference
+# API
 
 The diagram below traces a full analysis run — from calling `avl_sweep()` through to plotting the aero database. `avl_sweep` is the orchestrator; all other components are either called by it internally or by the user directly afterward.
 
