@@ -26,8 +26,12 @@ def pytest_terminal_summary(
 ) -> None:
     if not _req_outcomes:
         return
-    passed = sorted(r for r, oc in _req_outcomes.items() if all(o == "passed" for o in oc))
-    failed = sorted(r for r, oc in _req_outcomes.items() if any(o != "passed" for o in oc))
+    passed = sorted(
+        r for r, oc in _req_outcomes.items() if all(o == "passed" for o in oc)
+    )
+    failed = sorted(
+        r for r, oc in _req_outcomes.items() if any(o != "passed" for o in oc)
+    )
     terminalreporter.write_sep("-", "requirement coverage")
     for r in failed:
         terminalreporter.write_line(f"  FAIL  {r}", red=True)

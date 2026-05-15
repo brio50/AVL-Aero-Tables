@@ -88,10 +88,11 @@ def test_run_calls_binary_with_stdin():
             "avl_aero_tables.avl_bin.subprocess.run", return_value=mock_result
         ) as mock_run,
     ):
-        run("quit\n")
+        run("quit\n", avl_file="bd.avl", run_file="/tmp/avl_x/reset.run")
         mock_run.assert_called_once()
-        call_kwargs = mock_run.call_args
-        assert call_kwargs.kwargs["input"] == "quit\n"
+        call_args, call_kwargs = mock_run.call_args
+        assert call_kwargs["input"] == "quit\n"
+        assert call_args[0] == ["/bin/avl", "bd.avl", "/tmp/avl_x/reset.run"]
 
 
 # ---------------------------------------------------------------------------

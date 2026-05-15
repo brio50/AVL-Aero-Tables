@@ -25,6 +25,7 @@ def run(
     out_dir: Path | None = None,
     binary: Path | None = None,
     out_format: Literal["csv", "json", "df"] = "csv",
+    mass_file: str | Path | None = None,
 ) -> list[StResult]:
     """Run AVL stability analysis for a sweep of alpha, beta, and deflections.
 
@@ -52,6 +53,12 @@ def run(
         One of ``"csv"`` (default), ``"json"``,
         or ``"df"`` (DataFrame in memory only — no file written).
         The file is written to ``out_dir/results.<ext>``.
+    mass_file:
+        Optional path to a ``.mass`` file.  If provided, AVL loads the mass
+        and inertia breakdown before running the sweep so that CG and inertia
+        properties reflect the actual vehicle rather than the reset defaults.
+        A bare filename (e.g. ``"bd.mass"``) resolves relative to the
+        directory containing the ``.avl`` file.
 
     Returns
     -------
@@ -97,14 +104,29 @@ def run(
 
     geometry = avl_fileread(avl_file)
 
+    # Resolve mass_file to an absolute path (used as CLI arg; cwd=avl_dir so a
+    # bare filename also works when the mass file lives alongside the .avl).
+    mass_arg: str | None = None
+    if mass_file is not None:
+        mass_path = Path(mass_file)
+        if not mass_path.is_absolute():
+            mass_path = (avl_dir / mass_path).resolve()
+        mass_arg = str(mass_path) if mass_path.parent != avl_dir else mass_path.name
+
     # AVL has an ~80-char Fortran string limit for filenames.  Stage .st files
-    # in a short /tmp directory, then move them to the caller's out_dir.
-    # sweep.cmd is written with out_dir paths so it is clean and replayable;
-    # cmd_text uses the staging paths and is what is actually fed to AVL.
+    # and reset.run in a short /tmp directory so their paths stay within the
+    # limit when passed as CLI args or written into the command script.
+    reset_run_content = make_run_reset(avl_name, geometry.ctrl_names)
+
     with tempfile.TemporaryDirectory(prefix="avl_") as staging_str:
         staging = Path(staging_str)
+
+        # reset.run in staging: short path for the CLI arg
+        (staging / "reset.run").write_text(reset_run_content)
+        # reference copy in out_dir alongside results
+        (out_dir / "reset.run").write_text(reset_run_content)
+
         cmd_text = make_run_command(
-            avl_name,
             list(alpha),
             list(beta),
             geometry.ctrl_names,
@@ -112,12 +134,16 @@ def run(
             staging,
         )
 
-        (out_dir / "reset.run").write_text(
-            make_run_reset(avl_name, geometry.ctrl_names)
+        # sweep.log: human-readable record with a replay comment at the top
+        mass_part = f" {mass_arg}" if mass_arg else ""
+        replay = (
+            f"# avl {avl_file.name} {out_dir / 'reset.run'}{mass_part}"
+            f" < {out_dir / 'sweep.log'}"
         )
-        (out_dir / "sweep.cmd").write_text(
-            make_run_command(
-                avl_name,
+        (out_dir / "sweep.log").write_text(
+            replay
+            + "\n"
+            + make_run_command(
                 list(alpha),
                 list(beta),
                 geometry.ctrl_names,
@@ -126,7 +152,14 @@ def run(
             )
         )
 
-        result = avl_runner.run(cmd_text, binary=binary, cwd=avl_dir)
+        result = avl_runner.run(
+            cmd_text,
+            binary=binary,
+            cwd=avl_dir,
+            avl_file=avl_file.name,
+            run_file=str(staging / "reset.run"),
+            mass_file=mass_arg,
+        )
         if result.returncode != 0:
             raise RuntimeError(
                 f"AVL exited with code {result.returncode}.\n"

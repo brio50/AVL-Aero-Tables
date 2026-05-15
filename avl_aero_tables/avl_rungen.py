@@ -90,19 +90,20 @@ def make_run_reset(
 
 
 def make_run_command(
-    avl_name: str,
     alpha: list[float],
     beta: list[float],
     ctrl_names: list[str],
     ctrl_sweeps: dict[str, list[float]],
     out_dir: Path,
 ) -> str:
-    """Return the AVL interactive command script for a sweep.
+    """Return the AVL stdin command script for a sweep.
+
+    Geometry, run-case, and mass files are passed as CLI arguments to the AVL
+    binary by the caller — this function generates only the interactive OPER
+    commands piped to AVL's stdin.
 
     Parameters
     ----------
-    avl_name:
-        Geometry file stem without extension (e.g. "bd").
     alpha:
         List of angle-of-attack values in degrees.
     beta:
@@ -122,7 +123,6 @@ def make_run_command(
     >>> from pathlib import Path
     >>> from avl_aero_tables.avl_rungen import make_run_command
     >>> cmd = make_run_command(
-    ...     "bd",
     ...     alpha=[0.0, 5.0],
     ...     beta=[0.0],
     ...     ctrl_names=["flap", "aileron", "elevator", "rudder"],
@@ -130,12 +130,12 @@ def make_run_command(
     ...     out_dir=Path("/tmp/avl_out"),
     ... )
     >>> cmd.splitlines()[0]
-    'LOAD bd'
+    'PLOP'
     >>> cmd.count("A A")  # one alpha line per case
     2
     """
     out_dir = Path(out_dir)
-    lines: list[str] = [f"LOAD {avl_name}", "PLOP", "G", "", "OPER"]
+    lines: list[str] = ["PLOP", "G", "", "OPER"]
 
     ctrl_points: list[tuple[int, float]] = [
         (ctrl_names.index(name) + 1, defl)

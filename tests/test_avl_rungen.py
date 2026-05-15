@@ -81,46 +81,46 @@ OUT_DIR = Path("/tmp/out/bd")
 
 
 @pytest.mark.req("req-cmd-9")
-def test_command_starts_with_load():
-    text = make_run_command("bd", [5.0], [0.0], CTRL_NAMES, {}, OUT_DIR)
-    assert text.startswith("LOAD bd")
+def test_command_starts_with_plop():
+    text = make_run_command([5.0], [0.0], CTRL_NAMES, {}, OUT_DIR)
+    assert text.startswith("PLOP")
 
 
 @pytest.mark.req("req-cmd-10")
 def test_command_disables_graphics():
-    text = make_run_command("bd", [5.0], [0.0], CTRL_NAMES, {}, OUT_DIR)
+    text = make_run_command([5.0], [0.0], CTRL_NAMES, {}, OUT_DIR)
     assert "PLOP\nG\n" in text
 
 
 @pytest.mark.req("req-cmd-11")
 def test_command_opens_oper():
-    text = make_run_command("bd", [5.0], [0.0], CTRL_NAMES, {}, OUT_DIR)
+    text = make_run_command([5.0], [0.0], CTRL_NAMES, {}, OUT_DIR)
     assert "OPER" in text
 
 
 @pytest.mark.req("req-cmd-12")
 def test_command_ends_with_quit():
-    text = make_run_command("bd", [5.0], [0.0], CTRL_NAMES, {}, OUT_DIR)
+    text = make_run_command([5.0], [0.0], CTRL_NAMES, {}, OUT_DIR)
     assert "Quit" in text
 
 
 @pytest.mark.req("req-cmd-13")
 def test_command_sets_alpha_beta():
-    text = make_run_command("bd", [5.0], [3.0], CTRL_NAMES, {}, OUT_DIR)
+    text = make_run_command([5.0], [3.0], CTRL_NAMES, {}, OUT_DIR)
     assert "A A 5.000000" in text
     assert "B B 3.000000" in text
 
 
 @pytest.mark.req("req-cmd-14")
 def test_command_saves_st_file():
-    text = make_run_command("bd", [5.0], [0.0], CTRL_NAMES, {}, OUT_DIR)
+    text = make_run_command([5.0], [0.0], CTRL_NAMES, {}, OUT_DIR)
     assert ".st" in text
     assert str(OUT_DIR) in text
 
 
 @pytest.mark.req("req-cmd-15")
 def test_command_runs_and_resets():
-    text = make_run_command("bd", [5.0], [0.0], CTRL_NAMES, {}, OUT_DIR)
+    text = make_run_command([5.0], [0.0], CTRL_NAMES, {}, OUT_DIR)
     assert "\ni\n" in text
     assert "\nx\n" in text
     assert "CINI" in text
@@ -129,7 +129,7 @@ def test_command_runs_and_resets():
 @pytest.mark.req("req-cmd-16")
 def test_command_ctrl_sweep_deflection():
     text = make_run_command(
-        "bd", [0.0], [0.0], CTRL_NAMES, {"elevator": [-5.0, 0.0, 5.0]}, OUT_DIR
+        [0.0], [0.0], CTRL_NAMES, {"elevator": [-5.0, 0.0, 5.0]}, OUT_DIR
     )
     assert "D3 D3 -5" in text
     assert "D3 D3 0" in text
@@ -137,12 +137,12 @@ def test_command_ctrl_sweep_deflection():
 
 
 def test_command_alpha_beta_appear_in_commands():
-    text = make_run_command("bd", [5.0], [-3.0], CTRL_NAMES, {}, OUT_DIR)
+    text = make_run_command([5.0], [-3.0], CTRL_NAMES, {}, OUT_DIR)
     assert "A A 5.000000" in text
     assert "B B -3.000000" in text
 
 
 @pytest.mark.req("req-cmd-17")
 def test_command_multiple_alphas_produce_multiple_runs():
-    text = make_run_command("bd", [-6.0, 0.0, 6.0], [0.0], CTRL_NAMES, {}, OUT_DIR)
+    text = make_run_command([-6.0, 0.0, 6.0], [0.0], CTRL_NAMES, {}, OUT_DIR)
     assert text.count("A A") == 3  # one run per alpha when no ctrl_sweeps

@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-05-15
+
+### Added
+- `mass_file` parameter on `avl_sweep()` — pass a `.mass` file path to load mass and inertia properties via the AVL CLI before the sweep; a bare filename resolves relative to the `.avl` directory
+- `sweep.log` written to each output directory — records the stdin commands piped to AVL with a replay comment on the first line showing the exact shell invocation
+- `reset.run` is now a real AVL CLI input (written to a short `/tmp` staging path and passed as the second positional argument to the binary) rather than a reference-only file
+
+### Changed
+- AVL is now invoked using its documented CLI interface: `avl <avl_file> <reset.run> [<mass_file>]`, matching the original MATLAB implementation; geometry loading via the `LOAD` stdin command has been removed
+- `make_run_command()` no longer accepts `avl_name` or `mass_file` parameters — these are now CLI arguments handled by `avl_bin.run()`; the generated stdin script begins with `PLOP G` then `OPER` rather than `LOAD`
+- `avl_bin.run()` gains `avl_file`, `run_file`, and `mass_file` keyword arguments passed as positional CLI args to the AVL binary
+- `sweep.cmd` renamed to `sweep.log` to accurately reflect that it is a record of what was sent, not a driver file
+- Custom geometry documentation added to usage guide: recommended project layout for `.avl`, `.mass`, and associated airfoil data files
+
 ## [1.0.1] - 2026-05-15
 
 ### Fixed

@@ -105,18 +105,18 @@ def test_run_raises_on_avl_failure(tmp_path):
 
 
 @pytest.mark.req("req-sweep-6")
-def test_run_command_contains_avl_name(tmp_path):
+def test_run_passes_avl_name_as_cli_arg(tmp_path):
     captured = {}
     mock_result = _make_mock_result()
 
     def capture(cmd_text, **kwargs):
-        captured["cmd"] = cmd_text
+        captured["kwargs"] = kwargs
         return mock_result
 
     with patch("avl_aero_tables.avl_sweep.avl_runner.run", side_effect=capture):
         run(BD_AVL, alpha=[5.0], beta=[0.0], out_dir=tmp_path / "out")
 
-    assert "LOAD bd" in captured["cmd"]
+    assert captured["kwargs"].get("avl_file") == "bd.avl"
 
 
 @pytest.mark.req("req-sweep-7")
@@ -161,7 +161,9 @@ def _fake_results() -> list[StResult]:
 def _run_with_format(out_dir, fmt):
     mock_result = _make_mock_result()
     with patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result):
-        with patch("avl_aero_tables.avl_sweep.st_fileread", return_value=_fake_results()):
+        with patch(
+            "avl_aero_tables.avl_sweep.st_fileread", return_value=_fake_results()
+        ):
             run(BD_AVL, alpha=[5.0], beta=[0.0], out_dir=out_dir, out_format=fmt)
 
 

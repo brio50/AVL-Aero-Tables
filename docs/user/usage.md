@@ -132,6 +132,37 @@ fig = avl_fileplot(geom)
 fig.savefig("geometry.png", dpi=150)
 ```
 
+### Custom geometry — recommended project layout
+
+Keep your `.avl` file, `.mass` file, and any external airfoil coordinate files (`.dat`) together in one directory. `avl_sweep` sets AVL's working directory to the folder containing the `.avl` file, so all relative paths inside it resolve correctly regardless of where you run Python from.
+
+```{code-block} text
+:class: no-copybutton
+📁 my_project/
+├── 📁 geometry/
+│   ├── 📄 my_aircraft.avl
+│   ├── 📄 my_aircraft.mass   ← optional; mass & inertia breakdown
+│   └── 📄 naca2412.dat       ← optional; external airfoil coordinates
+├── 📁 out/                   ← generated at runtime
+│   └── 📁 my_aircraft/
+│       └── 📁 2026-05-15-143022/
+└── 📄 analysis.py
+```
+
+```python
+# analysis.py
+from avl_aero_tables import avl_sweep
+
+results = avl_sweep(
+    avl_file="geometry/my_aircraft.avl",
+    alpha=list(range(-6, 13, 2)),
+    beta=[-6.0, 0.0, 6.0],
+    mass_file="my_aircraft.mass",   # resolved relative to geometry/
+)
+```
+
+`mass_file` is a bare filename so it stays well within AVL's ~80-character string limit. If the mass file is in a different directory, pass an absolute path — but keep it short.
+
 ## Running sweeps
 
 ### Alpha / beta sweep
@@ -195,22 +226,21 @@ By default, each call creates a timestamped subdirectory under 📁 `out/<geomet
 📁 out/
 └── 📁 bd/
     └── 📁 2026-05-15-143022/
-        ├── 📄 reset.run       ← AVL run-case file; all flight conditions zeroed
-        ├── 📄 sweep.cmd       ← AVL command script; full stdin input fed to AVL
+        ├── 📄 reset.run       ← AVL run-case file passed as CLI arg; all flight conditions zeroed
+        ├── 📄 sweep.log       ← record of stdin commands fed to AVL; replay comment at top
         ├── 📄 case_0001.st
         ├── 📄 case_0002.st
         ├── 📄 ...
         └── 📄 results.csv
 ```
 
-`reset.run` is in AVL's native `.run` format — the same format you would write by hand to define a run case. `sweep.cmd` is the complete sequence of interactive commands (one per line) that was piped to AVL's stdin.
-
-These two files are written before AVL is invoked, so the full inputs are always on disk alongside the outputs. To replay a run manually from a terminal:
+`reset.run` is in AVL's native `.run` format with all flight conditions zeroed — it is passed to the AVL binary as a CLI argument so that run-case state is initialized before the sweep begins. `sweep.log` records the stdin commands (OPER, alpha/beta/deflection settings, `st` saves) piped to AVL after the CLI args are loaded. Its first line is a comment showing the exact replay invocation:
 
 ```bash
-cd examples          # must be in the directory containing bd.avl
-avl < out/bd/2026-05-15-143022/sweep.cmd
+# avl bd.avl /path/to/out/bd/2026-05-15-143022/reset.run < /path/to/out/bd/2026-05-15-143022/sweep.log
 ```
+
+Copy that line, adjust paths as needed, and run it from the directory containing `bd.avl`.
 
 To write to a fixed location instead — useful in scripts where you want to overwrite the previous result — pass `out_dir` explicitly. Stale `.st` files are removed before the new run:
 

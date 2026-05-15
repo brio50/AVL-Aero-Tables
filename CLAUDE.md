@@ -49,15 +49,17 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
     ├─ avl_fileread(avl_file)              → AvlGeometry (header, surfaces, body)
     │   └─ extracts control surface names (ctrl_names, ordered)
     │
-    ├─ avl_rungen.make_run_reset(...)      → reset.run  (written to out_dir)
+    ├─ avl_rungen.make_run_reset(...)      → reset.run  (written to staging + out_dir)
     │   └─ AVL native .run format; all flight conditions zeroed
+    │   └─ staging copy passed as CLI arg (short /tmp path stays under 80-char limit)
     │
-    ├─ avl_rungen.make_run_command(...)    → sweep.cmd  (written to out_dir)
-    │   └─ LOAD <name> / PLOP G / OPER / per-case: A,B,Di, i, x, st, CINI / Quit
-    │   └─ sweep.cmd uses out_dir paths (clean/replayable)
-    │   └─ cmd_text (fed to AVL) uses /tmp staging paths (80-char limit)
+    ├─ avl_rungen.make_run_command(...)    → sweep.log  (written to out_dir)
+    │   └─ PLOP G / OPER / per-case: A,B,Di, i, x, st, CINI / Quit  (no LOAD)
+    │   └─ sweep.log has replay comment header + out_dir .st paths (human reference)
+    │   └─ cmd_text (fed to AVL stdin) uses /tmp staging paths (80-char limit)
     │
-    ├─ avl_bin.run(cmd_text, cwd=avl_dir)  → subprocess driving AVL binary via stdin
+    ├─ avl_bin.run(cmd_text, avl_file, run_file, [mass_file], cwd=avl_dir)
+    │   └─ subprocess: avl <avl_file.name> <staging/reset.run> [<mass>] + stdin
     │   └─ .st files written to short /tmp staging dir; moved to out_dir after AVL exits
     │
     └─ st_fileread(out_dir)                → list[StResult]
@@ -73,29 +75,27 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
   All flight condition data (Alpha, Beta, control deflections) is inside the .st
   file itself, so numeric names lose no information.
 
-- **File-based AVL inputs**: before invoking AVL, `avl_sweep.run()` writes
-  `reset.run` (AVL native `.run` format, all conditions zeroed) and `sweep.cmd`
-  (stdin command script) to `out_dir`.  This keeps the full inputs on disk
-  alongside the outputs and allows manual replay with `avl < sweep.cmd`.
+- **AVL CLI interface**: AVL is invoked as `avl <avl_file> <reset.run> [<mass_file>]`
+  with the sweep commands piped to stdin — matching AVL's documented CLI interface
+  and the original MATLAB implementation.  This is why `reset.run` is a real input
+  and why no `LOAD` or `MASS` commands appear in the stdin script.
+
+- **File-based AVL inputs**: `avl_sweep.run()` writes `reset.run` and `sweep.log`
+  to `out_dir` so the full inputs are on disk alongside the outputs.  `sweep.log`
+  opens with a `#` comment line containing the exact shell command to replay the run.
 
 - **Two command strings**: `make_run_command` is called twice — once with
-  `out_dir` paths (written to `sweep.cmd` for human readability) and once with
-  the `/tmp` staging paths (fed to AVL via stdin to stay under the 80-char
-  Fortran filename limit).
+  `out_dir` paths (written to `sweep.log` for human reference) and once with
+  `/tmp` staging paths (fed to AVL stdin to stay under the 80-char Fortran limit).
 
-- **Staging in /tmp**: AVL writes `.st` files to a short
-  `tempfile.TemporaryDirectory(prefix="avl_")` path, then they are moved to
-  `out_dir`.  The temp directory is deleted automatically when the `with` block
-  exits, even if AVL crashes.
-
-- **Timestamped output directories**: the default `out_dir` is
-  `out/<geometry_name>/YYYY-MM-DD-HHMMSS/` relative to cwd, so each run gets
-  a fresh directory and previous results are never overwritten.  When an explicit
-  `out_dir` is provided, only stale `.st` files are removed before the run.
+- **Staging in /tmp**: AVL writes `.st` files — and `reset.run` is staged — in a
+  short `tempfile.TemporaryDirectory(prefix="avl_")` path to keep all AVL-facing
+  filenames under the ~80-char Fortran string limit.  Files are moved to `out_dir`
+  after AVL exits; the temp directory is deleted automatically even if AVL crashes.
 
 - **cwd = avl_dir**: AVL is invoked with `cwd` set to the directory containing
-  the .avl file so that `LOAD <name>` resolves without a path.
-
+  the `.avl` file so that bare filenames (geometry, mass) resolve correctly, and
+  relative paths inside the `.avl` file (airfoil data, etc.) also resolve.
 - **`make_run_command` loop structure**: when `ctrl_sweeps` is empty, one run is
   emitted per `(alpha, beta)` point.  When `ctrl_sweeps` has entries, surfaces
   are swept independently (not combinatorially) — matching the MATLAB behavior.
@@ -105,23 +105,6 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
 - **BODY/SURFACE parsing**: BODY is a standalone `if`; after its inner while loop exits on the next SURFACE line, the SURFACE `if` block fires in the same outer iteration (sequential `if`, not `elif`).
 
 - **Stability tables only filled for neutral-control runs**: `aero_filewrite` checks `all_neutral = all(abs(r.data.get(name, 0.0)) < 1e-6 for name in ctrl_map.values())` before populating `stab` tables, so off-neutral sweeps don't corrupt the neutral aero map.
-
----
-
-## Future work
-
-- **sphinx-multiversion**: add versioned docs with a version-switcher dropdown. When a second release is tagged, add `sphinx-multiversion` to `[docs]` extras, add `"sphinx_multiversion"` to `extensions` in `docs/conf.py`, and replace `sphinx-build` with `sphinx-multiversion` in `.github/workflows/docs.yml`. Each `git tag vX.Y.Z` then gets its own subdirectory on GitHub Pages.
-
-- **Multi-format export**: add export targets to `aero_filewrite` beyond the current pandas path.
-  - `.mat` via `scipy.io.savemat` — MATLAB struct for Simulink lookup tables; `StabTable`/`CtrlTable` numpy arrays map cleanly to struct fields.
-  - `.h5` via `h5py` — HDF5 as the Python-native equivalent; hierarchy `/stab/CLtot`, `/ctrl/<surface>/CLtot`, `/breakpoints/alpha|beta` mirrors the struct layout and is readable from MATLAB via `h5read`.
-  - Expose as `aero_filewrite(results, path, fmt="mat"|"h5")` or standalone `aero_to_mat` / `aero_to_hdf5` helpers.
-
-- **scipy interpolation**: add `scipy.interpolate.RegularGridInterpolator` support to
-  `AeroDatabase` so users can query coefficients at arbitrary (alpha, beta, defl) points
-  between breakpoints, not just at exact breakpoint values.  The numpy arrays in
-  `StabTable` and `CtrlTable` are already shaped correctly for `RegularGridInterpolator`.
-  Expose as an `interpolate(coef, alpha, beta, defl=0.0)` method or standalone helper.
 
 ---
 
