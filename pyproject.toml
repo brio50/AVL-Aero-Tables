@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "avl-aero-tables"
+version = "1.0.0"
+description = "Generate aerodynamic lookup tables using AVL (Athena Vortex Lattice)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Brian Borra" }]
+dependencies = [
+    "numpy",
+    "pandas",
+    "matplotlib",
+]
+
+[project.scripts]
+avl-aero-tables = "avl_aero_tables.avl_cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "mypy",
+    "pandas-stubs",
+]
+docs = [
+    "sphinx>=7",
+    "sphinx-book-theme",
+    "myst-parser",
+    "sphinx-copybutton",
+    "sphinxcontrib-mermaid",
+    "sphinx-design",
+    "sphinx-autobuild",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["avl_aero_tables*"]
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules"
+testpaths = ["tests", "avl_aero_tables"]
+markers = [
+    "req: requirement ID(s) this test covers (e.g. req-geom-1)",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = false
+
+[[tool.mypy.overrides]]
+module = "mpl_toolkits.*"
+ignore_missing_imports = true
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

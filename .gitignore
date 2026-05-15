@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+.eggs/
+*.egg
+
+# Pytest
+.pytest_cache/
+.cache/
+
+# Ruff
+.ruff_cache/
+
+# AVL outputs
+out/
+*.st
+!tests/data/*.st
+
+# Docs build
+docs/_build/
+
+# Doctest-generated artifacts
+geometry.png
+stability.png
+sweep.csv
+
+# Orphaned/intermediate doc images
+docs/_static/img/bd_aero.png
+docs/_static/img/bd_ctrl_C*.png
+
+# macOS
+.DS_Store

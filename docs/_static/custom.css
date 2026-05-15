@@ -1,0 +1,38 @@
+a.external::after {
+    content: " ↗";
+    font-size: 0.75em;
+    vertical-align: super;
+    opacity: 0.6;
+}
+
+/* Tab card padding */
+.sd-tab-set .sd-tab-content {
+    padding: 1.5em !important;
+}
+
+/* Language labels on code blocks */
+div[class^="highlight-"],
+div[class*=" highlight-"] {
+    position: relative;
+}
+div[class^="highlight-"]::after,
+div[class*=" highlight-"]::after {
+    position: absolute;
+    bottom: 0.4em;
+    right: 0.6em;
+    font-size: 0.75em;
+    opacity: 0.5;
+    pointer-events: none;
+}
+div.highlight-bash::after         { content: "bash"; }
+div.highlight-powershell::after   { content: "powershell"; }
+div.highlight-python::after       { content: "python"; }
+
+/* Wrap the test-link column in requirements tables */
+.req-table td:last-child,
+.req-table th:last-child {
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-all;
+    min-width: 0;
+}

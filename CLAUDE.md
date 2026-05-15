@@ -1,0 +1,174 @@
+# CLAUDE.md — Project Context for AI Assistants
+
+## What this project is
+
+A Python package (`avl_aero_tables`) that wraps [AVL](https://web.mit.edu/drela/Public/web/avl/) (Athena Vortex Lattice) by Mark Drela and Harold Youngren (MIT).  It drives AVL via stdin command scripts, parses its output, and returns structured Python data.
+
+---
+
+## File structure
+
+```
+avl_aero_tables/          # Python package
+  __init__.py         # public API
+  avl_fileread.py     # parse .avl geometry files → AvlGeometry dataclass
+  st_fileread.py      # parse .st stability output files → list[StResult]
+  avl_rungen.py       # generate AVL run-case and command file strings
+  avl_bin.py          # find/verify/invoke the AVL binary; CLI entry point
+  avl_sweep.py        # top-level sweep orchestration → list[StResult]
+  avl_fileplot.py     # four-view geometry plot → Figure
+  aero_filewrite.py   # pivot list[StResult] → AeroDatabase (numpy tables)
+  aero_fileplot.py    # 3-D surface plots of AeroDatabase tables
+
+examples/             # AVL geometry + run files (bd.avl, supra.avl, etc.)
+docs/                 # AVL user documentation
+out/                  # sweep outputs (generated at runtime, not committed)
+                      #   out/<name>/YYYY-MM-DD-HHMMSS/  — one subdir per run
+tests/
+  data/               # hand-generated .st data files for unit testing
+  test_avl_fileread.py
+  test_st_fileread.py
+  test_avl_rungen.py
+  test_avl.py
+  test_avl_aerogen.py  # (tests avl_sweep.py)
+  test_avl_fileplot.py
+  test_aero_filewrite.py
+  test_aero_fileplot.py
+```
+
+---
+
+## Operation flow
+
+```
+User code / CLI
+    │
+    ▼
+avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
+    │
+    ├─ avl_fileread(avl_file)              → AvlGeometry (header, surfaces, body)
+    │   └─ extracts control surface names (ctrl_names, ordered)
+    │
+    ├─ avl_rungen.make_run_reset(...)      → reset.run  (written to out_dir)
+    │   └─ AVL native .run format; all flight conditions zeroed
+    │
+    ├─ avl_rungen.make_run_command(...)    → sweep.cmd  (written to out_dir)
+    │   └─ LOAD <name> / PLOP G / OPER / per-case: A,B,Di, i, x, st, CINI / Quit
+    │   └─ sweep.cmd uses out_dir paths (clean/replayable)
+    │   └─ cmd_text (fed to AVL) uses /tmp staging paths (80-char limit)
+    │
+    ├─ avl_bin.run(cmd_text, cwd=avl_dir)  → subprocess driving AVL binary via stdin
+    │   └─ .st files written to short /tmp staging dir; moved to out_dir after AVL exits
+    │
+    └─ st_fileread(out_dir)                → list[StResult]
+        └─ each StResult has .filename, .controls, .data (dict of floats)
+```
+
+---
+
+## Key design decisions
+
+- **Numeric case filenames** (`case_0001.st`): AVL's Fortran source has an ~80-char
+  string limit for output filenames.  Descriptive names were hitting this limit.
+  All flight condition data (Alpha, Beta, control deflections) is inside the .st
+  file itself, so numeric names lose no information.
+
+- **File-based AVL inputs**: before invoking AVL, `avl_sweep.run()` writes
+  `reset.run` (AVL native `.run` format, all conditions zeroed) and `sweep.cmd`
+  (stdin command script) to `out_dir`.  This keeps the full inputs on disk
+  alongside the outputs and allows manual replay with `avl < sweep.cmd`.
+
+- **Two command strings**: `make_run_command` is called twice — once with
+  `out_dir` paths (written to `sweep.cmd` for human readability) and once with
+  the `/tmp` staging paths (fed to AVL via stdin to stay under the 80-char
+  Fortran filename limit).
+
+- **Staging in /tmp**: AVL writes `.st` files to a short
+  `tempfile.TemporaryDirectory(prefix="avl_")` path, then they are moved to
+  `out_dir`.  The temp directory is deleted automatically when the `with` block
+  exits, even if AVL crashes.
+
+- **Timestamped output directories**: the default `out_dir` is
+  `out/<geometry_name>/YYYY-MM-DD-HHMMSS/` relative to cwd, so each run gets
+  a fresh directory and previous results are never overwritten.  When an explicit
+  `out_dir` is provided, only stale `.st` files are removed before the run.
+
+- **cwd = avl_dir**: AVL is invoked with `cwd` set to the directory containing
+  the .avl file so that `LOAD <name>` resolves without a path.
+
+- **`make_run_command` loop structure**: when `ctrl_sweeps` is empty, one run is
+  emitted per `(alpha, beta)` point.  When `ctrl_sweeps` has entries, surfaces
+  are swept independently (not combinatorially) — matching the MATLAB behavior.
+
+- **`Clb_Cnr_div_Clr_Cnb` key in StResult**: the `.st` line `Clb Cnr / Clr Cnb = <value>` is stored under that compound key (5-token lookback) to avoid overwriting the real `Cnb` stability derivative.
+
+- **BODY/SURFACE parsing**: BODY is a standalone `if`; after its inner while loop exits on the next SURFACE line, the SURFACE `if` block fires in the same outer iteration (sequential `if`, not `elif`).
+
+- **Stability tables only filled for neutral-control runs**: `aero_filewrite` checks `all_neutral = all(abs(r.data.get(name, 0.0)) < 1e-6 for name in ctrl_map.values())` before populating `stab` tables, so off-neutral sweeps don't corrupt the neutral aero map.
+
+---
+
+## Future work
+
+- **sphinx-multiversion**: add versioned docs with a version-switcher dropdown. When a second release is tagged, add `sphinx-multiversion` to `[docs]` extras, add `"sphinx_multiversion"` to `extensions` in `docs/conf.py`, and replace `sphinx-build` with `sphinx-multiversion` in `.github/workflows/docs.yml`. Each `git tag vX.Y.Z` then gets its own subdirectory on GitHub Pages.
+
+- **Multi-format export**: add export targets to `aero_filewrite` beyond the current pandas path.
+  - `.mat` via `scipy.io.savemat` — MATLAB struct for Simulink lookup tables; `StabTable`/`CtrlTable` numpy arrays map cleanly to struct fields.
+  - `.h5` via `h5py` — HDF5 as the Python-native equivalent; hierarchy `/stab/CLtot`, `/ctrl/<surface>/CLtot`, `/breakpoints/alpha|beta` mirrors the struct layout and is readable from MATLAB via `h5read`.
+  - Expose as `aero_filewrite(results, path, fmt="mat"|"h5")` or standalone `aero_to_mat` / `aero_to_hdf5` helpers.
+
+- **scipy interpolation**: add `scipy.interpolate.RegularGridInterpolator` support to
+  `AeroDatabase` so users can query coefficients at arbitrary (alpha, beta, defl) points
+  between breakpoints, not just at exact breakpoint values.  The numpy arrays in
+  `StabTable` and `CtrlTable` are already shaped correctly for `RegularGridInterpolator`.
+  Expose as an `interpolate(coef, alpha, beta, defl=0.0)` method or standalone helper.
+
+---
+
+## Version source of truth
+
+The single source of truth for the package version is `pyproject.toml` → `[project] version`.
+
+- `docs/conf.py` reads it at build time via `importlib.metadata.version("avl-aero-tables")`
+- The installed package name is `avl-aero-tables` (not `python-avl-wrapper`, which was the old name — uninstall the old one if both appear in `pip list`)
+- When investigating version mismatches, check `pip list | grep avl` for stale editable installs from the pre-rename era
+
+## Development setup
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
+
+Run tests:
+
+```bash
+.venv/bin/pytest           # all tests
+.venv/bin/pytest -k avl_fileread   # one module
+```
+
+The AVL binary must be installed at `~/bin/avl` (see README.md for build
+instructions).  Integration tests are skipped automatically if the binary is
+absent.
+
+---
+
+## PR workflow
+
+Before opening a pull request, run these in order:
+
+```bash
+# 1. Auto-fix and format
+.venv/bin/ruff check --fix avl_aero_tables/ tests/
+.venv/bin/ruff format avl_aero_tables/ tests/
+
+# 2. Full test suite
+.venv/bin/pytest
+```
+
+Remaining `ruff` violations after `--fix` are either `E501` (long lines — wrap
+manually) or `F821` false positives on quoted forward-reference annotations
+(`"matplotlib.figure.Figure"`, `"pd.DataFrame"`); the latter are intentional
+and should be left alone.
+
