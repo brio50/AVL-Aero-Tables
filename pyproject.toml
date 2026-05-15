@@ -3,9 +3,9 @@ requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "python-avl-wrapper"
+name = "avl-aero-tables"
 version = "1.0.0"
-description = "Python wrapper for AVL (Athena Vortex Lattice) by Mark Drela and Harold Youngren (MIT)"
+description = "Generate aerodynamic lookup tables using AVL (Athena Vortex Lattice)"
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-avl-wrapper = "avl_wrapper.avl_cli:main"
+avl-aero-tables = "avl_aero_tables.avl_cli:main"
 
 [project.optional-dependencies]
 dev = [
@@ -38,11 +38,11 @@ docs = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["avl_wrapper*"]
+include = ["avl_aero_tables*"]
 
 [tool.pytest.ini_options]
 addopts = "--doctest-modules"
-testpaths = ["tests", "avl_wrapper"]
+testpaths = ["tests", "avl_aero_tables"]
 
 [tool.ruff]
 line-length = 88

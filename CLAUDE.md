@@ -2,14 +2,14 @@
 
 ## What this project is
 
-A Python package (`avl_wrapper`) that wraps [AVL](https://web.mit.edu/drela/Public/web/avl/) (Athena Vortex Lattice) by Mark Drela and Harold Youngren (MIT).  It drives AVL via stdin command scripts, parses its output, and returns structured Python data.
+A Python package (`avl_aero_tables`) that wraps [AVL](https://web.mit.edu/drela/Public/web/avl/) (Athena Vortex Lattice) by Mark Drela and Harold Youngren (MIT).  It drives AVL via stdin command scripts, parses its output, and returns structured Python data.
 
 ---
 
 ## File structure
 
 ```
-avl_wrapper/          # Python package
+avl_aero_tables/          # Python package
   __init__.py         # public API
   avl_fileread.py     # parse .avl geometry files → AvlGeometry dataclass
   st_fileread.py      # parse .st stability output files → list[StResult]
@@ -91,6 +91,11 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
 
 - **sphinx-multiversion**: add versioned docs with a version-switcher dropdown. When a second release is tagged, add `sphinx-multiversion` to `[docs]` extras, add `"sphinx_multiversion"` to `extensions` in `docs/conf.py`, and replace `sphinx-build` with `sphinx-multiversion` in `.github/workflows/docs.yml`. Each `git tag vX.Y.Z` then gets its own subdirectory on GitHub Pages.
 
+- **Multi-format export**: add export targets to `aero_filewrite` beyond the current pandas path.
+  - `.mat` via `scipy.io.savemat` — MATLAB struct for Simulink lookup tables; `StabTable`/`CtrlTable` numpy arrays map cleanly to struct fields.
+  - `.h5` via `h5py` — HDF5 as the Python-native equivalent; hierarchy `/stab/CLtot`, `/ctrl/<surface>/CLtot`, `/breakpoints/alpha|beta` mirrors the struct layout and is readable from MATLAB via `h5read`.
+  - Expose as `aero_filewrite(results, path, fmt="mat"|"h5")` or standalone `aero_to_mat` / `aero_to_hdf5` helpers.
+
 - **scipy interpolation**: add `scipy.interpolate.RegularGridInterpolator` support to
   `AeroDatabase` so users can query coefficients at arbitrary (alpha, beta, defl) points
   between breakpoints, not just at exact breakpoint values.  The numpy arrays in
@@ -98,6 +103,14 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
   Expose as an `interpolate(coef, alpha, beta, defl=0.0)` method or standalone helper.
 
 ---
+
+## Version source of truth
+
+The single source of truth for the package version is `pyproject.toml` → `[project] version`.
+
+- `docs/conf.py` reads it at build time via `importlib.metadata.version("avl-aero-tables")`
+- The installed package name is `avl-aero-tables` (not `python-avl-wrapper`, which was the old name — uninstall the old one if both appear in `pip list`)
+- When investigating version mismatches, check `pip list | grep avl` for stale editable installs from the pre-rename era
 
 ## Development setup
 
@@ -126,8 +139,8 @@ Before opening a pull request, run these in order:
 
 ```bash
 # 1. Auto-fix and format
-.venv/bin/ruff check --fix avl_wrapper/ tests/
-.venv/bin/ruff format avl_wrapper/ tests/
+.venv/bin/ruff check --fix avl_aero_tables/ tests/
+.venv/bin/ruff format avl_aero_tables/ tests/
 
 # 2. Full test suite
 .venv/bin/pytest

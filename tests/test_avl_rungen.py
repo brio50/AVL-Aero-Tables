@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from avl_wrapper.avl_rungen import make_command, make_reset_run
+from avl_aero_tables.avl_rungen import make_command, make_reset_run
 
 CTRL_NAMES = ["flap", "aileron", "elevator", "rudder"]
 

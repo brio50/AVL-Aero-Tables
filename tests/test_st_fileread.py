@@ -3,8 +3,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from avl_wrapper.aero_filewrite import results_to_dataframe
-from avl_wrapper.st_fileread import st_fileread
+from avl_aero_tables.aero_filewrite import results_to_dataframe
+from avl_aero_tables.st_fileread import st_fileread
 
 FIXTURES = Path(__file__).parent / "data"
 

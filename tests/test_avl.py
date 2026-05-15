@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from avl_wrapper.avl_bin import find_avl, run, verify
-from avl_wrapper.avl_cli import _build_parser, main
+from avl_aero_tables.avl_bin import find_avl, run, verify
+from avl_aero_tables.avl_cli import _build_parser, main
 
 # ---------------------------------------------------------------------------
 # find_avl
@@ -22,8 +22,8 @@ def test_find_avl_finds_local_binary():
 
 def test_find_avl_raises_when_missing():
     with (
-        patch("avl_wrapper.avl_bin.Path.home", return_value=Path("/nonexistent")),
-        patch("avl_wrapper.avl_bin.shutil.which", return_value=None),
+        patch("avl_aero_tables.avl_bin.Path.home", return_value=Path("/nonexistent")),
+        patch("avl_aero_tables.avl_bin.shutil.which", return_value=None),
     ):
         with pytest.raises(FileNotFoundError, match="AVL binary not found"):
             find_avl()
@@ -32,8 +32,8 @@ def test_find_avl_raises_when_missing():
 def test_find_avl_falls_back_to_path():
     fake_avl = Path("/usr/local/bin/avl")
     with (
-        patch("avl_wrapper.avl_bin.Path.home", return_value=Path("/nonexistent")),
-        patch("avl_wrapper.avl_bin.shutil.which", return_value=str(fake_avl)),
+        patch("avl_aero_tables.avl_bin.Path.home", return_value=Path("/nonexistent")),
+        patch("avl_aero_tables.avl_bin.shutil.which", return_value=str(fake_avl)),
     ):
         result = find_avl()
         assert result == fake_avl
@@ -77,9 +77,9 @@ def test_run_calls_binary_with_stdin():
     mock_result.returncode = 0
 
     with (
-        patch("avl_wrapper.avl_bin.find_avl", return_value=Path("/bin/avl")),
+        patch("avl_aero_tables.avl_bin.find_avl", return_value=Path("/bin/avl")),
         patch(
-            "avl_wrapper.avl_bin.subprocess.run", return_value=mock_result
+            "avl_aero_tables.avl_bin.subprocess.run", return_value=mock_result
         ) as mock_run,
     ):
         run("quit\n")
@@ -95,7 +95,7 @@ def test_run_calls_binary_with_stdin():
 
 def test_cli_verify_subcommand_success():
     with (
-        patch("avl_wrapper.avl_cli.verify", return_value=Path("/bin/avl")),
+        patch("avl_aero_tables.avl_cli.verify", return_value=Path("/bin/avl")),
     ):
         code = main(["verify"])
         assert code == 0
@@ -104,7 +104,7 @@ def test_cli_verify_subcommand_success():
 def test_cli_verify_subcommand_failure():
     with (
         patch(
-            "avl_wrapper.avl_cli.verify",
+            "avl_aero_tables.avl_cli.verify",
             side_effect=FileNotFoundError("AVL binary not found"),
         ),
     ):
@@ -121,7 +121,7 @@ def test_cli_run_subcommand(tmp_path):
     mock_result.stdout = ""
     mock_result.stderr = ""
 
-    with patch("avl_wrapper.avl_cli.run_file", return_value=mock_result):
+    with patch("avl_aero_tables.avl_cli.run_file", return_value=mock_result):
         code = main(["run", str(cmd_file)])
         assert code == 0
 

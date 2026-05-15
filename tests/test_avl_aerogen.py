@@ -5,9 +5,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from avl_wrapper.avl_fileread import avl_fileread
-from avl_wrapper.avl_sweep import run
-from avl_wrapper.st_fileread import StResult
+from avl_aero_tables.avl_fileread import avl_fileread
+from avl_aero_tables.avl_sweep import run
+from avl_aero_tables.st_fileread import StResult
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
 BD_AVL = EXAMPLES / "bd.avl"
@@ -53,7 +53,7 @@ def _make_mock_result(returncode: int = 0) -> MagicMock:
 def test_run_calls_avl_runner(tmp_path):
     mock_result = _make_mock_result()
     with patch(
-        "avl_wrapper.avl_sweep.avl_runner.run", return_value=mock_result
+        "avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result
     ) as mock_run:
         run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path / "out")
     mock_run.assert_called_once()
@@ -62,7 +62,7 @@ def test_run_calls_avl_runner(tmp_path):
 def test_run_passes_avl_dir_as_cwd(tmp_path):
     mock_result = _make_mock_result()
     with patch(
-        "avl_wrapper.avl_sweep.avl_runner.run", return_value=mock_result
+        "avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result
     ) as mock_run:
         run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path / "out")
     _, kwargs = mock_run.call_args
@@ -72,7 +72,7 @@ def test_run_passes_avl_dir_as_cwd(tmp_path):
 def test_run_creates_out_dir(tmp_path):
     out = tmp_path / "nested" / "out"
     mock_result = _make_mock_result()
-    with patch("avl_wrapper.avl_sweep.avl_runner.run", return_value=mock_result):
+    with patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result):
         run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=out)
     assert out.is_dir()
 
@@ -83,7 +83,7 @@ def test_run_removes_stale_st_files(tmp_path):
     stale = out / "old_result.st"
     stale.write_text("stale")
     mock_result = _make_mock_result()
-    with patch("avl_wrapper.avl_sweep.avl_runner.run", return_value=mock_result):
+    with patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result):
         run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=out)
     assert not stale.exists()
 
@@ -91,7 +91,7 @@ def test_run_removes_stale_st_files(tmp_path):
 def test_run_raises_on_avl_failure(tmp_path):
     mock_result = _make_mock_result(returncode=1)
     mock_result.stdout = "some output"
-    with patch("avl_wrapper.avl_sweep.avl_runner.run", return_value=mock_result):
+    with patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result):
         with pytest.raises(RuntimeError, match="AVL exited with code 1"):
             run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path / "out")
 
@@ -104,7 +104,7 @@ def test_run_command_contains_avl_name(tmp_path):
         captured["cmd"] = cmd_text
         return mock_result
 
-    with patch("avl_wrapper.avl_sweep.avl_runner.run", side_effect=capture):
+    with patch("avl_aero_tables.avl_sweep.avl_runner.run", side_effect=capture):
         run(BD_AVL, alpha=[5.0], beta=[0.0], out_dir=tmp_path / "out")
 
     assert "LOAD bd" in captured["cmd"]
@@ -118,7 +118,7 @@ def test_run_command_contains_alpha(tmp_path):
         captured["cmd"] = cmd_text
         return mock_result
 
-    with patch("avl_wrapper.avl_sweep.avl_runner.run", side_effect=capture):
+    with patch("avl_aero_tables.avl_sweep.avl_runner.run", side_effect=capture):
         run(BD_AVL, alpha=[7.5], beta=[0.0], out_dir=tmp_path / "out")
 
     assert "A A 7.500000" in captured["cmd"]
@@ -129,7 +129,7 @@ def test_run_default_out_dir_is_relative_to_avl(tmp_path):
     avl_copy = tmp_path / "bd.avl"
     avl_copy.write_text(BD_AVL.read_text())
 
-    with patch("avl_wrapper.avl_sweep.avl_runner.run", return_value=mock_result):
+    with patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result):
         run(avl_copy, alpha=[0.0], beta=[0.0])
 
     expected = tmp_path / "out" / "bd"
@@ -149,8 +149,8 @@ def _fake_results() -> list[StResult]:
 
 def _run_with_format(out_dir, fmt):
     mock_result = _make_mock_result()
-    with patch("avl_wrapper.avl_sweep.avl_runner.run", return_value=mock_result):
-        with patch("avl_wrapper.avl_sweep.st_fileread", return_value=_fake_results()):
+    with patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result):
+        with patch("avl_aero_tables.avl_sweep.st_fileread", return_value=_fake_results()):
             run(BD_AVL, alpha=[5.0], beta=[0.0], out_dir=out_dir, out_format=fmt)
 
 
@@ -181,7 +181,7 @@ def test_out_format_invalid_raises(tmp_path):
 
 
 def _avl_installed() -> bool:
-    from avl_wrapper.avl_bin import find_avl
+    from avl_aero_tables.avl_bin import find_avl
 
     try:
         find_avl()

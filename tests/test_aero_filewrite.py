@@ -5,14 +5,14 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from avl_wrapper.aero_filewrite import (
+from avl_aero_tables.aero_filewrite import (
     COEF_NAMES,
     AeroDatabase,
     CtrlTable,
     StabTable,
     aero_filewrite,
 )
-from avl_wrapper.st_fileread import StResult
+from avl_aero_tables.st_fileread import StResult
 
 # ---------------------------------------------------------------------------
 # Helpers

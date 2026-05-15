@@ -8,12 +8,12 @@ matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
 
-from avl_wrapper.aero_fileplot import aero_fileplot
-from avl_wrapper.aero_filewrite import (
+from avl_aero_tables.aero_fileplot import aero_fileplot
+from avl_aero_tables.aero_filewrite import (
     AeroDatabase,
     aero_filewrite,
 )
-from avl_wrapper.st_fileread import StResult
+from avl_aero_tables.st_fileread import StResult
 
 # ---------------------------------------------------------------------------
 # Helpers
