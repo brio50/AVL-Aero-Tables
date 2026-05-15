@@ -94,7 +94,7 @@ class AvlGeometry:
         Example
         -------
         >>> from avl_aero_tables.avl_fileread import avl_fileread
-        >>> geom = avl_fileread("examples/bd.avl")
+        >>> geom = avl_fileread("examples/bd/bd.avl")
         >>> geom.ctrl_names
         ['flap', 'aileron', 'elevator', 'rudder']
         """
@@ -133,7 +133,7 @@ def avl_fileread(avl_file: str | Path) -> AvlGeometry:
     Example
     -------
     >>> from avl_aero_tables.avl_fileread import avl_fileread
-    >>> geom = avl_fileread("examples/bd.avl")
+    >>> geom = avl_fileread("examples/bd/bd.avl")
     >>> geom.header.name
     'Bubble Dancer RES'
     >>> list(geom.surface.keys())

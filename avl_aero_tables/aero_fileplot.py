@@ -48,7 +48,7 @@ def aero_fileplot(
     >>> from avl_aero_tables.aero_filewrite import aero_filewrite
     >>> from avl_aero_tables.aero_fileplot import aero_fileplot
     >>> results = avl_sweep(  # doctest: +ELLIPSIS
-    ...     "examples/bd.avl",
+    ...     "examples/bd/bd.avl",
     ...     alpha=[-5, 0, 5, 10],
     ...     beta=[-5, 0, 5],
     ...     ctrl_sweeps={"elevator": [-10, 0, 10]},

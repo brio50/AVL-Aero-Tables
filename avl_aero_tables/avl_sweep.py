@@ -69,7 +69,7 @@ def run(
     -------
     >>> from avl_aero_tables import avl_sweep
     >>> results = avl_sweep(  # doctest: +ELLIPSIS
-    ...     "examples/bd.avl",
+    ...     "examples/bd/bd.avl",
     ...     alpha=[-5, 0, 5, 10],
     ...     beta=[0],
     ...     ctrl_sweeps={"elevator": [-10, 0, 10]},

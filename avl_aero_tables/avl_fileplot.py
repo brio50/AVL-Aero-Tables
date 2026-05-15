@@ -118,7 +118,7 @@ def avl_fileplot(geometry: AvlGeometry) -> "Figure":
     -------
     >>> from avl_aero_tables.avl_fileread import avl_fileread
     >>> from avl_aero_tables.avl_fileplot import avl_fileplot
-    >>> geom = avl_fileread("examples/bd.avl")
+    >>> geom = avl_fileread("examples/bd/bd.avl")
     >>> fig = avl_fileplot(geom)
     >>> fig.get_axes()[0].get_title()
     'Isometric'

@@ -6,12 +6,12 @@ import pytest
 from avl_aero_tables.avl_fileread import avl_fileread
 
 AVL_DIR = Path(__file__).parent.parent / "examples"
-ALL_AVL_FILES = sorted(AVL_DIR.glob("*.avl"))
+ALL_AVL_FILES = sorted(AVL_DIR.glob("**/*.avl"))
 
 
 @pytest.mark.req("req-geom-2")
 def test_bubble_dancer_header():
-    g = avl_fileread(AVL_DIR / "bd.avl")
+    g = avl_fileread(AVL_DIR / "bd" / "bd.avl")
     h = g.header
     assert h.name == "Bubble Dancer RES"
     assert h.Mach == 0.0
@@ -29,13 +29,13 @@ def test_bubble_dancer_header():
 
 @pytest.mark.req("req-geom-3")
 def test_bubble_dancer_surfaces():
-    g = avl_fileread(AVL_DIR / "bd.avl")
+    g = avl_fileread(AVL_DIR / "bd" / "bd.avl")
     assert set(g.surface.keys()) == {"Wing", "Horizontal_tail", "Vertical_tail"}
 
 
 @pytest.mark.req("req-geom-4")
 def test_bubble_dancer_wing_sections():
-    g = avl_fileread(AVL_DIR / "bd.avl")
+    g = avl_fileread(AVL_DIR / "bd" / "bd.avl")
     wing = g.surface["Wing"]
     assert wing.nchord == pytest.approx(6.0)
     assert wing.ydupl == pytest.approx(0.0)
@@ -53,7 +53,7 @@ def test_bubble_dancer_wing_sections():
 
 @pytest.mark.req("req-geom-5")
 def test_bubble_dancer_controls():
-    g = avl_fileread(AVL_DIR / "bd.avl")
+    g = avl_fileread(AVL_DIR / "bd" / "bd.avl")
     wing = g.surface["Wing"]
     assert wing.sections[0].controls[0].name == "flap"
     assert wing.sections[4].controls[0].name == "aileron"
@@ -67,7 +67,7 @@ def test_bubble_dancer_controls():
 
 @pytest.mark.req("req-geom-6")
 def test_bubble_dancer_body():
-    g = avl_fileread(AVL_DIR / "bd.avl")
+    g = avl_fileread(AVL_DIR / "bd" / "bd.avl")
     assert g.body is not None
     assert g.body.trans == pytest.approx([-12.5, 0.0, -1.4])
 

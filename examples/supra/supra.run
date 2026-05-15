@@ -2,7 +2,7 @@
  ---------------------------------------------
  Run case  1:  0 deg bank                              
 
- alpha        ->  CL          =  0.700000    
+ alpha        ->  alpha       =   5.00000    
  beta         ->  beta        =   0.00000    
  pb/2V        ->  pb/2V       =   0.00000    
  qc/2V        ->  qc/2V       =   0.00000    
@@ -11,7 +11,7 @@
  aileron      ->  Cl roll mom =   0.00000    
  elevator     ->  Cm pitchmom =   0.00000    
  rudder       ->  Cn yaw  mom =   0.00000    
- 
+
  alpha     =   3.70978     deg                             
  beta      =   0.00000     deg                             
  pb/2V     = -0.556003E-33                                 
@@ -28,9 +28,9 @@
  grav.acc. =   9.81000     m/s^2                           
  turn_rad. =   0.00000     m                               
  load_fac. =   1.00000                                     
- X_cg      =   3.75000     m                               
- Y_cg      =   0.00000     m                               
- Z_cg      =   0.00000     m                               
+ X_cg      =   3.75000     Lunit                           
+ Y_cg      =   0.00000     Lunit                           
+ Z_cg      =   0.00000     Lunit                           
  mass      =   1.25020     kg                              
  Ixx       =  0.474178     kg-m^2                          
  Iyy       =  0.957865E-01 kg-m^2                          
@@ -55,7 +55,7 @@
  aileron      ->  Cl roll mom =   0.00000    
  elevator     ->  Cm pitchmom =   0.00000    
  rudder       ->  Cn yaw  mom =   0.00000    
- 
+
  alpha     =   1.71749     deg                             
  beta      =   0.00000     deg                             
  pb/2V     =  0.977659E-33                                 
@@ -72,9 +72,9 @@
  grav.acc. =   9.81000     m/s^2                           
  turn_rad. =   0.00000     m                               
  load_fac. =   1.00000                                     
- X_cg      =   3.75000     m                               
- Y_cg      =   0.00000     m                               
- Z_cg      =   0.00000     m                               
+ X_cg      =   3.75000     Lunit                           
+ Y_cg      =   0.00000     Lunit                           
+ Z_cg      =   0.00000     Lunit                           
  mass      =   1.25020     kg                              
  Ixx       =  0.474178     kg-m^2                          
  Iyy       =  0.957865E-01 kg-m^2                          
@@ -99,7 +99,7 @@
  aileron      ->  Cl roll mom =   0.00000    
  elevator     ->  Cm pitchmom =   0.00000    
  rudder       ->  Cn yaw  mom =   0.00000    
- 
+
  alpha     =  0.232585     deg                             
  beta      =   0.00000     deg                             
  pb/2V     =  0.119704E-32                                 
@@ -116,9 +116,9 @@
  grav.acc. =   9.81000     m/s^2                           
  turn_rad. =   0.00000     m                               
  load_fac. =   1.00000                                     
- X_cg      =   3.75000     m                               
- Y_cg      =   0.00000     m                               
- Z_cg      =   0.00000     m                               
+ X_cg      =   3.75000     Lunit                           
+ Y_cg      =   0.00000     Lunit                           
+ Z_cg      =   0.00000     Lunit                           
  mass      =   1.25020     kg                              
  Ixx       =  0.474178     kg-m^2                          
  Iyy       =  0.957865E-01 kg-m^2                          
@@ -143,7 +143,7 @@
  aileron      ->  Cl roll mom =   0.00000    
  elevator     ->  Cm pitchmom =   0.00000    
  rudder       ->  Cn yaw  mom =   0.00000    
- 
+
  alpha     =  -1.24624     deg                             
  beta      =   0.00000     deg                             
  pb/2V     = -0.526460E-33                                 
@@ -160,9 +160,9 @@
  grav.acc. =   9.81000     m/s^2                           
  turn_rad. =   0.00000     m                               
  load_fac. =   1.00000                                     
- X_cg      =   3.75000     m                               
- Y_cg      =   0.00000     m                               
- Z_cg      =   0.00000     m                               
+ X_cg      =   3.75000     Lunit                           
+ Y_cg      =   0.00000     Lunit                           
+ Z_cg      =   0.00000     Lunit                           
  mass      =   1.25020     kg                              
  Ixx       =  0.474178     kg-m^2                          
  Iyy       =  0.957865E-01 kg-m^2                          
@@ -187,7 +187,7 @@
  aileron      ->  Cl roll mom =   0.00000    
  elevator     ->  Cm pitchmom =   0.00000    
  rudder       ->  Cn yaw  mom =   0.00000    
- 
+
  alpha     =  -2.22957     deg                             
  beta      =   0.00000     deg                             
  pb/2V     = -0.324817E-33                                 
@@ -204,9 +204,9 @@
  grav.acc. =   9.81000     m/s^2                           
  turn_rad. =   0.00000     m                               
  load_fac. =   1.00000                                     
- X_cg      =   3.75000     m                               
- Y_cg      =   0.00000     m                               
- Z_cg      =   0.00000     m                               
+ X_cg      =   3.75000     Lunit                           
+ Y_cg      =   0.00000     Lunit                           
+ Z_cg      =   0.00000     Lunit                           
  mass      =   1.25020     kg                              
  Ixx       =  0.474178     kg-m^2                          
  Iyy       =  0.957865E-01 kg-m^2                          

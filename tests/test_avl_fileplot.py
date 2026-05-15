@@ -14,8 +14,8 @@ from avl_aero_tables.avl_fileplot import avl_fileplot
 from avl_aero_tables.avl_fileread import avl_fileread
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
-BD_AVL = EXAMPLES / "bd.avl"
-ELLIPG_AVL = EXAMPLES / "ellipg.avl"
+BD_AVL = EXAMPLES / "bd" / "bd.avl"
+ELLIPG_AVL = Path(__file__).parent / "data" / "ellipg.avl"
 
 
 # ---------------------------------------------------------------------------

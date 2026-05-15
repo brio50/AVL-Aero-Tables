@@ -10,7 +10,7 @@ from avl_aero_tables.avl_sweep import run
 from avl_aero_tables.st_fileread import StResult
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
-BD_AVL = EXAMPLES / "bd.avl"
+BD_AVL = EXAMPLES / "bd" / "bd.avl"
 
 
 # ---------------------------------------------------------------------------
@@ -36,7 +36,7 @@ def test_ctrl_names_order_stable():
 
 @pytest.mark.req("req-geom-8")
 def test_ctrl_names_no_controls():
-    geometry = avl_fileread(EXAMPLES / "ellipg.avl")
+    geometry = avl_fileread(Path(__file__).parent / "data" / "ellipg.avl")
     assert geometry.ctrl_names == []
 
 
