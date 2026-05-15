@@ -1,6 +1,6 @@
 # Quickstart
 
-## Bubble Dancer walkthrough
+## Bubble Dancer Walkthrough
 
 The Bubble Dancer (`examples/bd/`) is the canonical reference example — a sailplane with a fuselage body, four control surfaces (flap, aileron, elevator, rudder), external airfoil coordinate files, and a mass/inertia file. Its directory structure is the recommended pattern for any custom geometry:
 
@@ -17,7 +17,7 @@ The Bubble Dancer (`examples/bd/`) is the canonical reference example — a sail
 
 Keep all these files together. `avl_sweep` sets AVL's working directory to the folder containing the `.avl` file, so every relative path inside it (`fuseBD.dat`, `ag35.dat`, etc.) resolves automatically.
 
-### Read and plot the geometry
+### Read & Plot Geometry
 
 ```python
 from avl_aero_tables import avl_fileread, avl_fileplot
@@ -34,7 +34,7 @@ fig.savefig("bd_geometry.png", dpi=150)
 
 ![Bubble Dancer four-view geometry plot](../_static/img/bd_geometry.png)
 
-### Run an alpha / beta sweep
+### Sweep Alpha / Beta
 
 ```python
 from avl_aero_tables import avl_sweep
@@ -59,7 +59,7 @@ AVL sweep complete → /your/project/out/bd/2026-05-15-143022  (10 cases)
   Alpha= -2.0  CLtot=0.2299
 ```
 
-### Sweep control surfaces
+### Sweep Control Surfaces
 
 ```python
 results = avl_sweep(
@@ -78,7 +78,7 @@ AVL sweep complete → /your/project/out/bd/2026-05-15-143022  (20 cases)
 
 See {doc}`../concepts` for how `ctrl_sweeps` counts cases and why `0.0` must be included for stability tables.
 
-### Build an aero database
+### Build Aero Database
 
 ```python
 from avl_aero_tables import aero_filewrite
@@ -102,7 +102,7 @@ print(aero.stab["CLtot"].data.shape)               # (5, 3) — alpha × beta
 print(aero.ctrl["CLtot_d03_elevator"].data.shape)  # (5, 3, 3) — alpha × beta × defl
 ```
 
-### Plot the aero database
+### Plot Aero Coefficients
 
 ```python
 from avl_aero_tables import aero_fileplot
