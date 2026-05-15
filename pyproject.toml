@@ -43,6 +43,9 @@ include = ["avl_aero_tables*"]
 [tool.pytest.ini_options]
 addopts = "--doctest-modules"
 testpaths = ["tests", "avl_aero_tables"]
+markers = [
+    "req: requirement ID(s) this test covers (e.g. req-geom-1)",
+]
 
 [tool.ruff]
 line-length = 88

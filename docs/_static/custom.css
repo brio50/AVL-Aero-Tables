@@ -27,3 +27,12 @@ div[class*=" highlight-"]::after {
 div.highlight-bash::after         { content: "bash"; }
 div.highlight-powershell::after   { content: "powershell"; }
 div.highlight-python::after       { content: "python"; }
+
+/* Wrap the test-link column in requirements tables */
+.req-table td:last-child,
+.req-table th:last-child {
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-all;
+    min-width: 0;
+}

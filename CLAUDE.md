@@ -22,7 +22,8 @@ avl_aero_tables/          # Python package
 
 examples/             # AVL geometry + run files (bd.avl, supra.avl, etc.)
 docs/                 # AVL user documentation
-out/                  # AVL .st output files (generated at runtime, not committed)
+out/                  # sweep outputs (generated at runtime, not committed)
+                      #   out/<name>/YYYY-MM-DD-HHMMSS/  — one subdir per run
 tests/
   data/               # hand-generated .st data files for unit testing
   test_avl_fileread.py
@@ -45,17 +46,21 @@ User code / CLI
     ▼
 avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
     │
-    ├─ avl_fileread(avl_file)          → AvlGeometry (header, surfaces, body)
+    ├─ avl_fileread(avl_file)              → AvlGeometry (header, surfaces, body)
     │   └─ extracts control surface names (ctrl_names, ordered)
     │
-    ├─ avl_rungen.make_command(...)    → AVL command script string
+    ├─ avl_rungen.make_run_reset(...)      → reset.run  (written to out_dir)
+    │   └─ AVL native .run format; all flight conditions zeroed
+    │
+    ├─ avl_rungen.make_run_command(...)    → sweep.cmd  (written to out_dir)
     │   └─ LOAD <name> / PLOP G / OPER / per-case: A,B,Di, i, x, st, CINI / Quit
+    │   └─ sweep.cmd uses out_dir paths (clean/replayable)
+    │   └─ cmd_text (fed to AVL) uses /tmp staging paths (80-char limit)
     │
     ├─ avl_bin.run(cmd_text, cwd=avl_dir)  → subprocess driving AVL binary via stdin
-    │   └─ .st files written to a short /tmp staging dir (AVL ~80-char path limit)
-    │   └─ .st files moved to out_dir after AVL exits
+    │   └─ .st files written to short /tmp staging dir; moved to out_dir after AVL exits
     │
-    └─ st_fileread(out_dir)            → list[StResult]
+    └─ st_fileread(out_dir)                → list[StResult]
         └─ each StResult has .filename, .controls, .data (dict of floats)
 ```
 
@@ -68,14 +73,30 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
   All flight condition data (Alpha, Beta, control deflections) is inside the .st
   file itself, so numeric names lose no information.
 
-- **Staging in /tmp**: `avl_sweep.run()` writes .st files to a short
-  `tempfile.TemporaryDirectory(prefix="avl_")` path to stay under the 80-char
-  limit, then moves them to the caller's `out_dir`.
+- **File-based AVL inputs**: before invoking AVL, `avl_sweep.run()` writes
+  `reset.run` (AVL native `.run` format, all conditions zeroed) and `sweep.cmd`
+  (stdin command script) to `out_dir`.  This keeps the full inputs on disk
+  alongside the outputs and allows manual replay with `avl < sweep.cmd`.
+
+- **Two command strings**: `make_run_command` is called twice — once with
+  `out_dir` paths (written to `sweep.cmd` for human readability) and once with
+  the `/tmp` staging paths (fed to AVL via stdin to stay under the 80-char
+  Fortran filename limit).
+
+- **Staging in /tmp**: AVL writes `.st` files to a short
+  `tempfile.TemporaryDirectory(prefix="avl_")` path, then they are moved to
+  `out_dir`.  The temp directory is deleted automatically when the `with` block
+  exits, even if AVL crashes.
+
+- **Timestamped output directories**: the default `out_dir` is
+  `out/<geometry_name>/YYYY-MM-DD-HHMMSS/` relative to cwd, so each run gets
+  a fresh directory and previous results are never overwritten.  When an explicit
+  `out_dir` is provided, only stale `.st` files are removed before the run.
 
 - **cwd = avl_dir**: AVL is invoked with `cwd` set to the directory containing
   the .avl file so that `LOAD <name>` resolves without a path.
 
-- **`make_command` loop structure**: when `ctrl_sweeps` is empty, one run is
+- **`make_run_command` loop structure**: when `ctrl_sweeps` is empty, one run is
   emitted per `(alpha, beta)` point.  When `ctrl_sweeps` has entries, surfaces
   are swept independently (not combinatorially) — matching the MATLAB behavior.
 

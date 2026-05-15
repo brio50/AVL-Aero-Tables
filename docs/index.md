@@ -15,7 +15,18 @@ Before using this wrapper, read the upstream AVL documentation. Understanding AV
 
 ## What is AVL Aero Tables?
 
-A Python package that drives AVL via stdin command scripts, parses its `.st` output, and returns structured aerodynamic lookup tables — no manual file editing required.
+A Python package that drives AVL programmatically and returns structured aerodynamic lookup tables.
+
+**The key idea:** AVL is normally operated interactively — you type commands into its terminal menu, load a hand-written `.run` file, and step through each flight condition manually. `avl-aero-tables` bypasses this entirely. For each sweep it generates two input files and writes them to a timestamped subdirectory of 📁 `out/` alongside the results, so previous runs are never overwritten:
+
+- **`reset.run`** — an AVL run-case file in AVL's native `.run` format, with all flight conditions zeroed to provide a clean starting state for every point
+- **`sweep.cmd`** — the full AVL command script: `LOAD`, `OPER`, per-case alpha / beta / deflection settings, `st` save commands, and `Quit`
+
+It then feeds `sweep.cmd` to AVL's stdin via subprocess — AVL reads it exactly as it would a human typing commands, but at machine speed, across hundreds of (alpha, beta, control deflection) combinations in a single Python call.
+
+```{note}
+Because `reset.run` and `sweep.cmd` live alongside the `.st` outputs in each timestamped directory, the full inputs to AVL are always on disk. You can inspect them to understand exactly what was sent, or replay any run manually from a terminal with `avl < out/bd/2026-05-15-143022/sweep.cmd`.
+```
 
 Five functions cover the full workflow — from reading a geometry file through plotting a finished aero database:
 
@@ -46,6 +57,7 @@ user/reference/index
 :maxdepth: 1
 :caption: Developers
 
+dev/requirements
 dev/roadmap
 dev/contributing
 dev/changelog

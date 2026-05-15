@@ -23,6 +23,7 @@ ELLIPG_AVL = EXAMPLES / "ellipg.avl"
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.req("req-plot-1")
 def test_returns_figure():
     geom = avl_fileread(BD_AVL)
     fig = avl_fileplot(geom)
@@ -30,6 +31,7 @@ def test_returns_figure():
     plt.close(fig)
 
 
+@pytest.mark.req("req-plot-2")
 def test_figure_has_four_axes():
     geom = avl_fileread(BD_AVL)
     fig = avl_fileplot(geom)
@@ -37,6 +39,7 @@ def test_figure_has_four_axes():
     plt.close(fig)
 
 
+@pytest.mark.req("req-plot-3")
 def test_all_axes_are_3d():
     geom = avl_fileread(BD_AVL)
     fig = avl_fileplot(geom)
@@ -45,6 +48,7 @@ def test_all_axes_are_3d():
     plt.close(fig)
 
 
+@pytest.mark.req("req-plot-4")
 def test_axes_titles():
     geom = avl_fileread(BD_AVL)
     fig = avl_fileplot(geom)
@@ -56,6 +60,7 @@ def test_axes_titles():
     plt.close(fig)
 
 
+@pytest.mark.req("req-plot-5")
 def test_figure_title_contains_geometry_name():
     geom = avl_fileread(BD_AVL)
     fig = avl_fileplot(geom)
@@ -68,6 +73,7 @@ def test_figure_title_contains_geometry_name():
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.req("req-plot-6")
 def test_lines_drawn_for_surfaces(bd_geometry):
     fig = avl_fileplot(bd_geometry)
     iso_ax = fig.axes[0]
@@ -77,6 +83,7 @@ def test_lines_drawn_for_surfaces(bd_geometry):
     plt.close(fig)
 
 
+@pytest.mark.req("req-plot-7")
 def test_cg_scatter_plotted(bd_geometry):
     fig = avl_fileplot(bd_geometry)
     iso_ax = fig.axes[0]
@@ -92,6 +99,7 @@ def test_no_body_geometry_runs(bd_geometry):
     plt.close(fig)
 
 
+@pytest.mark.req("req-plot-8")
 def test_no_body_geometry_no_crash():
     """ellipg.avl has no body; should plot surfaces only."""
     geom = avl_fileread(ELLIPG_AVL)
@@ -105,6 +113,7 @@ def test_no_body_geometry_no_crash():
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.req("req-plot-9")
 def test_mirror_doubles_lines(bd_geometry):
     """bd.avl has Ydupl=0 surfaces; mirrored lines should be present."""
     fig = avl_fileplot(bd_geometry)

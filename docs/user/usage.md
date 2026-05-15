@@ -38,6 +38,7 @@ for r in results[:3]:
 ```
 
 ```
+AVL sweep complete → /your/project/out/bd/2026-05-15-143022  (10 cases)
 10 cases computed
   Alpha= -6.0  CLtot=-0.1669
   Alpha= -4.0  CLtot=0.0311
@@ -187,10 +188,34 @@ results = avl_sweep("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_format="j
 
 ### Output directory
 
-By default, `.st` files go to `<avl_file_parent>/out/<geometry_name>/`. Override with `out_dir`:
+By default, each call creates a timestamped subdirectory under 📁 `out/<geometry_name>/` so that previous results are never overwritten:
+
+```{code-block} text
+:class: no-copybutton
+📁 out/
+└── 📁 bd/
+    └── 📁 2026-05-15-143022/
+        ├── 📄 reset.run       ← AVL run-case file; all flight conditions zeroed
+        ├── 📄 sweep.cmd       ← AVL command script; full stdin input fed to AVL
+        ├── 📄 case_0001.st
+        ├── 📄 case_0002.st
+        ├── 📄 ...
+        └── 📄 results.csv
+```
+
+`reset.run` is in AVL's native `.run` format — the same format you would write by hand to define a run case. `sweep.cmd` is the complete sequence of interactive commands (one per line) that was piped to AVL's stdin.
+
+These two files are written before AVL is invoked, so the full inputs are always on disk alongside the outputs. To replay a run manually from a terminal:
+
+```bash
+cd examples          # must be in the directory containing bd.avl
+avl < out/bd/2026-05-15-143022/sweep.cmd
+```
+
+To write to a fixed location instead — useful in scripts where you want to overwrite the previous result — pass `out_dir` explicitly. Stale `.st` files are removed before the new run:
 
 ```python
-results = avl_sweep("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="/tmp/my_run")
+results = avl_sweep("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="out/bd/latest")
 ```
 
 ## Aero database

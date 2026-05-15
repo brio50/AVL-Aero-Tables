@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import shutil
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
 from avl_aero_tables import avl_bin as avl_runner
 from avl_aero_tables.aero_filewrite import results_to_dataframe
 from avl_aero_tables.avl_fileread import avl_fileread
-from avl_aero_tables.avl_rungen import make_command
+from avl_aero_tables.avl_rungen import make_run_command, make_run_reset
 from avl_aero_tables.st_fileread import StResult, st_fileread
 
 _FORMATS = frozenset(("csv", "json", "df"))
@@ -40,7 +41,10 @@ def run(
         An empty dict (default) produces one run per (alpha, beta) point.
     out_dir:
         Directory for .st output files.  Defaults to
-        <avl_file_parent>/out/<geometry_name>/.
+        ``out/<geometry_name>/<timestamp>/`` relative to the current working
+        directory, where timestamp is ``YYYY-MM-DD-HHMMSS``.  Each call
+        creates a fresh subdirectory so previous results are never overwritten.
+        Pass an explicit path to write to a fixed location instead.
     binary:
         Path to the AVL binary.  Auto-detected if not provided.
     out_format:
@@ -57,12 +61,13 @@ def run(
     Example
     -------
     >>> from avl_aero_tables import avl_sweep
-    >>> results = avl_sweep(
+    >>> results = avl_sweep(  # doctest: +ELLIPSIS
     ...     "examples/bd.avl",
     ...     alpha=[-5, 0, 5, 10],
     ...     beta=[0],
     ...     ctrl_sweeps={"elevator": [-10, 0, 10]},
     ... )
+    AVL sweep complete → ...  (12 cases)
     >>> len(results)  # 4 alpha × 3 elevator deflections
     12
     >>> results[0].data["Alpha"]
@@ -80,26 +85,45 @@ def run(
         ctrl_sweeps = {}
 
     if out_dir is None:
-        out_dir = avl_dir / "out" / avl_name
-    out_dir = Path(out_dir).resolve()
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    for stale in out_dir.glob("*.st"):
-        stale.unlink()
+        timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+        out_dir = Path("out") / avl_name / timestamp
+        out_dir = Path(out_dir).resolve()
+        out_dir.mkdir(parents=True, exist_ok=True)
+    else:
+        out_dir = Path(out_dir).resolve()
+        out_dir.mkdir(parents=True, exist_ok=True)
+        for stale in out_dir.glob("*.st"):
+            stale.unlink()
 
     geometry = avl_fileread(avl_file)
 
     # AVL has an ~80-char Fortran string limit for filenames.  Stage .st files
     # in a short /tmp directory, then move them to the caller's out_dir.
+    # sweep.cmd is written with out_dir paths so it is clean and replayable;
+    # cmd_text uses the staging paths and is what is actually fed to AVL.
     with tempfile.TemporaryDirectory(prefix="avl_") as staging_str:
         staging = Path(staging_str)
-        cmd_text = make_command(
+        cmd_text = make_run_command(
             avl_name,
             list(alpha),
             list(beta),
             geometry.ctrl_names,
             ctrl_sweeps,
             staging,
+        )
+
+        (out_dir / "reset.run").write_text(
+            make_run_reset(avl_name, geometry.ctrl_names)
+        )
+        (out_dir / "sweep.cmd").write_text(
+            make_run_command(
+                avl_name,
+                list(alpha),
+                list(beta),
+                geometry.ctrl_names,
+                ctrl_sweeps,
+                out_dir,
+            )
         )
 
         result = avl_runner.run(cmd_text, binary=binary, cwd=avl_dir)
@@ -122,4 +146,5 @@ def run(
         elif out_format == "json":
             df.to_json(out_dir / "results.json", orient="records", indent=2)
 
+    print(f"AVL sweep complete → {out_dir}  ({len(results)} cases)")
     return results

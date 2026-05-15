@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 
-def make_reset_run(
+def make_run_reset(
     avl_name: str,
     ctrl_names: list[str],
     *,
@@ -26,8 +26,8 @@ def make_reset_run(
 
     Example
     -------
-    >>> from avl_aero_tables.avl_rungen import make_reset_run
-    >>> text = make_reset_run(
+    >>> from avl_aero_tables.avl_rungen import make_run_reset
+    >>> text = make_run_reset(
     ...     "bd",
     ...     ["flap", "aileron", "elevator", "rudder"],
     ...     CDoref=0.017,
@@ -89,7 +89,7 @@ def make_reset_run(
     return "\n".join(lines) + "\n"
 
 
-def make_command(
+def make_run_command(
     avl_name: str,
     alpha: list[float],
     beta: list[float],
@@ -120,8 +120,8 @@ def make_command(
     Example
     -------
     >>> from pathlib import Path
-    >>> from avl_aero_tables.avl_rungen import make_command
-    >>> cmd = make_command(
+    >>> from avl_aero_tables.avl_rungen import make_run_command
+    >>> cmd = make_run_command(
     ...     "bd",
     ...     alpha=[0.0, 5.0],
     ...     beta=[0.0],

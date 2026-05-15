@@ -13,6 +13,7 @@ from avl_aero_tables.avl_cli import _build_parser, main
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.req("req-bin-1")
 def test_find_avl_finds_local_binary():
     fake_bin = Path.home() / "bin" / "avl"
     if fake_bin.exists():
@@ -20,6 +21,7 @@ def test_find_avl_finds_local_binary():
         assert result == fake_bin
 
 
+@pytest.mark.req("req-bin-2")
 def test_find_avl_raises_when_missing():
     with (
         patch("avl_aero_tables.avl_bin.Path.home", return_value=Path("/nonexistent")),
@@ -29,6 +31,7 @@ def test_find_avl_raises_when_missing():
             find_avl()
 
 
+@pytest.mark.req("req-bin-3")
 def test_find_avl_falls_back_to_path():
     fake_avl = Path("/usr/local/bin/avl")
     with (
@@ -52,12 +55,14 @@ def _avl_installed() -> bool:
         return False
 
 
+@pytest.mark.req("req-bin-4")
 @pytest.mark.skipif(not _avl_installed(), reason="AVL binary not installed")
 def test_verify_returns_path():
     path = verify()
     assert path.is_file()
 
 
+@pytest.mark.req("req-bin-5")
 @pytest.mark.skipif(not _avl_installed(), reason="AVL binary not installed")
 def test_verify_raises_on_bad_binary(tmp_path):
     fake = tmp_path / "avl"
@@ -72,6 +77,7 @@ def test_verify_raises_on_bad_binary(tmp_path):
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.req("req-bin-6")
 def test_run_calls_binary_with_stdin():
     mock_result = MagicMock()
     mock_result.returncode = 0
@@ -93,6 +99,7 @@ def test_run_calls_binary_with_stdin():
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.req("req-bin-7")
 def test_cli_verify_subcommand_success():
     with (
         patch("avl_aero_tables.avl_cli.verify", return_value=Path("/bin/avl")),
@@ -101,6 +108,7 @@ def test_cli_verify_subcommand_success():
         assert code == 0
 
 
+@pytest.mark.req("req-bin-7")
 def test_cli_verify_subcommand_failure():
     with (
         patch(
@@ -112,6 +120,7 @@ def test_cli_verify_subcommand_failure():
         assert code == 1
 
 
+@pytest.mark.req("req-bin-8")
 def test_cli_run_subcommand(tmp_path):
     cmd_file = tmp_path / "command.txt"
     cmd_file.write_text("quit\n")
@@ -126,6 +135,7 @@ def test_cli_run_subcommand(tmp_path):
         assert code == 0
 
 
+@pytest.mark.req("req-bin-9")
 def test_cli_no_args_shows_help():
     parser = _build_parser()
     with pytest.raises(SystemExit):

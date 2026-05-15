@@ -1,6 +1,7 @@
 """Tests for aero_fileplot: plotting AeroDatabase tables."""
 
 from __future__ import annotations
+import pytest
 
 import matplotlib
 
@@ -70,6 +71,7 @@ def _ctrl_aero() -> AeroDatabase:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.req("req-aeroplot-1")
 def test_returns_list():
     aero = _minimal_aero()
     figs = aero_fileplot(aero)
@@ -78,6 +80,7 @@ def test_returns_list():
         plt.close(f)
 
 
+@pytest.mark.req("req-aeroplot-2")
 def test_returns_figures():
     aero = _minimal_aero()
     figs = aero_fileplot(aero)
@@ -92,6 +95,7 @@ def test_returns_figures():
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.req("req-aeroplot-3")
 def test_stability_figure_first():
     aero = _minimal_aero()
     figs = aero_fileplot(aero)
@@ -102,6 +106,7 @@ def test_stability_figure_first():
         plt.close(f)
 
 
+@pytest.mark.req("req-aeroplot-4")
 def test_stability_axes_titles():
     aero = _minimal_aero()
     figs = aero_fileplot(aero)
@@ -117,6 +122,7 @@ def test_stability_axes_titles():
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.req("req-aeroplot-5")
 def test_no_ctrl_only_stability_figure():
     r = StResult(filename="bare.st")
     r.controls = {}
@@ -141,6 +147,7 @@ def test_no_ctrl_only_stability_figure():
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.req("req-aeroplot-6")
 def test_ctrl_figures_produced():
     aero = _ctrl_aero()
     figs = aero_fileplot(aero)
@@ -150,6 +157,7 @@ def test_ctrl_figures_produced():
         plt.close(f)
 
 
+@pytest.mark.req("req-aeroplot-7")
 def test_ctrl_figure_has_one_subplot_per_surface():
     aero = _ctrl_aero()
     figs = aero_fileplot(aero)
@@ -160,6 +168,7 @@ def test_ctrl_figure_has_one_subplot_per_surface():
         plt.close(f)
 
 
+@pytest.mark.req("req-aeroplot-8")
 def test_ctrl_figure_title_contains_coef_name():
     aero = _ctrl_aero()
     figs = aero_fileplot(aero)
@@ -178,6 +187,7 @@ def test_ctrl_figure_title_contains_coef_name():
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.req("req-aeroplot-9")
 def test_beta_ref_nearest_used():
     """aero_fileplot should not crash if beta_ref is not exact."""
     results = [_make_result(0.0, b) for b in [-5.0, 0.0, 5.0]]
