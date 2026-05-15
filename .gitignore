@@ -30,7 +30,7 @@ docs/_build/
 # Doctest-generated artifacts
 geometry.png
 stability.png
-sweep.csv
+/sweep.csv
 
 # Orphaned/intermediate doc images
 docs/_static/img/bd_aero.png

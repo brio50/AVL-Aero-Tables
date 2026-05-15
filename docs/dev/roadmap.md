@@ -11,9 +11,9 @@ Nothing on this page is implemented yet. These are proposals and sketches only.
 The sketch below outlines a potential graphical interface — a browser-based or desktop UI for setting up geometry, configuring sweeps, and exploring aero database results without writing Python directly.
 
 ```{raw} html
-<object data="../_static/AVL.pdf" type="application/pdf" width="100%" height="700px">
+<iframe src="../_static/AVL.pdf" width="100%" height="700px" style="border:none;">
   <a href="../_static/AVL.pdf">Download UI concept sketch (PDF)</a>
-</object>
+</iframe>
 ```
 
 ## Planned features
@@ -21,6 +21,8 @@ The sketch below outlines a potential graphical interface — a browser-based or
 - **scipy interpolation**: add `scipy.interpolate.RegularGridInterpolator` support to `AeroDatabase` so users can query coefficients at arbitrary `(alpha, beta, defl)` points between breakpoints. The numpy arrays in `StabTable` and `CtrlTable` are already shaped correctly for `RegularGridInterpolator`. Expose as an `interpolate(coef, alpha, beta, defl=0.0)` method or standalone helper.
 
 - **Versioned docs**: `sphinx-multiversion` to build a separate HTML tree per git tag with a version-switcher dropdown on the docs site.
+
+- **Expose `velocity` and `density` in `make_run_reset`**: currently hardcoded to `0.0` and `1.0` respectively. Add them as keyword arguments so users can set airspeed and dynamic pressure for dimensional force output. `Mach` is already a parameter.
 
 - **Multi-format export**: add export targets to `aero_filewrite` beyond the current pandas/CSV path.
   - `.mat` via `scipy.io.savemat` — writes `AeroDatabase` as a MATLAB struct for direct use in Simulink lookup tables. `StabTable` and `CtrlTable` numpy arrays map cleanly to struct fields.

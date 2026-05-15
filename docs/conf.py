@@ -15,7 +15,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
-    "sphinx.ext.intersphinx",
     "sphinx_copybutton",
     "sphinxcontrib.mermaid",
     "sphinx_design",
@@ -44,13 +43,6 @@ html_theme_options = {
 }
 
 # -- Extensions -----------------------------------------------------------
-
-intersphinx_mapping = {
-    "python": ("https://docs.python.org/3", None),
-    "numpy": ("https://numpy.org/doc/stable", None),
-    "pandas": ("https://pandas.pydata.org/docs", None),
-    "matplotlib": ("https://matplotlib.org/stable", None),
-}
 
 copybutton_selector = "div:not(.no-copybutton) > div.highlight > pre"
 

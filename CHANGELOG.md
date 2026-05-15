@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-05-15
+
+### Fixed
+- Add missing `docs/dev/reqs/sweep.csv` (was excluded by an overly broad `.gitignore` pattern), docs action fix!
+- Remove unused `sphinx.ext.intersphinx` extension and its four network fetches at build time
+
 ## [1.0.0] - 2026-05-09 to 2026-05-15
 
 ### Added

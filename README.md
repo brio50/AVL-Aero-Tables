@@ -14,7 +14,7 @@ Requires Python 3.12+ and the AVL binary installed at `~/bin/avl`.
 
 ## Documentation
 
-Full installation guide, walkthrough, API reference, and more at the [docs site](https://brio50.github.io/avl-aero-tables).
+Full installation guide, walkthrough, API reference, and more at the [docs site](https://brio50.github.io/AVL-Aero-Tables/).
 
 ## Quick look
 
