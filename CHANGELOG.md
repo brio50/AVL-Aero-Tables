@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `avl_bin.run()` gains `avl_file`, `run_file`, and `mass_file` keyword arguments passed as positional CLI args to the AVL binary
 - `sweep.cmd` renamed to `sweep.log` to accurately reflect that it is a record of what was sent, not a driver file
 - Custom geometry documentation added to usage guide: recommended project layout for `.avl`, `.mass`, and associated airfoil data files
+- `examples/` reorganized: ~80 redundant and standalone AVL models removed, leaving six curated aircraft (Bubble Dancer, Allegro-Lite, Boeing 737-800, Plane Vanilla, SuperGee, Supra); each lives in its own subfolder with all referenced airfoil `.dat` and body `.dat` files co-located; `ellipg.avl` (wing-only test fixture) moved to `tests/data/`
 
 ## [1.0.1] - 2026-05-15
 

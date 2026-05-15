@@ -1,64 +1,47 @@
 # API
 
-The diagram below traces a full analysis run — from calling `avl_sweep()` through to plotting the aero database. `avl_sweep` is the orchestrator; all other components are either called by it internally or by the user directly afterward.
+`avl_sweep` is the top-level orchestrator. All other components are either called internally by it or used directly by the user afterward.
 
 ````{div} full-width
+
 ```{mermaid}
-sequenceDiagram
-    actor User
-    participant AE as avl_sweep
-    participant FR as avl_fileread
-    participant RG as avl_rungen
-    participant BN as avl_bin
-    participant SR as st_fileread
-    participant FW as aero_filewrite
-    participant FP as avl_fileplot
-    participant AP as aero_fileplot
-    participant CL as avl_cli
+flowchart TD
+    User(["User"])
 
-    User->>AE: avl_sweep(avl_file, alpha, beta, ctrl_sweeps)
-    AE->>FR: avl_fileread(avl_file)
-    FR-->>AE: AvlGeometry
-    AE->>RG: make_command(avl_name, alpha, beta, ctrl_names, ctrl_sweeps, staging)
-    RG-->>AE: command string
-    AE->>BN: run(cmd_text, cwd=avl_dir)
-    BN-->>AE: CompletedProcess
-    Note over AE: move .st files from /tmp staging → out_dir
-    AE->>SR: st_fileread(out_dir)
-    SR-->>AE: list[StResult]
-    opt out_format != "df"
-        AE->>FW: results_to_dataframe(results)
-        FW-->>AE: DataFrame → results.csv / .json
+    subgraph sweep ["avl_sweep.run"]
+        direction TB
+        FR["avl_fileread() → AvlGeometry"]
+        RR["make_run_reset() → reset.run"]
+        RC["make_run_command() → cmd_text"]
+        BN["avl_bin.run() → .st files"]
+        MV["stage /tmp → out_dir"]
+        SR["st_fileread() → list[StResult]"]
+        FW["results_to_dataframe() → results.csv/.json"]
+
+        FR --> RR --> RC --> BN --> MV --> SR
+        SR -.->|"out_format ≠ 'df'"| FW
     end
-    AE-->>User: list[StResult]
 
-    User->>CL: avl-aero-tables verify / run
-    CL->>BN: verify() / run_file()
-    BN-->>CL: result
-    CL-->>User: exit code
+    User -->|"avl_file, α, β, δ, I, ..."| sweep
+    sweep -->|"list[StResult]"| User
 
-    User->>FW: aero_filewrite(results)
-    FW-->>User: AeroDatabase
-
-    User->>FP: avl_fileplot(geom)
-    FP-->>User: Figure
-
-    User->>AP: aero_fileplot(aero, beta_ref)
-    AP-->>User: list[Figure]
+    User -->|"list[StResult]"| FW2["aero_filewrite() → AeroDatabase"]
+    FW2 -->|"AeroDatabase"| AP["aero_fileplot() → list[Figure]"]
+    User -->|"AvlGeometry"| FP["avl_fileplot() → Figure"]
+    User -->|"verify / run"| CLI["avl-aero-tables CLI → avl_bin"]
 ```
 
 | Component | Role | Public? |
 |---|---|---|
 | {doc}`avl_sweep` | Top-level orchestrator — the `avl_sweep()` entry point | Yes |
 | {doc}`avl_fileread` | Parses `.avl` geometry file → `AvlGeometry` | Yes |
-| {doc}`avl_rungen` | Builds the AVL stdin command script | Internal |
+| {doc}`avl_rungen` | Builds `reset.run` and the AVL stdin command script | Internal |
 | {doc}`avl_bin` | Locates, verifies, and invokes the AVL Fortran binary via subprocess | Indirect |
 | {doc}`st_fileread` | Parses `.st` output files → `list[StResult]` | Yes (advanced) |
 | {doc}`aero_filewrite` | Exports results to CSV/JSON; pivots `list[StResult]` → `AeroDatabase` | Yes |
 | {doc}`avl_fileplot` | Four-view geometry plot → `Figure` | Yes |
 | {doc}`aero_fileplot` | 3-D surface plots of `AeroDatabase` → `list[Figure]` | Yes |
 | {doc}`avl_cli` | `avl-aero-tables` CLI entry point (`verify`, `run` subcommands) | CLI only |
-
 ````
 
 ```{toctree}

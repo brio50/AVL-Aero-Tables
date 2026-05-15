@@ -44,6 +44,8 @@ html_theme_options = {
 
 # -- Extensions -----------------------------------------------------------
 
+mermaid_height = "1500px"
+
 copybutton_selector = "div:not(.no-copybutton) > div.highlight > pre"
 
 autodoc_default_options = {

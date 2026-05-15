@@ -44,7 +44,7 @@ tests/
 User code / CLI
     │
     ▼
-avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
+avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir, binary, out_format, mass_file)
     │
     ├─ avl_fileread(avl_file)              → AvlGeometry (header, surfaces, body)
     │   └─ extracts control surface names (ctrl_names, ordered)
@@ -53,17 +53,19 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir)
     │   └─ AVL native .run format; all flight conditions zeroed
     │   └─ staging copy passed as CLI arg (short /tmp path stays under 80-char limit)
     │
-    ├─ avl_rungen.make_run_command(...)    → sweep.log  (written to out_dir)
+    ├─ avl_rungen.make_run_command(...)    → cmd_text (fed to AVL stdin via staging paths)
+    │   └─ called twice: once with staging paths (→ cmd_text), once with out_dir paths (→ sweep.log)
     │   └─ PLOP G / OPER / per-case: A,B,Di, i, x, st, CINI / Quit  (no LOAD)
-    │   └─ sweep.log has replay comment header + out_dir .st paths (human reference)
-    │   └─ cmd_text (fed to AVL stdin) uses /tmp staging paths (80-char limit)
     │
     ├─ avl_bin.run(cmd_text, avl_file, run_file, [mass_file], cwd=avl_dir)
     │   └─ subprocess: avl <avl_file.name> <staging/reset.run> [<mass>] + stdin
     │   └─ .st files written to short /tmp staging dir; moved to out_dir after AVL exits
     │
-    └─ st_fileread(out_dir)                → list[StResult]
-        └─ each StResult has .filename, .controls, .data (dict of floats)
+    ├─ st_fileread(out_dir)                → list[StResult]
+    │   └─ each StResult has .filename, .controls, .data (dict of floats)
+    │
+    └─ results_to_dataframe(results)       → DataFrame → results.csv / results.json
+        └─ skipped when out_format == "df"
 ```
 
 ---

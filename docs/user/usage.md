@@ -157,11 +157,9 @@ results = avl_sweep(
     avl_file="geometry/my_aircraft.avl",
     alpha=list(range(-6, 13, 2)),
     beta=[-6.0, 0.0, 6.0],
-    mass_file="my_aircraft.mass",   # resolved relative to geometry/
+    mass_file="my_aircraft.mass",   # bare filename → resolves relative to geometry/
 )
 ```
-
-`mass_file` is a bare filename so it stays well within AVL's ~80-character string limit. If the mass file is in a different directory, pass an absolute path — but keep it short.
 
 ## Running sweeps
 
@@ -202,6 +200,29 @@ geom = avl_fileread("examples/bd.avl")
 geom.ctrl_names  # ['flap', 'aileron', 'elevator', 'rudder']
 ```
 ````
+
+### Mass and inertia
+
+Pass a `.mass` file to load CG and inertia properties before the sweep. AVL receives it as a third CLI argument (`avl <avl_file> <reset.run> <mass_file>`).
+
+```python
+results = avl_sweep(
+    avl_file="examples/bd.avl",
+    alpha=list(range(-6, 13, 2)),
+    beta=[0.0],
+    mass_file="examples/bd.mass",   # bare filename resolves relative to the .avl directory
+)
+```
+
+A bare filename resolves relative to the directory containing the `.avl` file. An absolute path also works — keep it short to stay within AVL's ~80-character Fortran string limit.
+
+### Custom AVL binary
+
+By default, `avl_sweep` auto-detects the AVL binary (`~/bin/avl`, then PATH). Override with `binary`:
+
+```python
+results = avl_sweep("examples/bd.avl", alpha=[-4, 0, 4], beta=[0], binary="/opt/avl/avl")
+```
 
 ### Output format
 
