@@ -1,6 +1,6 @@
 # avl_cli
 
-`avl-aero-tables` CLI entry point. Provides the `verify` and `run` subcommands by delegating to `avl_bin`.
+`avl-aero-tables` CLI entry point. Provides `verify`, `sweep`, and `plot` subcommands driven by a YAML project file.
 
 For usage examples see {doc}`/user/quickstart`.
 

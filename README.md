@@ -18,6 +18,20 @@ Full installation guide, walkthrough, API reference, and more at the [docs site]
 
 ## Quick look
 
+### CLI
+
+Define a sweep in a YAML project file and run it in one command:
+
+```bash
+avl-aero-tables sweep examples/bd/bd.yml        # run sweep → runs/bd/<timestamp>/
+avl-aero-tables plot geometry examples/bd/bd.yml # four-view geometry plot
+avl-aero-tables plot aero runs/bd/              # plot latest sweep results
+```
+
+### Python API
+
+Call the same steps programmatically:
+
 ```python
 from avl_aero_tables import avl_fileread, avl_fileplot, avl_sweep, aero_filewrite, aero_fileplot
 

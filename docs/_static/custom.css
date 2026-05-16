@@ -28,6 +28,11 @@ div.highlight-bash::after         { content: "bash"; }
 div.highlight-powershell::after   { content: "powershell"; }
 div.highlight-python::after       { content: "python"; }
 
+/* Looser line-height for folder tree blocks */
+.filetree .highlight pre {
+    line-height: 1.6em !important;
+}
+
 /* Give the sweep internals diagram room to breathe */
 .mermaid-sweep svg {
     min-height: 600px;

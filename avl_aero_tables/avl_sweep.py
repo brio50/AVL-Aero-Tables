@@ -96,13 +96,12 @@ def run(
 
     # AVL has an ~80-char Fortran string limit for filenames.  Stage .st files
     # and reset.run in a short /tmp directory so their paths stay within the
-    # limit when passed as CLI args or written into the command script.
+    # limit when written into the LOAD/CASE/st commands inside the stdin script.
     reset_run_content = make_run_reset(avl_name, geometry.ctrl_names)
 
     with tempfile.TemporaryDirectory(prefix="avl_") as staging_str:
         staging = Path(staging_str)
 
-        # reset.run in staging: short path for the CLI arg
         (staging / "reset.run").write_text(reset_run_content)
         # reference copy in run_dir alongside results
         (run_dir / "reset.run").write_text(reset_run_content)
@@ -113,22 +112,22 @@ def run(
             geometry.ctrl_names,
             ctrl_sweeps,
             staging,
+            avl_file=avl_file.name,
+            run_file=str(staging / "reset.run"),
         )
 
-        # sweep.log: human-readable record with a replay comment at the top
-        replay = (
-            f"# avl {avl_file.name} {run_dir / 'reset.run'}"
-            f" < {run_dir / 'sweep.log'}"
-        )
+        # sweep.log: exact stdin script fed to AVL via subprocess; full paths
+        # for human readability (AVL never sees this copy)
         (run_dir / "sweep.log").write_text(
-            replay
-            + "\n"
+            f"# avl  [stdin → {run_dir / 'sweep.log'}]\n"
             + make_run_command(
                 list(alpha),
                 list(beta),
                 geometry.ctrl_names,
                 ctrl_sweeps,
                 run_dir,
+                avl_file=str(avl_file),
+                run_file=str(run_dir / "reset.run"),
             )
         )
 
@@ -138,8 +137,6 @@ def run(
             cmd_text,
             binary=binary,
             cwd=avl_dir,
-            avl_file=avl_file.name,
-            run_file=str(staging / "reset.run"),
         )
         if result.returncode != 0:
             raise RuntimeError(

@@ -17,18 +17,32 @@ Before using this wrapper, read the upstream AVL documentation. Understanding AV
 
 A Python package that drives AVL programmatically and returns structured aerodynamic lookup tables.
 
-**The key idea:** AVL is normally operated interactively — you type commands into its terminal menu, load a hand-written `.run` file, and step through each flight condition manually. `avl-aero-tables` bypasses this entirely. It invokes the AVL binary using its documented CLI interface — passing the geometry and run-case files as positional arguments — then pipes the sweep commands (OPER, alpha/beta/deflection settings, `st` saves) to AVL's stdin, running hundreds of flight conditions in a single Python call.
+**The key idea:** AVL is normally operated interactively — you type commands into its terminal menu, load a hand-written `.run` file, and step through each flight condition manually. `avl-aero-tables` bypasses this entirely. It invokes the AVL binary with no arguments and pipes a complete stdin script — loading geometry (`LOAD`), run-case (`CASE`), and all sweep commands (OPER, alpha/beta/deflection settings, `st` saves) — running hundreds of flight conditions in a single Python call.
 
 For each sweep, two files are written to a timestamped subdirectory of 📁 `out/` alongside the results, so previous runs are never overwritten:
 
-- **`reset.run`** — the AVL run-case file passed as a CLI argument; all flight conditions zeroed so every sweep point starts from a clean state
-- **`sweep.log`** — the stdin commands piped to AVL; its first line is a comment with the exact shell command needed to replay the run
+- **`reset.run`** — the AVL run-case file loaded via the `CASE` stdin command; all flight conditions zeroed so every sweep point starts from a clean state
+- **`sweep.log`** — the exact stdin command script fed to AVL via subprocess to produce the `.st` files in that directory; kept as a record of what was run
 
 ```{note}
-Because `reset.run` and `sweep.log` live alongside the `.st` outputs in each timestamped directory, the full inputs to AVL are always on disk. Open `sweep.log` and copy its first line to replay any run manually from a terminal.
+Because `reset.run` and `sweep.log` live alongside the `.st` outputs in each timestamped directory, the full inputs to AVL are always on disk alongside the results they produced.
 ```
 
-Five functions cover the full workflow — from reading a geometry file through plotting a finished aero database:
+Five functions cover the full workflow — from reading a geometry file through plotting a finished aero database. Use the CLI for one-command runs, or call the Python API directly:
+
+### CLI
+
+Define a sweep in a YAML project file and run it in one command:
+
+```bash
+avl-aero-tables sweep examples/bd/bd.yml        # run sweep → runs/bd/<timestamp>/
+avl-aero-tables plot geometry examples/bd/bd.yml # four-view geometry plot
+avl-aero-tables plot aero runs/bd/              # plot latest sweep results
+```
+
+### Python API
+
+Call the same steps programmatically:
 
 ```python
 from avl_aero_tables import avl_fileread, avl_fileplot, avl_sweep, aero_filewrite, aero_fileplot
@@ -40,7 +54,9 @@ aero    = aero_filewrite(results)                   # build aero lookup tables
 figs    = aero_fileplot(aero)                       # plot aero tables
 ```
 
+```{seealso}
 See {doc}`user/install` to get up and running, then {doc}`user/quickstart` for the full walkthrough.
+```
 
 ```{toctree}
 :hidden:

@@ -62,11 +62,11 @@ Each run deflects exactly one surface; all others stay at zero. This matches the
 Every sweep creates a timestamped subdirectory inside the `out_dir` you pass:
 
 ```{code-block} text
-:class: no-copybutton
+:class: no-copybutton filetree
 📁 runs/
 └── 📁 bd_2026-05-15-143022/
     ├── 📄 reset.run       ← AVL run-case file; all flight conditions zeroed
-    ├── 📄 sweep.log       ← stdin commands piped to AVL; replay shell command at top
+    ├── 📄 sweep.log       ← exact stdin commands fed to AVL via subprocess to produce these .st files
     ├── 📄 case_0001.st
     ├── 📄 case_0002.st
     ├── 📄 ...
@@ -79,15 +79,13 @@ Previous runs are never overwritten — each call to `avl_sweep` creates a fresh
 results = avl_sweep("examples/bd/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="runs")
 ```
 
-## Replay
-
-`sweep.log` opens with a comment line containing the exact shell command needed to replay the run from a terminal:
+`sweep.log` is the exact stdin command script that was fed to the AVL subprocess to produce the `.st` files in that directory. Its first line is a comment recording the AVL invocation:
 
 ```bash
-# avl bd.avl /path/to/runs/bd_2026-05-15-143022/reset.run < /path/to/runs/bd_2026-05-15-143022/sweep.log
+# avl bd.avl /path/to/runs/bd_2026-05-15-143022/reset.run  [stdin → /path/to/runs/bd_2026-05-15-143022/sweep.log]
 ```
 
-Copy that line, strip the leading `#`, and run it from the directory containing `bd.avl`. This is useful for debugging AVL output or verifying a result without re-running Python.
+AVL is an interactive Fortran program — it has no CLI argument for a command script. `avl-aero-tables` drives it by piping this script to AVL's stdin via Python's `subprocess`. `sweep.log` is the on-disk record of exactly what was piped.
 
 ## Filename Limit
 

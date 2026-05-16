@@ -1,0 +1,9 @@
+input:
+  geometry: ellipg.avl
+
+sweep:
+  alpha: [-5, 0, 5, 10, 15]
+  beta: [0]
+
+output:
+  format: csv

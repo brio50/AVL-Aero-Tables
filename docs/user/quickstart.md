@@ -5,7 +5,7 @@
 The Bubble Dancer (`examples/bd/`) is the canonical reference example — a sailplane with a fuselage body, four control surfaces (flap, aileron, elevator, rudder), and external airfoil coordinate files. Its directory structure is the recommended pattern for any custom geometry:
 
 ```{code-block} text
-:class: no-copybutton
+:class: no-copybutton filetree
 📁 examples/bd/
 ├── 📄 bd.avl          ← geometry: surfaces, sections, control hinges, reference quantities
 ├── 📄 fuseBD.dat      ← fuselage body cross-section coordinates (referenced by bd.avl)
@@ -14,26 +14,107 @@ The Bubble Dancer (`examples/bd/`) is the canonical reference example — a sail
 └── 📄 ag37.dat
 ```
 
-Keep all these files together. `avl_sweep` sets AVL's working directory to the folder containing the `.avl` file, so every relative path inside it (`fuseBD.dat`, `ag35.dat`, etc.) resolves automatically.
+Keep all these files together. AVL's working directory is set to the folder containing the `.avl` file, so every relative path inside it (`fuseBD.dat`, `ag35.dat`, etc.) resolves automatically.
 
 For your own project, keep geometry inputs versioned in git and runs outside of version control:
 
 ```{code-block} text
-:class: no-copybutton
-📁 my_project/          ← git repo
-├── 📁 design_a/
-│   ├── 📄 design_a.avl      ← geometry: surfaces, sections, control hinges
+:class: no-copybutton filetree
+📁 my_project/               ← git repo
+├── 📁 design/
+│   ├── 📄 design.avl        ← geometry: surfaces, sections, control hinges
 │   ├── 📄 wing_airfoil.dat  ← airfoil coordinates   (AFIL entry in .avl)
 │   └── 📄 fuselage.dat      ← body cross-sections   (BFIL entry in .avl)
-├── 📁 design_b/
-│   ├── 📄 design_b.avl
-│   └── 📄 wing_airfoil.dat
+│   └── 📄 design.yml        ← CLI project file  (or analysis.py for the Python API)
 ├── 📁 runs/                 ← generated at runtime; add to .gitignore
-│   ├── 📁 design_a_2026-05-14-091234/
-│   └── 📁 design_a_2026-05-15-143022/
-├── 📄 .gitignore            ← contains: runs/
-└── 📄 analysis.py
+│   └── 📁 design_2026-05-15-143022/
+└── 📄 .gitignore            ← contains: runs/
 ```
+
+## CLI
+
+The fastest path from geometry to results — define your sweep in a YAML project file, then run three commands.
+
+### Project File
+
+Create a `bd.yml` alongside your `.avl` file:
+
+```{code-block} yaml
+:caption: examples/bd/bd.yml
+input:
+  geometry: bd.avl
+
+sweep:
+  alpha: [-5, 0, 5, 10, 15]
+  beta: [0]
+  ctrl_sweeps:
+    elevator: [-10, -5, 0, 5, 10]
+    rudder:   [-10, 0, 10]
+    aileron:  [-10, 0, 10]
+
+output:
+  format: csv
+```
+
+`input.geometry` is a path relative to the `.yml` file, so they should live in the same directory.
+
+### Plot Geometry
+
+Check that AVL reads the geometry correctly before running a sweep:
+
+```bash
+avl-aero-tables plot geometry examples/bd/bd.yml
+```
+
+![Bubble Dancer four-view geometry plot](../_static/img/bd_geometry.png)
+
+### Run Sweep
+
+```bash
+avl-aero-tables sweep examples/bd/bd.yml
+```
+
+```
+AVL sweep complete → runs/bd/2026-05-15-143022  (45 cases)
+```
+
+```{note}
+Results land in `runs/<yml-stem>/<timestamp>/` relative to the **project root** — one directory up from the `.yml` file. This differs from the Python API, where you control `out_dir` directly.
+```
+
+### Plot Results
+
+```bash
+avl-aero-tables plot aero runs/bd/
+```
+
+Pass a parent directory to plot the latest sweep, or a specific timestamped directory to plot a particular run. Opens the aero coefficient surface plots.
+
+````{tab-set}
+```{tab-item} Stability
+![Bubble Dancer stability derivatives](../_static/img/bd_stab.png)
+```
+```{tab-item} CL
+![CLtot control derivatives](../_static/img/bd_ctrl_CLtot.png)
+```
+```{tab-item} CY
+![CYtot control derivatives](../_static/img/bd_ctrl_CYtot.png)
+```
+```{tab-item} CD
+![CDtot control derivatives](../_static/img/bd_ctrl_CDtot.png)
+```
+```{tab-item} Cl
+![Cltot control derivatives](../_static/img/bd_ctrl_Cltot.png)
+```
+```{tab-item} Cm
+![Cmtot control derivatives](../_static/img/bd_ctrl_Cmtot.png)
+```
+```{tab-item} Cn
+![Cntot control derivatives](../_static/img/bd_ctrl_Cntot.png)
+```
+````
+
+## Python API
 
 ```{note}
 A fully runnable version of this walkthrough is available as `examples/quickstart.py`.
@@ -52,7 +133,7 @@ print(list(geom.surface.keys())) # ['Wing', 'Horizontal_tail', 'Vertical_tail']
 print(geom.header.Sref)          # 1000.0  (reference area, sq-in)
 
 fig = avl_fileplot(geom)
-fig.savefig("bd_geometry.png", dpi=150)
+fig.savefig("bd_geometry.png", dpi=150)  # saved to current working directory
 ```
 
 ![Bubble Dancer four-view geometry plot](../_static/img/bd_geometry.png)
@@ -140,7 +221,7 @@ figs = aero_fileplot(aero, beta_ref=0.0)
 names = ["bd_stab", "bd_ctrl_CLtot", "bd_ctrl_CYtot",
          "bd_ctrl_CDtot", "bd_ctrl_Cltot", "bd_ctrl_Cmtot", "bd_ctrl_Cntot"]
 for fig, name in zip(figs, names):
-    fig.savefig(f"{name}.png", dpi=150)
+    fig.savefig(f"{name}.png", dpi=150)  # saved to current working directory
 ```
 
 ````{tab-set}

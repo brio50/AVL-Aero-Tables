@@ -104,18 +104,18 @@ def test_run_raises_on_avl_failure(tmp_path):
 
 
 @pytest.mark.req("req-sweep-6")
-def test_run_passes_avl_name_as_cli_arg(tmp_path):
+def test_run_load_command_contains_avl_name(tmp_path):
     captured = {}
     mock_result = _make_mock_result()
 
     def capture(cmd_text, **kwargs):
-        captured["kwargs"] = kwargs
+        captured["cmd_text"] = cmd_text
         return mock_result
 
     with patch("avl_aero_tables.avl_sweep.avl_runner.run", side_effect=capture):
         run(BD_AVL, alpha=[5.0], beta=[0.0], out_dir=tmp_path)
 
-    assert captured["kwargs"].get("avl_file") == "bd.avl"
+    assert captured["cmd_text"].startswith("LOAD bd.avl")
 
 
 @pytest.mark.req("req-sweep-7")
@@ -183,6 +183,18 @@ def test_out_format_invalid_raises(tmp_path):
         _run_with_format(tmp_path, "xlsx")
 
 
+@pytest.mark.req("req-sweep-15")
+def test_run_writes_sweep_log(tmp_path):
+    mock_result = _make_mock_result()
+    with patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result):
+        run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path)
+    logs = list(tmp_path.rglob("sweep.log"))
+    assert len(logs) == 1
+    content = logs[0].read_text()
+    assert "LOAD" in content
+    assert "CASE" in content
+
+
 # ---------------------------------------------------------------------------
 # Integration test — skipped if AVL binary not installed
 # ---------------------------------------------------------------------------
@@ -198,6 +210,7 @@ def _avl_installed() -> bool:
         return False
 
 
+@pytest.mark.req("req-sweep-13")
 @pytest.mark.skipif(not _avl_installed(), reason="AVL binary not installed")
 def test_integration_bd_single_point(tmp_path):
     results = run(BD_AVL, alpha=[5.0], beta=[0.0], out_dir=tmp_path)

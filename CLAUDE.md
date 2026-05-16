@@ -54,14 +54,13 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir, binary, out_format, m
     │
     ├─ avl_rungen.make_run_reset(...)      → reset.run  (written to staging + out_dir)
     │   └─ AVL native .run format; all flight conditions zeroed
-    │   └─ staging copy passed as CLI arg (short /tmp path stays under 80-char limit)
     │
     ├─ avl_rungen.make_run_command(...)    → cmd_text (fed to AVL stdin via staging paths)
     │   └─ called twice: once with staging paths (→ cmd_text), once with out_dir paths (→ sweep.log)
-    │   └─ PLOP G / OPER / per-case: A,B,Di, i, x, st, CINI / Quit  (no LOAD)
+    │   └─ LOAD <avl_file> / CASE <reset.run> / PLOP G / OPER / per-case: A,B,Di, i, x, st, CINI / Quit
     │
-    ├─ avl_bin.run(cmd_text, avl_file, run_file, [mass_file], cwd=avl_dir)
-    │   └─ subprocess: avl <avl_file.name> <staging/reset.run> [<mass>] + stdin
+    ├─ avl_bin.run(cmd_text, cwd=avl_dir)
+    │   └─ subprocess: avl (no CLI args) + complete stdin script
     │   └─ .st files written to short /tmp staging dir; moved to out_dir after AVL exits
     │
     ├─ st_fileread(out_dir)                → list[StResult]
@@ -80,26 +79,29 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir, binary, out_format, m
   All flight condition data (Alpha, Beta, control deflections) is inside the .st
   file itself, so numeric names lose no information.
 
-- **AVL CLI interface**: AVL is invoked as `avl <avl_file> <reset.run> [<mass_file>]`
-  with the sweep commands piped to stdin — matching AVL's documented CLI interface
-  and the original MATLAB implementation.  This is why `reset.run` is a real input
-  and why no `LOAD` or `MASS` commands appear in the stdin script.
+- **Pure stdin interface**: AVL is an interactive Fortran program with no CLI argument
+  for sweep commands.  `avl_bin.run()` invokes `avl` with no positional args and pipes
+  the complete command script to stdin — matching the original MATLAB implementation
+  (`avl < command.txt`).  The script opens with `LOAD <avl_file>` and `CASE <reset.run>`
+  then proceeds to `PLOP G` / `OPER` / sweep loop / `Quit`.
 
 - **File-based AVL inputs**: `avl_sweep.run()` writes `reset.run` and `sweep.log`
   to `out_dir` so the full inputs are on disk alongside the outputs.  `sweep.log`
-  opens with a `#` comment line containing the exact shell command to replay the run.
+  contains the complete stdin script (including `LOAD`/`CASE`) and is a record of
+  exactly what was piped to AVL — not a runnable replay script (paths use `out_dir`
+  which may exceed AVL's ~80-char Fortran limit).
 
 - **Two command strings**: `make_run_command` is called twice — once with
   `out_dir` paths (written to `sweep.log` for human reference) and once with
   `/tmp` staging paths (fed to AVL stdin to stay under the 80-char Fortran limit).
 
-- **Staging in /tmp**: AVL writes `.st` files — and `reset.run` is staged — in a
-  short `tempfile.TemporaryDirectory(prefix="avl_")` path to keep all AVL-facing
+- **Staging in /tmp**: AVL writes `.st` files in a short
+  `tempfile.TemporaryDirectory(prefix="avl_")` path to keep all AVL-facing
   filenames under the ~80-char Fortran string limit.  Files are moved to `out_dir`
   after AVL exits; the temp directory is deleted automatically even if AVL crashes.
 
 - **cwd = avl_dir**: AVL is invoked with `cwd` set to the directory containing
-  the `.avl` file so that bare filenames (geometry, mass) resolve correctly, and
+  the `.avl` file so that the bare filename in `LOAD` resolves correctly, and
   relative paths inside the `.avl` file (airfoil data, etc.) also resolve.
 - **`make_run_command` loop structure**: when `ctrl_sweeps` is empty, one run is
   emitted per `(alpha, beta)` point.  When `ctrl_sweeps` has entries, surfaces

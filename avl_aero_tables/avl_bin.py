@@ -64,32 +64,24 @@ def run(
     command_text: str,
     binary: Path | None = None,
     cwd: Path | None = None,
-    avl_file: str | None = None,
-    run_file: str | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Feed command_text to AVL via stdin and return the completed process.
 
-    avl_file and run_file are passed as positional CLI arguments to the AVL
-    binary before stdin is read — matching AVL's documented CLI interface:
-    ``avl [avl_file [run_file]]``.  Set cwd to the directory containing the
-    .avl file so bare filenames resolve correctly.
+    AVL is driven entirely via stdin — geometry and run-case are loaded with
+    LOAD and CASE commands inside command_text.  Set cwd to the directory
+    containing the .avl file so bare filenames in LOAD resolve correctly.
 
     Example
     -------
     >>> from pathlib import Path
     >>> from avl_aero_tables.avl_bin import run
-    >>> result = run("Quit\\n", avl_file="bd.avl", cwd=Path("examples/bd"))
+    >>> result = run("LOAD bd.avl\\nQuit\\n", cwd=Path("examples/bd"))
     >>> result.returncode
     0
     """
     binary = binary or find_avl()
-    args = [str(binary)]
-    if avl_file is not None:
-        args.append(avl_file)
-    if run_file is not None:
-        args.append(run_file)
     return subprocess.run(
-        args,
+        [str(binary)],
         input=command_text,
         capture_output=True,
         text=True,

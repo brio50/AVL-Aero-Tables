@@ -11,16 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.0] - 2026-05-15
 
 ### Changed
+- `plot aero` argument changed from `<yml>` to `<runs_dir>` — pass a parent directory to auto-select the latest timestamped run, or a specific timestamped directory for a particular run; `.yml` is no longer required
 - `avl_sweep()` `out_dir` is now a **base directory** — the timestamped run directory `{out_dir}/{avl_stem}_{YYYY-MM-DD-HHMMSS}/` is created automatically (including parents); raises `TypeError` if omitted
 - All aircraft geometry files consolidated under `examples/` alongside the runnable scripts, mirroring the recommended user project layout: `examples/bd/`, `examples/supra/`, `examples/allegro/`, `examples/b737/`, `examples/plane/`, `examples/supergee/`, `examples/ellipg/`
 - `docs/_static/gen_plots.py` merged into `examples/quickstart.py` — single runnable script does geometry read/plot, full alpha × beta × all-controls sweep, aero database, and all coefficient plots; `--docs` flag also writes PNGs to `docs/_static/img/`
 - Output directory convention: `runs/bd_<timestamp>/` at project root (gitignored); `examples/quickstart.py` passes `out_dir=Path("runs")` and `avl_sweep` creates the timestamped subdir automatically
+- AVL is now invoked as `avl` with **no positional CLI arguments** — geometry and run-case are loaded via `LOAD` and `CASE` stdin commands at the top of the script, making the approach fully consistent with the original MATLAB implementation (`avl < command.txt`); `avl_bin.run()` drops its `avl_file` and `run_file` kwargs accordingly
+- `make_run_command()` gains `avl_file` and `run_file` parameters and now emits `LOAD <avl_file>` and `CASE <run_file>` at the top of the generated stdin script
+- `sweep.log` now contains the complete stdin script including `LOAD` and `CASE` — a full record of everything piped to AVL; replay claim removed from docs
 
 ### Added
 - `examples/quickstart.py` — end-to-end walkthrough script (geometry → sweep → aero database → plots); outputs to `runs/bd_<timestamp>/`; `--docs` flag updates committed doc images
 
 ### Fixed
 - Docstring examples in `avl_sweep`, `aero_filewrite`, and `aero_fileplot` now pass `out_dir` to `avl_sweep()` — previously would raise `TypeError` when run as doctests
+- Quickstart docs clarified that `fig.savefig()` writes to the current working directory
+- `sweep.log` replay claim removed — the file uses full `run_dir` paths for human readability which exceed AVL's ~80-char Fortran limit; `sweep.log` is a record, not a runnable script
 
 ## [1.1.0] - 2026-05-15
 
@@ -30,10 +36,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/dev/reqs/sweep.csv` req-sweep-8 had a dead test link (`test_run_default_out_dir_is_relative_to_avl`) and wrong description — corrected to match the actual test name and behavior (CWD-relative timestamped directory, not avl_dir-relative)
 
 ### Added
+- YAML-driven CLI: `avl-aero-tables sweep <yml>`, `plot geometry <yml>`, `plot aero <runs_dir>` — replaces the removed `run <command_file>` subcommand
+- `examples/<stem>/<stem>.yml` project files for all seven reference aircraft (bd, allegro, b737, ellipg, plane, supergee, supra)
+- `ProjectConfig` / `InputSpec` / `SweepSpec` / `OutputSpec` pydantic models — parse and validate the project file; report structured errors on bad input
 - `sweep.log` written to each output directory — records the stdin commands piped to AVL with a replay comment on the first line showing the exact shell invocation
 - `reset.run` is now a real AVL CLI input (written to a short `/tmp` staging path and passed as the second positional argument to the binary) rather than a reference-only file
 
 ### Changed
+- YAML project file schema: `input.geometry` (path to `.avl`, relative to yml), `sweep.{alpha,beta,ctrl_sweeps}`, `output.format` (default `csv`)
+- Sweep output directory: `<yml_dir>/../runs/<stem>/<YYYY-MM-DD-HHMMSS>/` — e.g. `examples/bd/bd.yml` → `examples/runs/bd/2026-05-15-120000/`
+- `plot aero` takes a `<runs_dir>` path — pass a parent directory to auto-select the latest timestamped run, or a specific directory for a particular run
+- `run <command_file>` subcommand removed — was never the intended interface
 - AVL is now invoked using its documented CLI interface: `avl <avl_file> <reset.run>`, matching the original MATLAB implementation; geometry loading via the `LOAD` stdin command has been removed
 - `make_run_command()` no longer accepts `avl_name` parameter — this is now a CLI argument handled by `avl_bin.run()`; the generated stdin script begins with `PLOP G` then `OPER` rather than `LOAD`
 - `avl_bin.run()` gains `avl_file` and `run_file` keyword arguments passed as positional CLI args to the AVL binary
@@ -43,6 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - `mass_file` parameter removed from `avl_sweep()` and `avl_bin.run()` — `.st` stability and control derivatives do not depend on mass or inertia properties; `.mass` files are only needed for AVL's dynamic stability eigenvalue analysis (`.eig`), which is outside the scope of this package
+
+### Dependencies
+- Added `pyyaml` and `pydantic` to `[project] dependencies`
 
 ## [1.0.1] - 2026-05-15
 

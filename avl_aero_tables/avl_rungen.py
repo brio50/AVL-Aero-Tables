@@ -95,12 +95,14 @@ def make_run_command(
     ctrl_names: list[str],
     ctrl_sweeps: dict[str, list[float]],
     out_dir: Path,
+    avl_file: str | Path,
+    run_file: str | Path,
 ) -> str:
     """Return the AVL stdin command script for a sweep.
 
-    The geometry and run-case files are passed as CLI arguments to the AVL
-    binary by the caller — this function generates only the interactive OPER
-    commands piped to AVL's stdin.
+    AVL is driven entirely via stdin — geometry and run-case are loaded with
+    LOAD and CASE commands at the top of the script, followed by OPER commands
+    for each sweep point.
 
     Parameters
     ----------
@@ -117,6 +119,10 @@ def make_run_command(
     out_dir:
         Directory where .st output files will be written.  May be an absolute
         or relative path — keep it short; AVL has an ~80-char filename limit.
+    avl_file:
+        Path to the .avl geometry file passed to the LOAD command.
+    run_file:
+        Path to the reset .run file passed to the CASE command.
 
     Example
     -------
@@ -128,14 +134,16 @@ def make_run_command(
     ...     ctrl_names=["flap", "aileron", "elevator", "rudder"],
     ...     ctrl_sweeps={},
     ...     out_dir=Path("/tmp/avl_out"),
+    ...     avl_file="bd.avl",
+    ...     run_file="/tmp/avl_x/reset.run",
     ... )
     >>> cmd.splitlines()[0]
-    'PLOP'
+    'LOAD bd.avl'
     >>> cmd.count("A A")  # one alpha line per case
     2
     """
     out_dir = Path(out_dir)
-    lines: list[str] = ["PLOP", "G", "", "OPER"]
+    lines: list[str] = [f"LOAD {avl_file}", f"CASE {run_file}", "PLOP", "G", "", "OPER"]
 
     ctrl_points: list[tuple[int, float]] = [
         (ctrl_names.index(name) + 1, defl)
