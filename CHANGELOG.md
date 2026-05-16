@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-05-16
+
+### Removed
+- Plotly iframe dark-mode sync (`_THEME_LISTENER` script, `MutationObserver` in
+  `custom.js`, `class="plotly-iframe"` targeting).  The postMessage/relayout approach
+  was fragile — it raced with Plotly's multi-frame render pipeline and caused the plot
+  background to flash between dark and light on hard refresh.  Plotly figures remain
+  in their baked-in light template regardless of the page theme toggle.
+
 ## [1.5.0] - 2026-05-16
 
 ### Added

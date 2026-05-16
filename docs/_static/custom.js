@@ -14,17 +14,4 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // Sync plotly iframe theme with sphinx-book-theme dark/light toggle.
-    function broadcastTheme(theme) {
-        document.querySelectorAll("iframe.plotly-iframe").forEach(function (iframe) {
-            try {
-                iframe.contentWindow.postMessage({ type: "set-theme", theme: theme }, "*");
-            } catch (e) {}
-        });
-    }
-
-    var observer = new MutationObserver(function () {
-        broadcastTheme(document.documentElement.dataset.theme || "light");
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 });

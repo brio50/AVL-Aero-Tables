@@ -14,26 +14,6 @@ HERE = Path(__file__).resolve().parent   # examples/
 B737_AVL = HERE / "b737/b737.avl"
 DOCS_HTML = HERE.parent / "docs/_static/html"
 
-# Injected into every generated HTML file so plotly theme tracks the Sphinx
-# dark/light toggle (sphinx-book-theme sets html[data-theme]).
-_THEME_LISTENER = """<script>
-(function () {
-    function applyTemplate(theme) {
-        var t = theme === "dark" ? "plotly_dark" : "plotly_white";
-        document.querySelectorAll(".plotly-graph-div").forEach(function (d) {
-            if (window.Plotly) Plotly.relayout(d, { template: t });
-        });
-    }
-    try {
-        var th = window.parent.document.documentElement.dataset.theme;
-        if (th) applyTemplate(th);
-    } catch (e) {}
-    window.addEventListener("message", function (e) {
-        if (e.data && e.data.type === "set-theme") applyTemplate(e.data.theme);
-    });
-})();
-</script>"""
-
 
 def main(write_docs: bool = False) -> None:
     runs_dir = HERE / "runs"
@@ -95,7 +75,7 @@ def main(write_docs: bool = False) -> None:
 
 
 def _save_html(fig: object, run_path: Path, docs_path: Path, write_docs: bool) -> None:
-    html = fig.to_html(include_plotlyjs="cdn", full_html=False) + _THEME_LISTENER  # type: ignore[attr-defined]
+    html = fig.to_html(include_plotlyjs="cdn", full_html=False)  # type: ignore[attr-defined]
     run_path.write_text(html)
     print(f"  → {run_path.name}")
     if write_docs:
