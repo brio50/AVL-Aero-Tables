@@ -87,7 +87,9 @@ def run(
         ctrl_sweeps = {}
 
     if out_dir is None:
-        raise TypeError("out_dir is required — pass a base directory (e.g. Path('runs'))")
+        raise TypeError(
+            "out_dir is required — pass a base directory (e.g. Path('runs'))"
+        )
     timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
     run_dir = Path(out_dir).resolve() / f"{avl_file.stem}_{timestamp}"
     run_dir.mkdir(parents=True, exist_ok=True)

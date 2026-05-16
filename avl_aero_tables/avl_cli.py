@@ -138,9 +138,15 @@ def _cmd_plot_aero(args: argparse.Namespace) -> int:
     if _TIMESTAMP_RE.match(runs_dir.name):
         result_dir = runs_dir
     else:
-        subdirs = sorted(
-            d for d in runs_dir.iterdir() if d.is_dir() and _TIMESTAMP_RE.match(d.name)
-        ) if runs_dir.exists() else []
+        subdirs = (
+            sorted(
+                d
+                for d in runs_dir.iterdir()
+                if d.is_dir() and _TIMESTAMP_RE.match(d.name)
+            )
+            if runs_dir.exists()
+            else []
+        )
         if not subdirs:
             print(
                 f"ERROR: No sweep results found in {runs_dir}.",

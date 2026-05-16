@@ -121,7 +121,6 @@ def test_cli_verify_subcommand_failure():
         assert code == 1
 
 
-
 @pytest.mark.req("req-bin-9")
 def test_cli_no_args_shows_help():
     parser = _build_parser()

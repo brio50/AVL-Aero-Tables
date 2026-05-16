@@ -1,8 +1,8 @@
-import pytest
-
 """Tests for avl_rungen: run-case and command file generation."""
 
 from pathlib import Path
+
+import pytest
 
 from avl_aero_tables.avl_rungen import make_run_command, make_run_reset
 
@@ -138,7 +138,13 @@ def test_command_runs_and_resets():
 @pytest.mark.req("req-cmd-16")
 def test_command_ctrl_sweep_deflection():
     text = make_run_command(
-        [0.0], [0.0], CTRL_NAMES, {"elevator": [-5.0, 0.0, 5.0]}, OUT_DIR, AVL_FILE, RUN_FILE
+        [0.0],
+        [0.0],
+        CTRL_NAMES,
+        {"elevator": [-5.0, 0.0, 5.0]},
+        OUT_DIR,
+        AVL_FILE,
+        RUN_FILE,
     )
     assert "D3 D3 -5" in text
     assert "D3 D3 0" in text
@@ -154,5 +160,7 @@ def test_command_alpha_beta_appear_in_commands():
 
 @pytest.mark.req("req-cmd-17")
 def test_command_multiple_alphas_produce_multiple_runs():
-    text = make_run_command([-6.0, 0.0, 6.0], [0.0], CTRL_NAMES, {}, OUT_DIR, AVL_FILE, RUN_FILE)
+    text = make_run_command(
+        [-6.0, 0.0, 6.0], [0.0], CTRL_NAMES, {}, OUT_DIR, AVL_FILE, RUN_FILE
+    )
     assert text.count("A A") == 3  # one run per alpha when no ctrl_sweeps
