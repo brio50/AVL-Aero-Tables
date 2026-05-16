@@ -6,9 +6,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from avl_aero_tables.avl_fileread import avl_fileread
+from avl_aero_tables.avl_fileread import StResult, avl_fileread
 from avl_aero_tables.avl_sweep import run
-from avl_aero_tables.st_fileread import StResult
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
 BD_AVL = EXAMPLES / "bd" / "bd.avl"
@@ -184,13 +183,13 @@ def test_out_format_invalid_raises(tmp_path):
 
 
 @pytest.mark.req("req-sweep-15")
-def test_run_writes_sweep_log(tmp_path):
+def test_run_writes_sweep_inp(tmp_path):
     mock_result = _make_mock_result()
     with patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result):
         run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path)
-    logs = list(tmp_path.rglob("sweep.log"))
-    assert len(logs) == 1
-    content = logs[0].read_text()
+    inps = list(tmp_path.rglob(".in/sweep.inp"))
+    assert len(inps) == 1
+    content = inps[0].read_text()
     assert "LOAD" in content
     assert "CASE" in content
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+import tomllib
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
@@ -13,6 +14,17 @@ import yaml
 from pydantic import BaseModel, ValidationError, field_validator
 
 from avl_aero_tables.avl_bin import verify
+
+_PYPROJECT = Path(__file__).resolve().parent.parent / "pyproject.toml"
+
+
+def _package_version() -> str:
+    if _PYPROJECT.exists():
+        with _PYPROJECT.open("rb") as f:
+            return tomllib.load(f)["project"]["version"]
+    from importlib.metadata import version
+
+    return version("avl-aero-tables")
 
 
 class InputSpec(BaseModel):
@@ -56,6 +68,9 @@ def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="avl-aero-tables",
         description="Python wrapper for AVL (Athena Vortex Lattice)",
+    )
+    p.add_argument(
+        "--version", action="version", version=f"avl-aero-tables {_package_version()}"
     )
     sub = p.add_subparsers(dest="command", required=True)
 
@@ -103,6 +118,7 @@ def _cmd_sweep(args: argparse.Namespace) -> int:
         ctrl_sweeps=cfg.sweep.ctrl_sweeps,
         out_dir=out_dir,
         out_format=cfg.output.format,
+        yml_file=yml,
     )
     return 0
 
@@ -131,7 +147,7 @@ def _cmd_plot_aero(args: argparse.Namespace) -> int:
 
     from avl_aero_tables.aero_fileplot import aero_fileplot
     from avl_aero_tables.aero_filewrite import aero_filewrite
-    from avl_aero_tables.st_fileread import st_fileread
+    from avl_aero_tables.avl_fileread import st_fileread
 
     runs_dir = args.runs_dir.resolve()
 
@@ -155,7 +171,7 @@ def _cmd_plot_aero(args: argparse.Namespace) -> int:
             return 1
         result_dir = subdirs[-1]
 
-    results = st_fileread(result_dir)
+    results = st_fileread(result_dir / ".raw")
     aero = aero_filewrite(results)
     aero_fileplot(aero)
     plt.show()

@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-05-16
+
+### Added
+- Structured run output directory with reproducibility artifacts:
+  - `.in/` — AVL-generated inputs (`reset.run`, `sweep.inp`)
+  - `.in/<avl_stem>/` — snapshot of all user input files at run time (`.avl`, `.yml` for CLI runs, and all referenced airfoil/body `.dat` files discovered from `AFIL`/`BFIL` entries)
+  - `.raw/` — raw AVL output files (`case_*.st`)
+  - `provenance.json` at run root — records `timestamp`, `package_version`, `git_commit`, `git_branch`, `git_dirty`, `entry` (`"cli"` or `"api"`), `source` (input directory), and `snapshot` (relative path to `.in/<avl_stem>/`)
+- `avl_sweep.run()` gains `yml_file` parameter — when provided by the CLI, marks `entry: "cli"` in `provenance.json` and copies the `.yml` into `.in/<avl_stem>/`
+- `--version` flag added to the `avl-aero-tables` CLI; reads version from `pyproject.toml` (source of truth) with `importlib.metadata` fallback for non-editable installs
+
+### Changed
+- `sweep.log` renamed to `sweep.inp` (`.inp` is the conventional extension for stdin-fed solver scripts in scientific computing) and moved from run root to `.in/`
+- `reset.run` moved from run root to `.in/`
+- `case_*.st` files moved from run root to `.raw/`
+- `results.csv` / `results.json` remain at run root alongside `provenance.json`
+- `avl-aero-tables plot aero` updated to read `.st` files from `.raw/` subdirectory
+- `provenance.json` `source` field changed from file path (`.avl` or `.yml`) to the input directory — more accurate since `.avl` depends on co-located airfoil/body `.dat` files
+- `provenance.json` `package_version` reads from `pyproject.toml` directly rather than `importlib.metadata` — stays current during local development without reinstalling
+
 ## [1.2.0] - 2026-05-15
 
 ### Changed

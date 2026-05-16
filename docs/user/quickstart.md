@@ -25,12 +25,16 @@ For your own project, keep geometry inputs versioned in git and runs outside of 
 │   ├── 📄 design.avl        ← geometry: surfaces, sections, control hinges
 │   ├── 📄 wing_airfoil.dat  ← airfoil coordinates   (AFIL entry in .avl)
 │   └── 📄 fuselage.dat      ← body cross-sections   (BFIL entry in .avl)
-│   └── 📄 design.yml        ← CLI project file  (or analysis.py for the Python API)
+│   └── 📄 design.yml        ← CLI project file
 ├── 📁 runs/                 ← generated at runtime; add to .gitignore
 │   └── 📁 design_2026-05-15-143022/
+├── 📄 analysis.py           ← Python API script
 └── 📄 .gitignore            ← contains: runs/
 ```
 
+See {ref}`output-layout` for the full contents of each timestamped run directory.
+
+(quickstart:cli)=
 ## CLI
 
 The fastest path from geometry to results — define your sweep in a YAML project file, then run three commands.
@@ -114,6 +118,7 @@ Pass a parent directory to plot the latest sweep, or a specific timestamped dire
 ```
 ````
 
+(quickstart:python-api)=
 ## Python API
 
 ```{note}

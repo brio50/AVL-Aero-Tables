@@ -223,7 +223,7 @@ def test_plot_aero_picks_latest_dir(tmp_path):
 
     fake_aero = MagicMock()
     with (
-        patch("avl_aero_tables.st_fileread.st_fileread", side_effect=fake_st_fileread),
+        patch("avl_aero_tables.avl_fileread.st_fileread", side_effect=fake_st_fileread),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
         patch("avl_aero_tables.aero_fileplot.aero_fileplot"),
         patch("matplotlib.pyplot.show"),
@@ -232,7 +232,7 @@ def test_plot_aero_picks_latest_dir(tmp_path):
 
     assert result == 0
     assert len(captured) == 1
-    assert captured[0] == new_dir
+    assert captured[0] == new_dir / ".raw"
 
 
 def test_plot_aero_specific_dir(tmp_path):
@@ -248,7 +248,7 @@ def test_plot_aero_specific_dir(tmp_path):
 
     fake_aero = MagicMock()
     with (
-        patch("avl_aero_tables.st_fileread.st_fileread", side_effect=fake_st_fileread),
+        patch("avl_aero_tables.avl_fileread.st_fileread", side_effect=fake_st_fileread),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
         patch("avl_aero_tables.aero_fileplot.aero_fileplot"),
         patch("matplotlib.pyplot.show"),
@@ -256,7 +256,7 @@ def test_plot_aero_specific_dir(tmp_path):
         result = main(["plot", "aero", str(specific_dir)])
 
     assert result == 0
-    assert captured[0] == specific_dir
+    assert captured[0] == specific_dir / ".raw"
 
 
 # ---------------------------------------------------------------------------

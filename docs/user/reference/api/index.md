@@ -12,31 +12,29 @@ sequenceDiagram
     participant FR as avl_fileread
     participant RG as avl_rungen
     participant BN as avl_bin
-    participant SF as st_fileread
     participant FS as 📁 out_dir/
 
-    U->>S: avl_file, α, β, δ, .mass
+    U->>S: avl_file, α, β, δ
     S->>FR: avl_file
     FR-->>S: AvlGeometry
     S->>RG: make_run_reset()
-    RG->>FS: reset.run
+    RG->>FS: .in/reset.run
     S->>RG: make_run_command() ×2
-    RG->>FS: sweep.log
+    RG->>FS: .in/sweep.inp
     RG-->>S: cmd_text
-    S->>BN: avl_file, reset.run, cmd_text
-    BN->>FS: case_NNNN.st
-    S->>SF: out_dir/
-    SF-->>S: list[StResult]
+    S->>BN: cmd_text
+    BN->>FS: .raw/case_NNNN.st
+    FR->>FS: read *.st
+    FR-->>S: list[StResult]
     S-->>U: list[StResult]
 ```
 
 | Component | Role | Public? |
 |---|---|---|
 | {doc}`avl_sweep` | Top-level orchestrator — the `avl_sweep()` entry point | Yes |
-| {doc}`avl_fileread` | Parses `.avl` geometry file → `AvlGeometry` | Yes |
-| {doc}`avl_rungen` | Builds `reset.run` and the AVL stdin command script | Internal |
+| {doc}`avl_fileread` | Parses AVL file formats: `.avl` geometry → `AvlGeometry`; `.st` output → `list[StResult]` | Yes |
+| {doc}`avl_rungen` | Builds `.in/reset.run` and `.in/sweep.inp` (the AVL stdin script) | Internal |
 | {doc}`avl_bin` | Locates, verifies, and invokes the AVL Fortran binary via subprocess | Indirect |
-| {doc}`st_fileread` | Parses `.st` output files → `list[StResult]` | Yes (advanced) |
 
 ````
 
@@ -78,7 +76,6 @@ avl_sweep
 avl_fileread
 avl_rungen
 avl_bin
-st_fileread
 aero_filewrite
 avl_fileplot
 aero_fileplot

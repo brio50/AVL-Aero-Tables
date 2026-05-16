@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from avl_aero_tables.st_fileread import StResult
+from avl_aero_tables.avl_fileread import StResult
 
 if TYPE_CHECKING:
     import pandas as pd

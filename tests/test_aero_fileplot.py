@@ -14,7 +14,7 @@ from avl_aero_tables.aero_filewrite import (
     AeroDatabase,
     aero_filewrite,
 )
-from avl_aero_tables.st_fileread import StResult
+from avl_aero_tables.avl_fileread import StResult
 
 # ---------------------------------------------------------------------------
 # Helpers
