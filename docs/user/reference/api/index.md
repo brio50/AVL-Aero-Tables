@@ -50,13 +50,15 @@ flowchart TD
     FW["🗄️ aero_filewrite()"]
     AP["📈 aero_fileplot()"]
     CLI["💻 avl-aero-tables CLI"]
+    CFG["📋 avl_config"]
 
     GEOM --> FP -->|"Figure"| FOUT(["🖼️ four-view plot"])
     RES --> FW -->|"AeroDatabase"| AP -->|"list[Figure]"| AOUT(["📈 aero surface plots"])
-    CLI -->|"verify / run"| BIN["⚙️ avl_bin"]
+    CLI --> CFG
+    CLI -->|"verify / sweep / plot"| BIN["⚙️ avl_bin"]
 
     classDef py fill:#dbeafe,stroke:#3b82f6,color:#1e3a5f
-    class FP,FW,AP,CLI,BIN py
+    class FP,FW,AP,CLI,CFG,BIN py
 ```
 
 ````
@@ -66,7 +68,8 @@ flowchart TD
 | {doc}`avl_fileplot` | Four-view geometry plot → `Figure` | Yes |
 | {doc}`aero_filewrite` | Exports results to CSV/JSON; pivots `list[StResult]` → `AeroDatabase` | Yes |
 | {doc}`aero_fileplot` | 3-D surface plots of `AeroDatabase` → `list[Figure]` | Yes |
-| {doc}`avl_cli` | `avl-aero-tables` CLI entry point (`verify`, `run` subcommands) | CLI only |
+| {doc}`avl_cli` | `avl-aero-tables` CLI entry point — argument parsing and command dispatch | CLI only |
+| {doc}`avl_config` | YAML project-file schema (`ProjectConfig`) and `load_config()` | CLI only |
 
 ```{toctree}
 :maxdepth: 1
@@ -80,4 +83,5 @@ aero_filewrite
 avl_fileplot
 aero_fileplot
 avl_cli
+avl_config
 ```

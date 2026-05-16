@@ -10,10 +10,9 @@ import pytest
 
 from avl_aero_tables.avl_cli import (
     _TIMESTAMP_RE,
-    ProjectConfig,
-    _load_config,
     main,
 )
+from avl_aero_tables.avl_config import ProjectConfig, load_config as _load_config
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
 BD_YML = EXAMPLES / "bd" / "bd.yml"
@@ -79,6 +78,49 @@ def test_load_config_invalid_format_exits(tmp_path):
           format: xlsx
     """)
     )
+    with pytest.raises(SystemExit):
+        _load_config(yml)
+
+
+def test_load_config_empty_beta_exits(tmp_path):
+    yml = tmp_path / "bad.yml"
+    _write_yml(yml, alpha="[0]")
+    yml.write_text(
+        "input:\n  geometry: x.avl\nsweep:\n  alpha: [0]\n  beta: []\n"
+    )
+    with pytest.raises(SystemExit):
+        _load_config(yml)
+
+
+def test_load_config_ctrl_sweeps_empty_list_exits(tmp_path):
+    yml = tmp_path / "bad.yml"
+    yml.write_text(
+        textwrap.dedent("""\
+        input:
+          geometry: x.avl
+        sweep:
+          alpha: [0]
+          beta: [0]
+          ctrl_sweeps:
+            elevator: []
+    """)
+    )
+    with pytest.raises(SystemExit):
+        _load_config(yml)
+
+
+def test_load_config_non_numeric_alpha_exits(tmp_path):
+    yml = tmp_path / "bad.yml"
+    yml.write_text(
+        "input:\n  geometry: x.avl\nsweep:\n  alpha: [foo]\n  beta: [0]\n"
+    )
+    with pytest.raises(SystemExit):
+        _load_config(yml)
+
+
+def test_load_config_invalid_yaml_exits(tmp_path):
+    yml = tmp_path / "bad.yml"
+    yml.write_text(": bad: yaml: [")
     with pytest.raises(SystemExit):
         _load_config(yml)
 
@@ -168,7 +210,13 @@ def test_sweep_passes_correct_args(tmp_path):
         captured.update(kwargs)
         return []
 
-    with patch("avl_aero_tables.avl_sweep.run", side_effect=fake_run):
+    fake_geom = MagicMock()
+    fake_geom.ctrl_names = ["elevator"]
+
+    with (
+        patch("avl_aero_tables.avl_fileread.avl_fileread", return_value=fake_geom),
+        patch("avl_aero_tables.avl_sweep.run", side_effect=fake_run),
+    ):
         result = main(["sweep", str(yml)])
 
     assert result == 0
@@ -177,6 +225,33 @@ def test_sweep_passes_correct_args(tmp_path):
     assert captured["beta"] == [0]
     assert captured["ctrl_sweeps"] == {"elevator": [-10, 0, 10]}
     assert captured["out_format"] == "json"
+
+
+def test_sweep_bad_ctrl_key_exits(tmp_path):
+    sub = tmp_path / "bd"
+    sub.mkdir()
+    yml = sub / "bd.yml"
+    yml.write_text(
+        textwrap.dedent("""\
+        input:
+          geometry: bd.avl
+        sweep:
+          alpha: [0]
+          beta: [0]
+          ctrl_sweeps:
+            florp: [-10, 0, 10]
+    """)
+    )
+    (sub / "bd.avl").touch()
+
+    fake_geom = MagicMock()
+    fake_geom.ctrl_names = ["elevator", "aileron"]
+
+    with (
+        patch("avl_aero_tables.avl_fileread.avl_fileread", return_value=fake_geom),
+        pytest.raises(SystemExit),
+    ):
+        main(["sweep", str(yml)])
 
 
 # ---------------------------------------------------------------------------

@@ -8,12 +8,9 @@ import sys
 import tomllib
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
-
-import yaml
-from pydantic import BaseModel, ValidationError, field_validator
 
 from avl_aero_tables.avl_bin import verify
+from avl_aero_tables.avl_config import load_config
 
 _PYPROJECT = Path(__file__).resolve().parent.parent / "pyproject.toml"
 
@@ -25,43 +22,6 @@ def _package_version() -> str:
     from importlib.metadata import version
 
     return version("avl-aero-tables")
-
-
-class InputSpec(BaseModel):
-    geometry: str
-
-
-class SweepSpec(BaseModel):
-    alpha: list[float]
-    beta: list[float]
-    ctrl_sweeps: dict[str, list[float]] = {}
-
-    @field_validator("alpha", "beta")
-    @classmethod
-    def non_empty(cls, v: list[float]) -> list[float]:
-        if not v:
-            raise ValueError("must contain at least one value")
-        return v
-
-
-class OutputSpec(BaseModel):
-    format: Literal["csv", "json", "df"] = "csv"
-
-
-class ProjectConfig(BaseModel):
-    input: InputSpec
-    sweep: SweepSpec
-    output: OutputSpec = OutputSpec()
-
-
-def _load_config(yml_path: Path) -> ProjectConfig:
-    with yml_path.open() as f:
-        raw = yaml.safe_load(f)
-    try:
-        return ProjectConfig.model_validate(raw)
-    except ValidationError as exc:
-        print(f"ERROR: invalid project file {yml_path}:\n{exc}", file=sys.stderr)
-        sys.exit(1)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -105,9 +65,24 @@ def _cmd_sweep(args: argparse.Namespace) -> int:
     from avl_aero_tables.avl_sweep import run as _sweep_run
 
     yml = args.yml.resolve()
-    cfg = _load_config(yml)
+    cfg = load_config(yml)
 
     avl_file = (yml.parent / cfg.input.geometry).resolve()
+
+    if cfg.sweep.ctrl_sweeps:
+        from avl_aero_tables.avl_fileread import avl_fileread
+
+        geom = avl_fileread(avl_file)
+        valid = set(geom.ctrl_names)
+        bad = [k for k in cfg.sweep.ctrl_sweeps if k not in valid]
+        if bad:
+            print(
+                f"ERROR: ctrl_sweeps keys not found in {avl_file.name}: {bad}\n"
+                f"  Valid control surfaces: {sorted(valid)}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
     timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
     out_dir = yml.parent.parent / "runs" / yml.stem / timestamp
 
@@ -130,7 +105,7 @@ def _cmd_plot_geometry(args: argparse.Namespace) -> int:
     from avl_aero_tables.avl_fileread import avl_fileread
 
     yml = args.yml.resolve()
-    cfg = _load_config(yml)
+    cfg = load_config(yml)
     avl_file = (yml.parent / cfg.input.geometry).resolve()
 
     geometry = avl_fileread(avl_file)

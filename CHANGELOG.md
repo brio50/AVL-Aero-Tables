@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `avl_config.py` — new module holding `InputSpec`, `SweepSpec`, `OutputSpec`, `ProjectConfig`, and `load_config()`; extracted from `avl_cli.py` to separate schema/validation concerns from CLI dispatch
+- YAML validation now rejects `ctrl_sweeps` entries with empty deflection lists (e.g. `elevator: []`)
+- YAML validation now rejects malformed YAML files with a clean error message (previously raised an unhandled `yaml.YAMLError`)
+- `avl-aero-tables sweep` validates `ctrl_sweeps` keys against control surface names in the `.avl` file before running; exits with a clear error listing the bad keys and valid surface names
+
+### Changed
+- `avl_cli.py` reduced to argument parsing and command dispatch; all Pydantic models and `load_config()` moved to `avl_config.py`
+
 ## [1.3.0] - 2026-05-16
 
 ### Added
