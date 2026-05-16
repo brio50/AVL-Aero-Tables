@@ -8,14 +8,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-05-16
+
+### Added
+- `avl_fileplot`: coordinate triads on geometry plot — AVL world frame (X/Y/Z, grey) at the coordinate origin (0, 0, 0); aircraft body frame (x_b/y_b/z_b, RGB) at the CG; legend distinguishes the two frames
+- Sphinx docs: plotly figures embedded as lazy-loading iframes with `onload` auto-resize; page weight reduced from ~500 KB to ~47 KB; eliminates CDN version mismatch between Sphinx and generated figures
+
+### Changed
+- `avl_fileplot`: four-panel view (Isometric / Top / Front / Side) replaced with a single interactive 3-D scene — user rotates freely
+- `avl_fileplot`: equal-axis scaling via `aspectmode="manual"` with explicit per-axis ranges; true geometric proportions preserved
+- `avl_fileplot`: matplotlib removed entirely; plotly is the only backend
+
+### Fixed
+- `avl_fileplot`: geometry plot now applies each surface's `SCALE` transformation before plotting; previously only `TRANSLATE` was applied, causing surfaces with a Z scale factor (e.g. the b737 wing uses `SCALE 1.0 1.0 0.07`) to plot at grossly incorrect Z values
+
+## [1.4.0] - 2026-05-16
+
 ### Added
 - `avl_config.py` — new module holding `InputSpec`, `SweepSpec`, `OutputSpec`, `ProjectConfig`, and `load_config()`; extracted from `avl_cli.py` to separate schema/validation concerns from CLI dispatch
 - YAML validation now rejects `ctrl_sweeps` entries with empty deflection lists (e.g. `elevator: []`)
 - YAML validation now rejects malformed YAML files with a clean error message (previously raised an unhandled `yaml.YAMLError`)
 - `avl-aero-tables sweep` validates `ctrl_sweeps` keys against control surface names in the `.avl` file before running; exits with a clear error listing the bad keys and valid surface names
+- `examples/b737.py` — Boeing 737-800 end-to-end walkthrough (geometry → sweep → aero database → interactive plots); `--docs` flag writes standalone HTML to `docs/_static/html/`
+- `avl_fileplot` and `aero_fileplot` rewritten for plotly; interactive figures embed directly in Sphinx docs and are drop-in compatible with Dash (`dcc.Graph(figure=fig)`) — the `backend` parameter was removed in 1.4.1 when matplotlib support was dropped entirely
+- `plotly` added to core package dependencies
 
 ### Changed
 - `avl_cli.py` reduced to argument parsing and command dispatch; all Pydantic models and `load_config()` moved to `avl_config.py`
+- `examples/quickstart.py` renamed to `examples/bd.py` — same Bubble Dancer walkthrough; name now matches the aircraft
+- Quickstart docs restructured: intro split into "Input Structure" and "Project Layout" sections; CLI section uses Bubble Dancer (`bd.avl`), Python API section uses Boeing 737-800 (`b737.avl`); B737 plots are now interactive plotly embeds
+- `docs/user/reference/api/avl_fileread.md` description updated to cover both parsers (`.avl` geometry and `.st` stability output); stale `st_fileread.md` (orphaned when the module was merged into `avl_fileread`) removed
+
+### Fixed
+- `avl_fileplot` matplotlib backend: geometry axes now have equal scale across all three dimensions; previously `set_aspect('equal')` equalized the bounding box but not the data ranges, causing wide-span aircraft (e.g. 737) to appear proportionally wrong
 
 ## [1.3.0] - 2026-05-16
 

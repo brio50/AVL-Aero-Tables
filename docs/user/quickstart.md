@@ -1,8 +1,8 @@
 # Quickstart
 
-## Bubble Dancer Walkthrough
+## Input Structure
 
-The Bubble Dancer (`examples/bd/`) is the canonical reference example — a sailplane with a fuselage body, four control surfaces (flap, aileron, elevator, rudder), and external airfoil coordinate files. Its directory structure is the recommended pattern for any custom geometry:
+An AVL geometry is a set of files that must travel together. The Bubble Dancer (`examples/bd/`) illustrates the typical structure — a sailplane with a fuselage body, four control surfaces (flap, aileron, elevator, rudder), and external airfoil coordinate files:
 
 ```{code-block} text
 :class: no-copybutton filetree
@@ -13,6 +13,8 @@ The Bubble Dancer (`examples/bd/`) is the canonical reference example — a sail
 ├── 📄 ag36.dat
 └── 📄 ag37.dat
 ```
+
+## Project Layout
 
 Keep all these files together. AVL's working directory is set to the folder containing the `.avl` file, so every relative path inside it (`fuseBD.dat`, `ag35.dat`, etc.) resolves automatically.
 
@@ -38,6 +40,12 @@ See {ref}`output-layout` for the full contents of each timestamped run directory
 ## CLI
 
 The fastest path from geometry to results — define your sweep in a YAML project file, then run three commands.
+
+```{seealso}
+**Example files** — `examples/bd/bd.avl` · `examples/bd/bd.yml`
+
+`examples/bd.py` regenerates all plots in this section (`python examples/bd.py --docs`).
+```
 
 ### Project File
 
@@ -70,7 +78,9 @@ Check that AVL reads the geometry correctly before running a sweep:
 avl-aero-tables plot geometry examples/bd/bd.yml
 ```
 
-![Bubble Dancer four-view geometry plot](../_static/img/bd_geometry.png)
+```{plotly-figure} _static/html/bd_geometry.html
+```
+
 
 ### Run Sweep
 
@@ -94,36 +104,44 @@ avl-aero-tables plot aero runs/bd/
 
 Pass a parent directory to plot the latest sweep, or a specific timestamped directory to plot a particular run. Opens the aero coefficient surface plots.
 
-````{tab-set}
-```{tab-item} Stability
-![Bubble Dancer stability derivatives](../_static/img/bd_stab.png)
-```
-```{tab-item} CL
-![CLtot control derivatives](../_static/img/bd_ctrl_CLtot.png)
-```
-```{tab-item} CY
-![CYtot control derivatives](../_static/img/bd_ctrl_CYtot.png)
-```
-```{tab-item} CD
-![CDtot control derivatives](../_static/img/bd_ctrl_CDtot.png)
-```
-```{tab-item} Cl
-![Cltot control derivatives](../_static/img/bd_ctrl_Cltot.png)
-```
-```{tab-item} Cm
-![Cmtot control derivatives](../_static/img/bd_ctrl_Cmtot.png)
-```
-```{tab-item} Cn
-![Cntot control derivatives](../_static/img/bd_ctrl_Cntot.png)
+`````{tab-set}
+````{tab-item} Stability
+```{plotly-figure} _static/html/bd_stab.html
 ```
 ````
+````{tab-item} CL
+```{plotly-figure} _static/html/bd_ctrl_CLtot.html
+```
+````
+````{tab-item} CY
+```{plotly-figure} _static/html/bd_ctrl_CYtot.html
+```
+````
+````{tab-item} CD
+```{plotly-figure} _static/html/bd_ctrl_CDtot.html
+```
+````
+````{tab-item} Cl
+```{plotly-figure} _static/html/bd_ctrl_Cltot.html
+```
+````
+````{tab-item} Cm
+```{plotly-figure} _static/html/bd_ctrl_Cmtot.html
+```
+````
+````{tab-item} Cn
+```{plotly-figure} _static/html/bd_ctrl_Cntot.html
+```
+````
+`````
 
 (quickstart:python-api)=
 ## Python API
 
-```{note}
-A fully runnable version of this walkthrough is available as `examples/quickstart.py`.
-Run it from anywhere with `python examples/quickstart.py` — outputs go to `examples/runs/bd_<timestamp>/`.
+```{seealso}
+**Example files** — `examples/b737/b737.avl` · `examples/b737/b737.yml`
+
+`examples/b737.py` is a fully runnable version of this walkthrough (`python examples/b737.py --docs`).
 ```
 
 ### Read & Plot Geometry
@@ -131,17 +149,19 @@ Run it from anywhere with `python examples/quickstart.py` — outputs go to `exa
 ```python
 from avl_aero_tables import avl_fileread, avl_fileplot
 
-geom = avl_fileread("examples/bd/bd.avl")
+geom = avl_fileread("examples/b737/b737.avl")
 
-print(geom.header.name)          # Bubble Dancer RES
-print(list(geom.surface.keys())) # ['Wing', 'Horizontal_tail', 'Vertical_tail']
-print(geom.header.Sref)          # 1000.0  (reference area, sq-in)
+print(geom.header.name)          # 737-800 raised tail
+print(list(geom.surface.keys())) # ['Wing', 'Stab', 'Fin', 'Fuselage_H', ...]
+print(geom.ctrl_names)           # ['slat', 'flap', 'aileron', 'elevator', 'rudder']
+print(geom.header.Sref)          # 1260.0  (reference area, sq-ft)
 
 fig = avl_fileplot(geom)
-fig.savefig("bd_geometry.png", dpi=150)  # saved to current working directory
+fig.write_html("b737_geometry.html", include_plotlyjs="cdn")
 ```
 
-![Bubble Dancer four-view geometry plot](../_static/img/bd_geometry.png)
+```{plotly-figure} _static/html/b737_geometry.html
+```
 
 ### Sweep Alpha / Beta
 
@@ -152,7 +172,7 @@ from pathlib import Path
 from avl_aero_tables import avl_sweep
 
 results = avl_sweep(
-    avl_file="examples/bd/bd.avl",
+    avl_file="examples/b737/b737.avl",
     alpha=list(range(-6, 13, 2)),   # -6 to +12 deg, 2 deg steps
     beta=[0.0],
     out_dir=Path("runs"),
@@ -164,18 +184,18 @@ for r in results[:3]:
 ```
 
 ```
-AVL sweep complete → /your/project/runs/bd_2026-05-15-143022  (10 cases)
+AVL sweep complete → /your/project/runs/b737_2026-05-16-101818  (10 cases)
 10 cases computed
-  Alpha= -6.0  CLtot=-0.1669
-  Alpha= -4.0  CLtot=0.0311
-  Alpha= -2.0  CLtot=0.2299
+  Alpha= -6.0  CLtot=-0.4135
+  Alpha= -4.0  CLtot=-0.2376
+  Alpha= -2.0  CLtot=0.0362
 ```
 
 ### Sweep Control Surfaces
 
 ```python
 results = avl_sweep(
-    avl_file="examples/bd/bd.avl",
+    avl_file="examples/b737/b737.avl",
     alpha=[-4.0, 0.0, 4.0, 8.0],
     beta=[0.0],
     ctrl_sweeps={"elevator": [-10.0, -5.0, 0.0, 5.0, 10.0]},
@@ -185,7 +205,7 @@ print(f"{len(results)} cases (4 alpha × 5 elevator deflections)")
 ```
 
 ```
-AVL sweep complete → /your/project/runs/bd_2026-05-15-143022  (20 cases)
+AVL sweep complete → /your/project/runs/b737_2026-05-16-143022  (20 cases)
 20 cases (4 alpha × 5 elevator deflections)
 ```
 
@@ -199,14 +219,15 @@ See {doc}`concepts` for how `ctrl_sweeps` counts cases and why `0.0` must be inc
 from avl_aero_tables import aero_filewrite
 
 results = avl_sweep(
-    avl_file="examples/bd/bd.avl",
+    avl_file="examples/b737/b737.avl",
     alpha=list(range(-5, 16, 5)),
     beta=list(range(-5, 6, 5)),
     ctrl_sweeps={
-        "flap":     [-10.0, 0.0, 10.0],
-        "aileron":  [-15.0, 0.0, 15.0],
-        "elevator": [-20.0, 0.0, 20.0],
-        "rudder":   [-20.0, 0.0, 20.0],
+        "slat":     [0.0, 5.0, 10.0],
+        "flap":     [0.0, 10.0, 20.0],
+        "aileron":  [-10.0, 0.0, 10.0],
+        "elevator": [-10.0, 0.0, 10.0],
+        "rudder":   [-10.0, 0.0, 10.0],
     },
     out_dir=Path("runs"),
 )
@@ -214,7 +235,7 @@ results = avl_sweep(
 aero = aero_filewrite(results)
 
 print(aero.stab["CLtot"].data.shape)               # (5, 3) — alpha × beta
-print(aero.ctrl["CLtot_d03_elevator"].data.shape)  # (5, 3, 3) — alpha × beta × defl
+print(aero.ctrl["CLtot_d04_elevator"].data.shape)  # (5, 3, 3) — alpha × beta × defl
 ```
 
 ### Plot Aero Coefficients
@@ -223,32 +244,39 @@ print(aero.ctrl["CLtot_d03_elevator"].data.shape)  # (5, 3, 3) — alpha × beta
 from avl_aero_tables import aero_fileplot
 
 figs = aero_fileplot(aero, beta_ref=0.0)
-names = ["bd_stab", "bd_ctrl_CLtot", "bd_ctrl_CYtot",
-         "bd_ctrl_CDtot", "bd_ctrl_Cltot", "bd_ctrl_Cmtot", "bd_ctrl_Cntot"]
+names = ["b737_stab", "b737_ctrl_CLtot", "b737_ctrl_CYtot",
+         "b737_ctrl_CDtot", "b737_ctrl_Cltot", "b737_ctrl_Cmtot", "b737_ctrl_Cntot"]
 for fig, name in zip(figs, names):
-    fig.savefig(f"{name}.png", dpi=150)  # saved to current working directory
+    fig.write_html(f"{name}.html", include_plotlyjs="cdn")
 ```
 
-````{tab-set}
-```{tab-item} Stability
-![Bubble Dancer stability derivatives](../_static/img/bd_stab.png)
-```
-```{tab-item} CL
-![CLtot control derivatives](../_static/img/bd_ctrl_CLtot.png)
-```
-```{tab-item} CY
-![CYtot control derivatives](../_static/img/bd_ctrl_CYtot.png)
-```
-```{tab-item} CD
-![CDtot control derivatives](../_static/img/bd_ctrl_CDtot.png)
-```
-```{tab-item} Cl
-![Cltot control derivatives](../_static/img/bd_ctrl_Cltot.png)
-```
-```{tab-item} Cm
-![Cmtot control derivatives](../_static/img/bd_ctrl_Cmtot.png)
-```
-```{tab-item} Cn
-![Cntot control derivatives](../_static/img/bd_ctrl_Cntot.png)
+`````{tab-set}
+````{tab-item} Stability
+```{plotly-figure} _static/html/b737_stab.html
 ```
 ````
+````{tab-item} CL
+```{plotly-figure} _static/html/b737_ctrl_CLtot.html
+```
+````
+````{tab-item} CY
+```{plotly-figure} _static/html/b737_ctrl_CYtot.html
+```
+````
+````{tab-item} CD
+```{plotly-figure} _static/html/b737_ctrl_CDtot.html
+```
+````
+````{tab-item} Cl
+```{plotly-figure} _static/html/b737_ctrl_Cltot.html
+```
+````
+````{tab-item} Cm
+```{plotly-figure} _static/html/b737_ctrl_Cmtot.html
+```
+````
+````{tab-item} Cn
+```{plotly-figure} _static/html/b737_ctrl_Cntot.html
+```
+````
+`````

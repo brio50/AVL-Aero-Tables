@@ -41,35 +41,78 @@ sequenceDiagram
 ````{div} full-width mermaid-postsweep
 
 ```{mermaid}
-:caption: Post-sweep API
-flowchart TD
-    RES(["📊 list[StResult]"])
-    GEOM(["📐 AvlGeometry"])
+:caption: Geometry plot
+sequenceDiagram
+    actor U as User
+    participant FR as avl_fileread
+    participant FP as avl_fileplot
+    participant FS as 📁 out/
 
-    FP["🖼️ avl_fileplot()"]
-    FW["🗄️ aero_filewrite()"]
-    AP["📈 aero_fileplot()"]
-    CLI["💻 avl-aero-tables CLI"]
-    CFG["📋 avl_config"]
-
-    GEOM --> FP -->|"Figure"| FOUT(["🖼️ four-view plot"])
-    RES --> FW -->|"AeroDatabase"| AP -->|"list[Figure]"| AOUT(["📈 aero surface plots"])
-    CLI --> CFG
-    CLI -->|"verify / sweep / plot"| BIN["⚙️ avl_bin"]
-
-    classDef py fill:#dbeafe,stroke:#3b82f6,color:#1e3a5f
-    class FP,FW,AP,CLI,CFG,BIN py
+    U->>FR: avl_file
+    FR-->>U: AvlGeometry
+    U->>FP: AvlGeometry
+    FP-->>U: plotly.Figure
+    U->>FS: fig.write_html() → .html
 ```
 
-````
+```{mermaid}
+:caption: Aero database + plots
+sequenceDiagram
+    actor U as User
+    participant FW as aero_filewrite
+    participant AP as aero_fileplot
+    participant FS as 📁 out/
+
+    U->>FW: list[StResult]
+    FW->>FS: results.csv / results.json
+    FW-->>U: AeroDatabase
+    U->>AP: AeroDatabase
+    AP-->>U: list[plotly.Figure]
+    U->>FS: fig.write_html() → list[.html]
+```
 
 | Component | Role | Public? |
 |---|---|---|
-| {doc}`avl_fileplot` | Four-view geometry plot → `Figure` | Yes |
+| {doc}`avl_fileplot` | Interactive four-view geometry plot → `plotly.Figure` → `.html` | Yes |
 | {doc}`aero_filewrite` | Exports results to CSV/JSON; pivots `list[StResult]` → `AeroDatabase` | Yes |
-| {doc}`aero_fileplot` | 3-D surface plots of `AeroDatabase` → `list[Figure]` | Yes |
+| {doc}`aero_fileplot` | Interactive 3-D surface plots → `list[plotly.Figure]` → `list[.html]` | Yes |
+
+````
+
+````{div} full-width mermaid-cli
+
+```{mermaid}
+:caption: CLI
+sequenceDiagram
+    actor U as User
+    participant CLI as avl_cli
+    participant CFG as avl_config
+    participant BN as avl_bin
+    participant S as avl_sweep
+    participant FP as avl_fileplot / aero_fileplot
+
+    U->>CLI: avl-aero-tables <cmd> project.yml
+    CLI->>CFG: load_config(yml)
+    CFG-->>CLI: ProjectConfig
+    alt verify
+        CLI->>BN: locate / verify binary
+        BN-->>CLI: path, version
+    else sweep
+        CLI->>S: avl_sweep(ProjectConfig)
+        S-->>CLI: list[StResult] + results.csv
+    else plot
+        CLI->>FP: avl_fileplot / aero_fileplot
+        FP-->>CLI: Figure(s)
+    end
+    CLI-->>U: output / status
+```
+
+| Component | Role | Public? |
+|---|---|---|
 | {doc}`avl_cli` | `avl-aero-tables` CLI entry point — argument parsing and command dispatch | CLI only |
 | {doc}`avl_config` | YAML project-file schema (`ProjectConfig`) and `load_config()` | CLI only |
+
+````
 
 ```{toctree}
 :maxdepth: 1

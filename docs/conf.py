@@ -3,6 +3,7 @@ from importlib.metadata import version as _pkg_version
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent / "_ext"))
 
 # -- Project --------------------------------------------------------------
 
@@ -18,6 +19,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinxcontrib.mermaid",
     "sphinx_design",
+    "plotly_figure",
 ]
 
 # -- Source ---------------------------------------------------------------
@@ -34,6 +36,7 @@ html_show_copyright = False
 templates_path = ["_templates"]
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
+html_js_files = ["custom.js"]
 
 html_theme_options = {
     "repository_url": "https://github.com/brio50/avl-aero-tables",

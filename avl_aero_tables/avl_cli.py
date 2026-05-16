@@ -99,7 +99,7 @@ def _cmd_sweep(args: argparse.Namespace) -> int:
 
 
 def _cmd_plot_geometry(args: argparse.Namespace) -> int:
-    import matplotlib.pyplot as plt
+    import webbrowser
 
     from avl_aero_tables.avl_fileplot import avl_fileplot
     from avl_aero_tables.avl_fileread import avl_fileread
@@ -109,8 +109,11 @@ def _cmd_plot_geometry(args: argparse.Namespace) -> int:
     avl_file = (yml.parent / cfg.input.geometry).resolve()
 
     geometry = avl_fileread(avl_file)
-    avl_fileplot(geometry)
-    plt.show()
+    fig = avl_fileplot(geometry)
+    out = avl_file.parent / f"{avl_file.stem}_geometry.html"
+    fig.write_html(str(out), include_plotlyjs="cdn")
+    print(f"Geometry plot → {out}")
+    webbrowser.open(out.as_uri())
     return 0
 
 
@@ -118,7 +121,7 @@ _TIMESTAMP_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-\d{6}$")
 
 
 def _cmd_plot_aero(args: argparse.Namespace) -> int:
-    import matplotlib.pyplot as plt
+    import webbrowser
 
     from avl_aero_tables.aero_fileplot import aero_fileplot
     from avl_aero_tables.aero_filewrite import aero_filewrite
@@ -148,8 +151,17 @@ def _cmd_plot_aero(args: argparse.Namespace) -> int:
 
     results = st_fileread(result_dir / ".raw")
     aero = aero_filewrite(results)
-    aero_fileplot(aero)
-    plt.show()
+    figs = aero_fileplot(aero)
+    names = ["stab", "ctrl_CLtot", "ctrl_CYtot", "ctrl_CDtot", "ctrl_Cltot", "ctrl_Cmtot", "ctrl_Cntot"]
+    first_out = None
+    for fig, name in zip(figs, names):
+        out = result_dir / f"{name}.html"
+        fig.write_html(str(out), include_plotlyjs="cdn")
+        print(f"  → {out.name}")
+        if first_out is None:
+            first_out = out
+    if first_out:
+        webbrowser.open(first_out.as_uri())
     return 0
 
 
