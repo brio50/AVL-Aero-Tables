@@ -1,7 +1,7 @@
 """End-to-end walkthrough: geometry → sweep → aero database → plots.
 
-Run from the project root:
-    python examples/quickstart.py           # outputs to runs/bd_<timestamp>/
+Run from anywhere:
+    python examples/quickstart.py           # outputs to examples/runs/bd_<timestamp>/
     python examples/quickstart.py --docs    # also copies PNGs to docs/_static/img/
 
 Requires AVL binary installed at ~/bin/avl.
@@ -10,13 +10,13 @@ Requires AVL binary installed at ~/bin/avl.
 import argparse
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-BD_AVL = ROOT / "examples/bd/bd.avl"
-DOCS_IMG = ROOT / "docs/_static/img"
+HERE = Path(__file__).resolve().parent   # examples/
+BD_AVL = HERE / "bd/bd.avl"
+DOCS_IMG = HERE.parent / "docs/_static/img"
 
 
 def main(write_docs: bool = False) -> None:
-    runs_dir = ROOT / "runs"
+    runs_dir = HERE / "runs"
 
     # ── Geometry ──────────────────────────────────────────────────────────────
     from avl_aero_tables import avl_fileread, avl_fileplot

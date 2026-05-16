@@ -37,7 +37,7 @@ For your own project, keep geometry inputs versioned in git and runs outside of 
 
 ```{note}
 A fully runnable version of this walkthrough is available as `examples/quickstart.py`.
-Run it from the project root with `python examples/quickstart.py`.
+Run it from anywhere with `python examples/quickstart.py` — outputs go to `examples/runs/bd_<timestamp>/`.
 ```
 
 ### Read & Plot Geometry
@@ -103,7 +103,9 @@ AVL sweep complete → /your/project/runs/bd_2026-05-15-143022  (20 cases)
 20 cases (4 alpha × 5 elevator deflections)
 ```
 
+```{seealso}
 See {doc}`concepts` for how `ctrl_sweeps` counts cases and why `0.0` must be included for stability tables.
+```
 
 ### Build Aero Database
 

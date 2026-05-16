@@ -20,7 +20,7 @@ build/
 .ruff_cache/
 
 # Sweep outputs — created on demand by examples/quickstart.py
-runs/
+examples/runs/
 *.st
 !examples/**/*.st
 
