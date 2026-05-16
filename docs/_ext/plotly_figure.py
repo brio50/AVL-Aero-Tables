@@ -49,6 +49,7 @@ class PlotlyFigure(Directive):
         html = (
             f'<iframe src="{rel}" width="100%"'
             f' onload="{onload}"'
+            ' class="plotly-iframe"'
             ' style="border:none; display:block; min-height:450px;"'
             ' loading="lazy"></iframe>'
         )

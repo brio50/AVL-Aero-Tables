@@ -113,6 +113,8 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir, binary, out_format, m
 
 - **Stability tables only filled for neutral-control runs**: `aero_filewrite` checks `all_neutral = all(abs(r.data.get(name, 0.0)) < 1e-6 for name in ctrl_map.values())` before populating `stab` tables, so off-neutral sweeps don't corrupt the neutral aero map.
 
+- **0.0 auto-injected into `ctrl_sweeps`**: if any surface's deflection list omits 0.0, `avl_sweep.run()` (and the YAML `SweepSpec` validator in `avl_config.py`) emits a `UserWarning` and inserts 0.0 — sorted into the list — so `db.stab` is always populated.  The original user-supplied list is never modified in place; a new dict is returned.
+
 ---
 
 ## Version source of truth

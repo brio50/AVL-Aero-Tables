@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import tempfile
 import tomllib
+import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
@@ -22,6 +23,26 @@ from avl_aero_tables.avl_fileread import (
 from avl_aero_tables.avl_rungen import make_run_command, make_run_reset
 
 _FORMATS = frozenset(("csv", "json", "df"))
+
+
+def _ensure_neutral_in_sweeps(
+    ctrl_sweeps: dict[str, list[float]],
+) -> dict[str, list[float]]:
+    missing = [
+        k for k, vals in ctrl_sweeps.items() if not any(abs(v) < 1e-9 for v in vals)
+    ]
+    if missing:
+        warnings.warn(
+            f"ctrl_sweeps surfaces {missing} have no 0.0 deflection — "
+            "inserting 0.0 so stability tables are populated.",
+            UserWarning,
+            stacklevel=3,
+        )
+        ctrl_sweeps = {
+            k: sorted(vals + [0.0]) if k in missing else vals
+            for k, vals in ctrl_sweeps.items()
+        }
+    return ctrl_sweeps
 
 _PYPROJECT = Path(__file__).resolve().parent.parent / "pyproject.toml"
 
@@ -151,6 +172,8 @@ def run(
 
     if ctrl_sweeps is None:
         ctrl_sweeps = {}
+
+    ctrl_sweeps = _ensure_neutral_in_sweeps(ctrl_sweeps)
 
     if out_dir is None:
         raise TypeError(

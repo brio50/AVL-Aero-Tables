@@ -1,4 +1,3 @@
-
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -7,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.5.0] - 2026-05-16
+
+### Added
+- `ctrl_sweeps` entries that omit `0.0` now trigger a `UserWarning` and have
+  `0.0` inserted automatically (sorted into the list), ensuring `AeroDatabase.stab`
+  tables are always populated.  Applies to both the Python API (`avl_sweep.run`)
+  and the YAML project-file validator (`SweepSpec` in `avl_config.py`).
+- `avl_aero_tables/_plot_config.py` — shared plotly constants (`AXIS_3D`, `CAMERA_GEOM`, `COLORSCALE_STAB`, `COLORSCALE_CTRL`, `OPACITY_SURFACE`); both plot modules import from here so visual defaults are changed in one place
+- Dark mode sync: plotly figures in Sphinx iframes now track the sphinx-book-theme light/dark toggle — `custom.js` watches `html[data-theme]` via `MutationObserver` and postMessages each `.plotly-iframe`; each generated HTML file contains a listener that calls `Plotly.relayout` with `plotly_dark` or `plotly_white` accordingly; initial theme is read directly from the parent document on iframe load
+
+### Changed
+- `avl_fileplot`: default camera reoriented to nose-left, flying toward viewer (`eye=(-1.5, -1.5, 0.8)`); previously the camera was behind the tail so the aircraft flew away from the viewer
+- `avl_fileplot`, `aero_fileplot`: background planes removed from all 3-D scenes (`showbackground=False` on all axes); axes lines and ticks remain
+- `docs/_ext/plotly_figure.py`: iframes get `class="plotly-iframe"` for postMessage targeting
+- `examples/b737.py`, `examples/bd.py`: `_save_html` appends a theme-listener `<script>` block to every generated HTML file
 
 ## [1.4.1] - 2026-05-16
 

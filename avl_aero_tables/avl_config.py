@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import warnings
 from pathlib import Path
 from typing import Literal
 
@@ -33,7 +34,23 @@ class SweepSpec(BaseModel):
     ) -> dict[str, list[float]]:
         empty = [k for k, vals in v.items() if not vals]
         if empty:
-            raise ValueError(f"ctrl_sweeps entries must have at least one value: {empty}")
+            raise ValueError(
+                f"ctrl_sweeps entries must have at least one value: {empty}"
+            )
+        missing = [
+            k for k, vals in v.items() if not any(abs(x) < 1e-9 for x in vals)
+        ]
+        if missing:
+            warnings.warn(
+                f"ctrl_sweeps surfaces {missing} have no 0.0 deflection — "
+                "inserting 0.0 so stability tables are populated.",
+                UserWarning,
+                stacklevel=2,
+            )
+            v = {
+                k: sorted(vals + [0.0]) if k in missing else vals
+                for k, vals in v.items()
+            }
         return v
 
 

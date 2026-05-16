@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from avl_aero_tables._plot_config import AXIS_3D, COLORSCALE_CTRL, COLORSCALE_STAB, OPACITY_SURFACE
 from avl_aero_tables.aero_filewrite import COEF_NAMES, AeroDatabase
 
 if TYPE_CHECKING:
@@ -88,14 +89,14 @@ def aero_fileplot(
             tbl = aero.stab[coef]
             alpha_g, beta_g = np.meshgrid(tbl.alpha, tbl.beta, indexing="ij")
             fig_stab.add_trace(
-                go.Surface(x=alpha_g, y=beta_g, z=tbl.data, colorscale="Viridis", opacity=0.9, showscale=False, name=coef),
+                go.Surface(x=alpha_g, y=beta_g, z=tbl.data, colorscale=COLORSCALE_STAB, opacity=OPACITY_SURFACE, showscale=False, name=coef),
                 row=i // n_cols + 1, col=i % n_cols + 1,
             )
             fig_stab.update_layout(**{scene_names[i]: dict(
                 aspectmode="cube",
-                xaxis=dict(title="Alpha (deg)"),
-                yaxis=dict(title="Beta (deg)"),
-                zaxis=dict(title=coef),
+                xaxis=dict(title="Alpha (deg)", **AXIS_3D),
+                yaxis=dict(title="Beta (deg)", **AXIS_3D),
+                zaxis=dict(title=coef, **AXIS_3D),
             )})
         fig_stab.update_layout(title_text="Stability coefficients", height=400 * n_rows, showlegend=False)
         figs.append(fig_stab)
@@ -131,14 +132,14 @@ def aero_fileplot(
             tbl = aero.ctrl[key]
             alpha_g, defl_g = np.meshgrid(tbl.alpha, tbl.defl, indexing="ij")
             fig_ctrl.add_trace(
-                go.Surface(x=alpha_g, y=defl_g, z=tbl.data[:, bi, :], colorscale="Plasma", opacity=0.9, showscale=False, name=tbl.surface),
+                go.Surface(x=alpha_g, y=defl_g, z=tbl.data[:, bi, :], colorscale=COLORSCALE_CTRL, opacity=OPACITY_SURFACE, showscale=False, name=tbl.surface),
                 row=j // n_cols + 1, col=j % n_cols + 1,
             )
             fig_ctrl.update_layout(**{scene_names[j]: dict(
                 aspectmode="cube",
-                xaxis=dict(title="Alpha (deg)"),
-                yaxis=dict(title=f"{tbl.ctrl_name} (deg)"),
-                zaxis=dict(title=coef),
+                xaxis=dict(title="Alpha (deg)", **AXIS_3D),
+                yaxis=dict(title=f"{tbl.ctrl_name} (deg)", **AXIS_3D),
+                zaxis=dict(title=coef, **AXIS_3D),
             )})
         fig_ctrl.update_layout(
             title_text=f"{coef}  —  beta = {beta_actual:.1f} deg",

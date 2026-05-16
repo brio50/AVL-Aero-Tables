@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from avl_aero_tables._plot_config import AXIS_3D, CAMERA_GEOM
 from avl_aero_tables.avl_fileread import AvlBody, AvlGeometry, AvlSurface
 
 if TYPE_CHECKING:
@@ -181,10 +182,10 @@ def avl_fileplot(geometry: AvlGeometry) -> "go.Figure":
         scene=dict(
             aspectmode="manual",
             aspectratio=dict(x=1, y=1, z=1),
-            xaxis=dict(title="X", range=axis_ranges[0]),
-            yaxis=dict(title="Y", range=axis_ranges[1]),
-            zaxis=dict(title="Z", range=axis_ranges[2]),
-            camera=dict(eye=dict(x=1.5, y=-1.5, z=0.8)),
+            xaxis=dict(title="X", range=axis_ranges[0], **AXIS_3D),
+            yaxis=dict(title="Y", range=axis_ranges[1], **AXIS_3D),
+            zaxis=dict(title="Z", range=axis_ranges[2], **AXIS_3D),
+            camera=CAMERA_GEOM,
         ),
     )
 
