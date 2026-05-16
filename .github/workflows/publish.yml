@@ -6,7 +6,42 @@ on:
       - "v*"
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Fortran and X11 build dependencies
+        run: sudo apt-get install -y gfortran libx11-dev
+
+      - name: Build and install AVL 3.52
+        run: |
+          mkdir -p ~/bin
+          curl -fsSL https://web.mit.edu/drela/Public/web/avl/avl3.52.tgz -o avl3.52.tgz
+          tar xzf avl3.52.tgz
+          cd AVL3.52rel09032025
+          cd eispack && make -f Makefile.gfortran && cd ..
+          cd plotlib && cp config.make.gfortranDP config.make && make gfortranDP && cd ..
+          cd bin && make -f Makefile.gfortranDP
+          cp avl ~/bin/avl
+
+      - name: Install Python dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Run tests
+        run: pytest
+
   publish:
+    needs: test
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -14,6 +49,25 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure tag is on master
+        run: |
+          git fetch origin master
+          if ! git merge-base --is-ancestor $GITHUB_SHA origin/master; then
+            echo "ERROR: tag must point to a commit on master"
+            exit 1
+          fi
+
+      - name: Check tag matches pyproject.toml version
+        run: |
+          PKG_VERSION=$(grep -m1 '^version' pyproject.toml | sed 's/.*= *"\(.*\)"/\1/')
+          TAG_VERSION=${GITHUB_REF_NAME#v}
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "ERROR: pyproject.toml version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
+            exit 1
+          fi
 
       - uses: actions/setup-python@v5
         with:
@@ -26,3 +80,23 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract changelog for this version
+        id: changelog
+        uses: mindsers/changelog-reader-action@v2
+        with:
+          version: ${{ github.ref_name }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.changelog.outputs.changes }}
