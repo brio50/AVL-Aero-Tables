@@ -63,12 +63,12 @@ Each run deflects exactly one surface; all others stay at zero. This matches the
 Every sweep creates a timestamped subdirectory inside the `out_dir` you pass:
 
 ```python
-results = avl_sweep("examples/bd/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="runs")
+results = avl_sweep("examples/bd/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="_runs")
 ```
 
 ```{code-block} text
 :class: no-copybutton filetree
-📁 runs/
+📁 _runs/
 └── 📁 bd_2026-05-15-143022/
     ├── 📄 results.csv       ← aero table output (format: csv / json / df)
     ├── 📄 provenance.json   ← git commit, dirty flag, source dir, snapshot path

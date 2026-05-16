@@ -84,7 +84,7 @@ def _cmd_sweep(args: argparse.Namespace) -> int:
             sys.exit(1)
 
     timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
-    out_dir = yml.parent.parent / "runs" / yml.stem / timestamp
+    out_dir = yml.parent.parent / "_runs" / yml.stem / timestamp
 
     _sweep_run(
         avl_file=avl_file,
@@ -190,7 +190,7 @@ def main(argv: list[str] | None = None) -> int:
         avl-aero-tables verify
         avl-aero-tables sweep examples/bd/bd.yml
         avl-aero-tables plot geometry examples/bd/bd.yml
-        avl-aero-tables plot aero runs/bd/
+        avl-aero-tables plot aero _runs/bd/
     """
     parser = _build_parser()
     args = parser.parse_args(argv)

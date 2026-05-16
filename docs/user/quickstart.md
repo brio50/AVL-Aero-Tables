@@ -23,15 +23,15 @@ For your own project, keep geometry inputs versioned in git and runs outside of 
 ```{code-block} text
 :class: no-copybutton filetree
 📁 my_project/               ← git repo
+├── 📁 _runs/                ← generated at runtime; add to .gitignore
+│   └── 📁 design_2026-05-15-143022/
 ├── 📁 design/
 │   ├── 📄 design.avl        ← geometry: surfaces, sections, control hinges
 │   ├── 📄 wing_airfoil.dat  ← airfoil coordinates   (AFIL entry in .avl)
 │   └── 📄 fuselage.dat      ← body cross-sections   (BFIL entry in .avl)
 │   └── 📄 design.yml        ← CLI project file
-├── 📁 runs/                 ← generated at runtime; add to .gitignore
-│   └── 📁 design_2026-05-15-143022/
 ├── 📄 analysis.py           ← Python API script
-└── 📄 .gitignore            ← contains: runs/
+└── 📄 .gitignore            ← contains: _runs/
 ```
 
 See {ref}`output-layout` for the full contents of each timestamped run directory.
@@ -89,17 +89,17 @@ avl-aero-tables sweep examples/bd/bd.yml
 ```
 
 ```
-AVL sweep complete → runs/bd/2026-05-15-143022  (45 cases)
+AVL sweep complete → _runs/bd/2026-05-15-143022  (45 cases)
 ```
 
 ```{note}
-Results land in `runs/<yml-stem>/<timestamp>/` relative to the **project root** — one directory up from the `.yml` file. This differs from the Python API, where you control `out_dir` directly.
+Results land in `_runs/<yml-stem>/<timestamp>/` relative to the **project root** — one directory up from the `.yml` file. This differs from the Python API, where you control `out_dir` directly.
 ```
 
 ### Plot Results
 
 ```bash
-avl-aero-tables plot aero runs/bd/
+avl-aero-tables plot aero _runs/bd/
 ```
 
 Pass a parent directory to plot the latest sweep, or a specific timestamped directory to plot a particular run. Opens the aero coefficient surface plots.
@@ -165,7 +165,7 @@ fig.write_html("b737_geometry.html", include_plotlyjs="cdn")
 
 ### Sweep Alpha / Beta
 
-`out_dir` is a base directory — `avl_sweep` creates `runs/bd_<timestamp>/` inside it automatically:
+`out_dir` is a base directory — `avl_sweep` creates `_runs/bd_<timestamp>/` inside it automatically:
 
 ```python
 from pathlib import Path
@@ -175,7 +175,7 @@ results = avl_sweep(
     avl_file="examples/b737/b737.avl",
     alpha=list(range(-6, 13, 2)),   # -6 to +12 deg, 2 deg steps
     beta=[0.0],
-    out_dir=Path("runs"),
+    out_dir=Path("_runs"),
 )
 
 print(f"{len(results)} cases computed")
@@ -184,7 +184,7 @@ for r in results[:3]:
 ```
 
 ```
-AVL sweep complete → /your/project/runs/b737_2026-05-16-101818  (10 cases)
+AVL sweep complete → /your/project/_runs/b737_2026-05-16-101818  (10 cases)
 10 cases computed
   Alpha= -6.0  CLtot=-0.4135
   Alpha= -4.0  CLtot=-0.2376
@@ -199,13 +199,13 @@ results = avl_sweep(
     alpha=[-4.0, 0.0, 4.0, 8.0],
     beta=[0.0],
     ctrl_sweeps={"elevator": [-10.0, -5.0, 0.0, 5.0, 10.0]},
-    out_dir=Path("runs"),
+    out_dir=Path("_runs"),
 )
 print(f"{len(results)} cases (4 alpha × 5 elevator deflections)")
 ```
 
 ```
-AVL sweep complete → /your/project/runs/b737_2026-05-16-143022  (20 cases)
+AVL sweep complete → /your/project/_runs/b737_2026-05-16-143022  (20 cases)
 20 cases (4 alpha × 5 elevator deflections)
 ```
 
@@ -229,7 +229,7 @@ results = avl_sweep(
         "elevator": [-10.0, 0.0, 10.0],
         "rudder":   [-10.0, 0.0, 10.0],
     },
-    out_dir=Path("runs"),
+    out_dir=Path("_runs"),
 )
 
 aero = aero_filewrite(results)

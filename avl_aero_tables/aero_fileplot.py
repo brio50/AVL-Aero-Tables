@@ -98,7 +98,12 @@ def aero_fileplot(
                 yaxis=dict(title="Beta (deg)", **AXIS_3D),
                 zaxis=dict(title=coef, **AXIS_3D),
             )})
-        fig_stab.update_layout(title_text="Stability coefficients", height=400 * n_rows, showlegend=False)
+        fig_stab.update_layout(
+            title_text="Stability coefficients",
+            height=400 * n_rows,
+            showlegend=False,
+            margin=dict(l=40, r=40, t=80, b=40),
+        )
         figs.append(fig_stab)
 
     # ------------------------------------------------------------------
@@ -145,6 +150,7 @@ def aero_fileplot(
             title_text=f"{coef}  —  beta = {beta_actual:.1f} deg",
             height=400 * n_rows,
             showlegend=False,
+            margin=dict(l=40, r=40, t=80, b=40),
         )
         figs.append(fig_ctrl)
 

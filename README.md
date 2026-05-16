@@ -23,9 +23,9 @@ Full installation guide, walkthrough, API reference, and more at the [docs site]
 Define a sweep in a YAML project file and run it in one command:
 
 ```bash
-avl-aero-tables sweep examples/bd/bd.yml        # run sweep → runs/bd/<timestamp>/
+avl-aero-tables sweep examples/bd/bd.yml        # run sweep → _runs/bd/<timestamp>/
 avl-aero-tables plot geometry examples/bd/bd.yml # four-view geometry plot
-avl-aero-tables plot aero runs/bd/              # plot latest sweep results
+avl-aero-tables plot aero _runs/bd/              # plot latest sweep results
 ```
 
 ### Python API

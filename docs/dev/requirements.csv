@@ -59,15 +59,15 @@ req-sweep-9,out_format=csv writes results.csv to out_dir,Common interchange form
 req-sweep-10,out_format=json writes results.json to out_dir,Common interchange format for web tools and other language consumers,tests/test_avl_aerogen.py::test_out_format_json_creates_file
 req-sweep-11,out_format=df returns results in memory without writing any file,Avoids unnecessary disk I/O in programmatic usage,tests/test_avl_aerogen.py::test_out_format_df_writes_no_file
 req-sweep-12,out_format=<unrecognised> raises ValueError with message containing not recognised,Fails fast with a clear error rather than silently writing nothing,tests/test_avl_aerogen.py::test_out_format_invalid_raises
-req-plot-1,avl_fileplot returns a matplotlib Figure,Caller can embed the figure in notebooks or save to disk,tests/test_avl_fileplot.py::test_returns_figure
-req-plot-2,Figure contains exactly four Axes3D subplots,Four-view orthographic layout is the standard engineering drawing convention,tests/test_avl_fileplot.py::test_figure_has_four_axes
-req-plot-3,All four axes are Axes3D instances,2-D axes would silently flatten the geometry and misrepresent dihedral,tests/test_avl_fileplot.py::test_all_axes_are_3d
-req-plot-4,"Axes carry titles: Isometric, Top, Front, Side",Labels orient the viewer without consulting documentation,tests/test_avl_fileplot.py::test_axes_titles
-req-plot-5,Figure suptitle contains the geometry header.name,Distinguishes saved plots when multiple geometries are compared,tests/test_avl_fileplot.py::test_figure_title_contains_geometry_name
-req-plot-6,At least one line is drawn in the isometric axes,Missing lines indicate that surface parsing failed or coordinates were not transferred,tests/test_avl_fileplot.py::test_lines_drawn_for_surfaces
-req-plot-7,CG position is rendered as a scatter collection,CG visualization is critical for stability interpretation,tests/test_avl_fileplot.py::test_cg_scatter_plotted
+req-plot-1,avl_fileplot returns a plotly Figure,Caller can embed the figure in notebooks or save to HTML via fig.write_html(),tests/test_avl_fileplot.py::test_returns_figure
+req-plot-2,Figure has exactly one 3-D scene,Single interactive scene enables rotate/zoom; the four-view matplotlib layout is replaced by the interactive plotly viewer,tests/test_avl_fileplot.py::test_figure_has_one_scene
+req-plot-3,All figure traces are Scatter3d or Cone instances,Non-3D traces would flatten geometry in the interactive viewer and misrepresent dihedral,tests/test_avl_fileplot.py::test_all_traces_are_scatter3d_or_cone
+req-plot-5,Figure layout.title.text contains the geometry header.name,Distinguishes saved plots when multiple geometries are compared,tests/test_avl_fileplot.py::test_figure_title_contains_geometry_name
+req-plot-6,At least one Scatter3d line trace is present,Missing line traces indicate that surface parsing failed or coordinates were not transferred to the figure,tests/test_avl_fileplot.py::test_line_traces_drawn
+req-plot-7,CG position is rendered as a Scatter3d marker trace,CG visualization is critical for stability interpretation,tests/test_avl_fileplot.py::test_cg_marker_present
 req-plot-8,Geometry without a body section plots without error,Wing-only and body-less models are common and must not raise,tests/test_avl_fileplot.py::test_no_body_geometry_no_crash
-req-plot-9,With mirroring the isometric axes contains at least 4 lines,Mirrored surfaces must appear on both sides of the symmetry plane,tests/test_avl_fileplot.py::test_mirror_doubles_lines
+req-plot-9,With mirrored surfaces at least 4 Scatter3d line traces are present,Mirrored surfaces must produce traces on both sides of the symmetry plane,tests/test_avl_fileplot.py::test_mirror_doubles_traces
+req-plot-10,Geometry with a body section plots without error,Files with fuselage bodies must not raise during plotting,tests/test_avl_fileplot.py::test_body_geometry_runs
 req-write-1,aero_filewrite returns an AeroDatabase instance,Defines the structured output contract for the entire pipeline,tests/test_aero_filewrite.py::test_returns_aero_database
 req-write-2,aero_filewrite raises ValueError (message contains empty) for an empty result list,An empty list is always a caller error; silent NaN-filled tables are harder to diagnose,tests/test_aero_filewrite.py::test_empty_results_raises
 req-write-3,AeroDatabase.date is a non-empty string,Provenance field lets users identify when a table was generated,tests/test_aero_filewrite.py::test_date_is_set
@@ -86,12 +86,12 @@ req-write-15,CtrlTable.surface is <d_idx>_<ctrl_name> and CtrlTable.ctrl_name is
 req-write-16,Geometry with no control surfaces produces an empty ctrl dict,ctrl must not contain phantom entries for non-existent surfaces,tests/test_aero_filewrite.py::test_no_controls_empty_ctrl_dict
 req-write-17,Geometry with no control surfaces still fills StabTable,Stability-only models are valid and must produce a complete neutral aero map,tests/test_aero_filewrite.py::test_no_controls_stab_table_filled
 req-write-18,A coefficient absent from a result's .data produces NaN at that table cell,NaN distinguishes a genuinely missing value from a coefficient that happens to be zero,tests/test_aero_filewrite.py::test_missing_coef_produces_nan
-req-aeroplot-1,aero_fileplot returns a list of matplotlib Figure objects,Caller iterates and saves or displays each figure individually,tests/test_aero_fileplot.py::test_returns_list
-req-aeroplot-2,Every item in the returned list is a Figure,Mixed types would break callers that iterate and call fig.savefig,tests/test_aero_fileplot.py::test_returns_figures
-req-aeroplot-3,The first figure is the stability figure with 6 subplots (one per coefficient),Consistent ordering enables programmatic access by index,tests/test_aero_fileplot.py::test_stability_figure_first
-req-aeroplot-4,"Stability figure axes titles include coefficient names (CLtot, CDtot, etc.)",Labels identify which subplot carries which coefficient without documentation,tests/test_aero_fileplot.py::test_stability_axes_titles
+req-aeroplot-1,aero_fileplot returns a list of plotly Figure objects,Caller iterates and saves or displays each figure individually via fig.write_html(),tests/test_aero_fileplot.py::test_returns_list
+req-aeroplot-2,Every item in the returned list is a plotly Figure,Mixed types would break callers that iterate and call fig.write_html(),tests/test_aero_fileplot.py::test_returns_plotly_figures
+req-aeroplot-3,The first figure is the stability figure with 6 Surface traces (one per coefficient),Consistent ordering enables programmatic access by index; one trace per coefficient,tests/test_aero_fileplot.py::test_stability_figure_first
+req-aeroplot-4,"Stability figure subplot titles include coefficient names (CLtot, CDtot, etc.)",Labels identify which subplot carries which coefficient without documentation,tests/test_aero_fileplot.py::test_stability_subplot_titles
 req-aeroplot-5,If no control surfaces are present exactly one figure is returned,Single-figure output for geometry-only models must not produce empty control figures,tests/test_aero_fileplot.py::test_no_ctrl_only_stability_figure
 req-aeroplot-6,"With one surface and all COEF_NAMES, seven figures are returned (1 stability + 6 control)",One figure per coefficient for each surface; count must be deterministic,tests/test_aero_fileplot.py::test_ctrl_figures_produced
-req-aeroplot-7,Each control figure has one subplot per surface,Combines all surfaces for a given coefficient on one figure for side-by-side comparison,tests/test_aero_fileplot.py::test_ctrl_figure_has_one_subplot_per_surface
-req-aeroplot-8,Each control figure suptitle contains a coefficient name,Identifies the figure when saved to disk or displayed in a multi-figure viewer,tests/test_aero_fileplot.py::test_ctrl_figure_title_contains_coef_name
+req-aeroplot-7,Each control figure has one Surface trace per control surface,Combines all surfaces for a given coefficient on one figure for side-by-side comparison,tests/test_aero_fileplot.py::test_ctrl_figure_has_one_surface_per_control
+req-aeroplot-8,Each control figure layout.title.text contains a coefficient name,Identifies the figure when saved to disk or displayed in a multi-figure viewer,tests/test_aero_fileplot.py::test_ctrl_figure_titles_contain_coef_name
 req-aeroplot-9,When beta_ref is not an exact breakpoint the nearest available beta is used,Exact beta values are rarely available; nearest-neighbor avoids a crash or silent empty plot,tests/test_aero_fileplot.py::test_beta_ref_nearest_used

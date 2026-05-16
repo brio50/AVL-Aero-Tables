@@ -1,7 +1,7 @@
 """Bubble Dancer walkthrough: geometry → sweep → aero database → plots.
 
 Run from anywhere:
-    python examples/bd.py           # outputs to examples/runs/bd_<timestamp>/
+    python examples/bd.py           # outputs to examples/_runs/bd_<timestamp>/
     python examples/bd.py --docs    # also copies HTML to docs/_static/html/
 
 Requires AVL binary installed at ~/bin/avl.
@@ -16,7 +16,7 @@ DOCS_HTML = HERE.parent / "docs/_static/html"
 
 
 def main(write_docs: bool = False) -> None:
-    runs_dir = HERE / "runs"
+    runs_dir = HERE / "_runs"
 
     # ── Geometry ──────────────────────────────────────────────────────────────
     from avl_aero_tables import avl_fileread, avl_fileplot

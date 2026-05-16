@@ -66,6 +66,7 @@ def test_cg_marker_present(bd_geometry):
     assert len(marker_traces) > 0
 
 
+@pytest.mark.req("req-plot-10")
 def test_body_geometry_runs(bd_geometry):
     """bd.avl has a body; must plot without error."""
     fig = avl_fileplot(bd_geometry)

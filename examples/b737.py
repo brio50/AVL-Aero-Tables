@@ -1,7 +1,7 @@
 """Boeing 737-800 walkthrough: geometry → sweep → aero database → plots.
 
 Run from anywhere:
-    python examples/b737.py           # outputs to examples/runs/b737_<timestamp>/
+    python examples/b737.py           # outputs to examples/_runs/b737_<timestamp>/
     python examples/b737.py --docs    # also copies HTML to docs/_static/html/
 
 Requires AVL binary installed at ~/bin/avl.
@@ -16,7 +16,7 @@ DOCS_HTML = HERE.parent / "docs/_static/html"
 
 
 def main(write_docs: bool = False) -> None:
-    runs_dir = HERE / "runs"
+    runs_dir = HERE / "_runs"
 
     # ── Geometry ──────────────────────────────────────────────────────────────
     from avl_aero_tables import avl_fileread, avl_fileplot
@@ -46,7 +46,7 @@ def main(write_docs: bool = False) -> None:
         out_dir=runs_dir,
     )
 
-    # avl_sweep created runs/b737_<timestamp>/ — find it as the most recent subdir
+    # avl_sweep created _runs/b737_<timestamp>/ — find it as the most recent subdir
     run_dir = max(runs_dir.glob("b737_*/"))
     print(f"Output → {run_dir}")
 

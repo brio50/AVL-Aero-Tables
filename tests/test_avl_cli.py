@@ -175,7 +175,7 @@ def test_out_dir_pattern(tmp_path):
     assert len(captured) == 1
     out_dir = captured[0]
     assert out_dir.parent.name == "bd"
-    assert out_dir.parent.parent.name == "runs"
+    assert out_dir.parent.parent.name == "_runs"
     assert out_dir.parent.parent.parent == sub.parent
     assert _TIMESTAMP_RE.match(out_dir.name)
 
@@ -283,7 +283,7 @@ def test_plot_geometry_calls_fileplot(tmp_path):
 
 
 def test_plot_aero_picks_latest_dir(tmp_path):
-    runs_base = tmp_path / "runs" / "bd"
+    runs_base = tmp_path / "_runs" / "bd"
     runs_base.mkdir(parents=True)
     old_dir = runs_base / "2026-01-01-120000"
     new_dir = runs_base / "2026-05-15-093000"
@@ -311,7 +311,7 @@ def test_plot_aero_picks_latest_dir(tmp_path):
 
 
 def test_plot_aero_specific_dir(tmp_path):
-    runs_base = tmp_path / "runs" / "bd"
+    runs_base = tmp_path / "_runs" / "bd"
     specific_dir = runs_base / "2026-01-01-120000"
     specific_dir.mkdir(parents=True)
 
@@ -340,7 +340,7 @@ def test_plot_aero_specific_dir(tmp_path):
 
 
 def test_plot_aero_no_results_exits(tmp_path):
-    empty_dir = tmp_path / "runs" / "bd"
+    empty_dir = tmp_path / "_runs" / "bd"
     empty_dir.mkdir(parents=True)
 
     result = main(["plot", "aero", str(empty_dir)])

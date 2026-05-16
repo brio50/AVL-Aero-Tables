@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from avl_aero_tables._plot_config import AXIS_3D, CAMERA_GEOM
+from avl_aero_tables._plot_config import AXIS_3D, CAMERA_GEOM, equal_3d_ranges
 from avl_aero_tables.avl_fileread import AvlBody, AvlGeometry, AvlSurface
 
 if TYPE_CHECKING:
@@ -118,13 +118,12 @@ def avl_fileplot(geometry: AvlGeometry) -> "go.Figure":
 
     traces = _build_traces(geometry)
 
-    coords = [[v for t in traces for v in t[k]] for k in ("x", "y", "z")]
-    mins = [min(c) for c in coords]
-    maxs = [max(c) for c in coords]
-    half = max(hi - lo for lo, hi in zip(mins, maxs)) / 2
-    mids = [(lo + hi) / 2 for lo, hi in zip(mins, maxs)]
-    axis_ranges = [[mid - half, mid + half] for mid in mids]
-    arrow = half * 0.20  # arrow length: 20% of plot half-range
+    axis_ranges = equal_3d_ranges(
+        [v for t in traces for v in t["x"]],
+        [v for t in traces for v in t["y"]],
+        [v for t in traces for v in t["z"]],
+    )
+    arrow = (axis_ranges[0][1] - axis_ranges[0][0]) / 2 * 0.20
 
     fig = go.Figure()
     for t in traces:
