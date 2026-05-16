@@ -8,25 +8,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-05-15
+
+### Changed
+- `avl_sweep()` `out_dir` is now a **base directory** — the timestamped run directory `{out_dir}/{avl_stem}_{YYYY-MM-DD-HHMMSS}/` is created automatically (including parents); raises `TypeError` if omitted
+- All aircraft geometry files consolidated under `examples/` alongside the runnable scripts, mirroring the recommended user project layout: `examples/bd/`, `examples/supra/`, `examples/allegro/`, `examples/b737/`, `examples/plane/`, `examples/supergee/`, `examples/ellipg/`
+- `docs/_static/gen_plots.py` merged into `examples/quickstart.py` — single runnable script does geometry read/plot, full alpha × beta × all-controls sweep, aero database, and all coefficient plots; `--docs` flag also writes PNGs to `docs/_static/img/`
+- Output directory convention: `runs/bd_<timestamp>/` at project root (gitignored); `examples/quickstart.py` passes `out_dir=Path("runs")` and `avl_sweep` creates the timestamped subdir automatically
+
+### Added
+- `examples/quickstart.py` — end-to-end walkthrough script (geometry → sweep → aero database → plots); outputs to `runs/bd_<timestamp>/`; `--docs` flag updates committed doc images
+
+### Fixed
+- Docstring examples in `avl_sweep`, `aero_filewrite`, and `aero_fileplot` now pass `out_dir` to `avl_sweep()` — previously would raise `TypeError` when run as doctests
+
 ## [1.1.0] - 2026-05-15
 
 ### Fixed
 - All usage guide and docstring examples corrected from `"examples/bd.avl"` to `"examples/bd/bd.avl"` — paths were stale since the 1.1.0 examples reorganization into per-aircraft subdirectories; copy-paste code would have raised `FileNotFoundError`
-- `avl-upstream.md` incorrectly stated `.mass` files are "Not used by avl-aero-tables" — corrected to document the `mass_file=` parameter added in 1.1.0
+- `avl-upstream.md` clarified that `.mass` files are not required by `avl-aero-tables` — `.st` stability derivatives are computed by AVL's vortex lattice solver without mass/inertia data; mass is only needed for dynamic stability eigenvalue (`.eig`) output
 - `docs/dev/reqs/sweep.csv` req-sweep-8 had a dead test link (`test_run_default_out_dir_is_relative_to_avl`) and wrong description — corrected to match the actual test name and behavior (CWD-relative timestamped directory, not avl_dir-relative)
 
 ### Added
-- `mass_file` parameter on `avl_sweep()` — pass a `.mass` file path to load mass and inertia properties via the AVL CLI before the sweep; a bare filename resolves relative to the `.avl` directory
 - `sweep.log` written to each output directory — records the stdin commands piped to AVL with a replay comment on the first line showing the exact shell invocation
 - `reset.run` is now a real AVL CLI input (written to a short `/tmp` staging path and passed as the second positional argument to the binary) rather than a reference-only file
 
 ### Changed
-- AVL is now invoked using its documented CLI interface: `avl <avl_file> <reset.run> [<mass_file>]`, matching the original MATLAB implementation; geometry loading via the `LOAD` stdin command has been removed
-- `make_run_command()` no longer accepts `avl_name` or `mass_file` parameters — these are now CLI arguments handled by `avl_bin.run()`; the generated stdin script begins with `PLOP G` then `OPER` rather than `LOAD`
-- `avl_bin.run()` gains `avl_file`, `run_file`, and `mass_file` keyword arguments passed as positional CLI args to the AVL binary
+- AVL is now invoked using its documented CLI interface: `avl <avl_file> <reset.run>`, matching the original MATLAB implementation; geometry loading via the `LOAD` stdin command has been removed
+- `make_run_command()` no longer accepts `avl_name` parameter — this is now a CLI argument handled by `avl_bin.run()`; the generated stdin script begins with `PLOP G` then `OPER` rather than `LOAD`
+- `avl_bin.run()` gains `avl_file` and `run_file` keyword arguments passed as positional CLI args to the AVL binary
 - `sweep.cmd` renamed to `sweep.log` to accurately reflect that it is a record of what was sent, not a driver file
-- Custom geometry documentation added to usage guide: recommended project layout for `.avl`, `.mass`, and associated airfoil data files
+- Custom geometry documentation added to usage guide: recommended project layout for `.avl` and associated airfoil data files
 - `examples/` reorganized: ~80 redundant and standalone AVL models removed, leaving six curated aircraft (Bubble Dancer, Allegro-Lite, Boeing 737-800, Plane Vanilla, SuperGee, Supra); each lives in its own subfolder with all referenced airfoil `.dat` and body `.dat` files co-located; `ellipg.avl` (wing-only test fixture) moved to `tests/data/`
+
+### Removed
+- `mass_file` parameter removed from `avl_sweep()` and `avl_bin.run()` — `.st` stability and control derivatives do not depend on mass or inertia properties; `.mass` files are only needed for AVL's dynamic stability eigenvalue analysis (`.eig`), which is outside the scope of this package
 
 ## [1.0.1] - 2026-05-15
 

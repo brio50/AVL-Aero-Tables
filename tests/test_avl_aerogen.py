@@ -38,7 +38,7 @@ def test_ctrl_names_order_stable():
 
 @pytest.mark.req("req-geom-8")
 def test_ctrl_names_no_controls():
-    geometry = avl_fileread(Path(__file__).parent / "data" / "ellipg.avl")
+    geometry = avl_fileread(EXAMPLES / "ellipg" / "ellipg.avl")
     assert geometry.ctrl_names == []
 
 
@@ -61,7 +61,7 @@ def test_run_calls_avl_runner(tmp_path):
     with patch(
         "avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result
     ) as mock_run:
-        run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path / "out")
+        run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path)
     mock_run.assert_called_once()
 
 
@@ -71,30 +71,27 @@ def test_run_passes_avl_dir_as_cwd(tmp_path):
     with patch(
         "avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result
     ) as mock_run:
-        run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path / "out")
+        run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path)
     _, kwargs = mock_run.call_args
     assert kwargs["cwd"] == BD_AVL.parent
 
 
 @pytest.mark.req("req-sweep-3")
-def test_run_creates_out_dir(tmp_path):
-    out = tmp_path / "nested" / "out"
+def test_run_creates_subdir_inside_out_dir(tmp_path):
     mock_result = _make_mock_result()
     with patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result):
-        run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=out)
-    assert out.is_dir()
+        run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path)
+    subdirs = list(tmp_path.iterdir())
+    assert len(subdirs) == 1 and subdirs[0].is_dir()
 
 
 @pytest.mark.req("req-sweep-4")
-def test_run_removes_stale_st_files(tmp_path):
-    out = tmp_path / "out"
-    out.mkdir()
-    stale = out / "old_result.st"
-    stale.write_text("stale")
+def test_run_subdir_named_avl_stem_timestamp(tmp_path):
     mock_result = _make_mock_result()
     with patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result):
-        run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=out)
-    assert not stale.exists()
+        run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path)
+    subdir = next(tmp_path.iterdir())
+    assert subdir.name.startswith("bd_")
 
 
 @pytest.mark.req("req-sweep-5")
@@ -103,7 +100,7 @@ def test_run_raises_on_avl_failure(tmp_path):
     mock_result.stdout = "some output"
     with patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result):
         with pytest.raises(RuntimeError, match="AVL exited with code 1"):
-            run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path / "out")
+            run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path)
 
 
 @pytest.mark.req("req-sweep-6")
@@ -116,7 +113,7 @@ def test_run_passes_avl_name_as_cli_arg(tmp_path):
         return mock_result
 
     with patch("avl_aero_tables.avl_sweep.avl_runner.run", side_effect=capture):
-        run(BD_AVL, alpha=[5.0], beta=[0.0], out_dir=tmp_path / "out")
+        run(BD_AVL, alpha=[5.0], beta=[0.0], out_dir=tmp_path)
 
     assert captured["kwargs"].get("avl_file") == "bd.avl"
 
@@ -131,23 +128,15 @@ def test_run_command_contains_alpha(tmp_path):
         return mock_result
 
     with patch("avl_aero_tables.avl_sweep.avl_runner.run", side_effect=capture):
-        run(BD_AVL, alpha=[7.5], beta=[0.0], out_dir=tmp_path / "out")
+        run(BD_AVL, alpha=[7.5], beta=[0.0], out_dir=tmp_path)
 
     assert "A A 7.500000" in captured["cmd"]
 
 
 @pytest.mark.req("req-sweep-8")
-def test_run_default_out_dir_is_timestamped(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    mock_result = _make_mock_result()
-
-    with patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result):
+def test_run_raises_if_out_dir_not_specified():
+    with pytest.raises(TypeError, match="out_dir is required"):
         run(BD_AVL, alpha=[0.0], beta=[0.0])
-
-    subdirs = list((tmp_path / "out" / "bd").iterdir())
-    assert len(subdirs) == 1
-    assert subdirs[0].is_dir()
-    assert len(subdirs[0].name) == len("2026-05-15-143022")
 
 
 # ---------------------------------------------------------------------------
@@ -172,27 +161,26 @@ def _run_with_format(out_dir, fmt):
 
 @pytest.mark.req("req-sweep-9")
 def test_out_format_csv_creates_file(tmp_path):
-    _run_with_format(tmp_path / "out", "csv")
-    assert (tmp_path / "out" / "results.csv").exists()
+    _run_with_format(tmp_path, "csv")
+    assert any(tmp_path.rglob("results.csv"))
 
 
 @pytest.mark.req("req-sweep-10")
 def test_out_format_json_creates_file(tmp_path):
-    _run_with_format(tmp_path / "out", "json")
-    assert (tmp_path / "out" / "results.json").exists()
+    _run_with_format(tmp_path, "json")
+    assert any(tmp_path.rglob("results.json"))
 
 
 @pytest.mark.req("req-sweep-11")
 def test_out_format_df_writes_no_file(tmp_path):
-    _run_with_format(tmp_path / "out", "df")
-    out = tmp_path / "out"
-    assert not any(out.glob("results.*"))
+    _run_with_format(tmp_path, "df")
+    assert not any(tmp_path.rglob("results.*"))
 
 
 @pytest.mark.req("req-sweep-12")
 def test_out_format_invalid_raises(tmp_path):
     with pytest.raises(ValueError, match="not recognised"):
-        _run_with_format(tmp_path / "out", "xlsx")
+        _run_with_format(tmp_path, "xlsx")
 
 
 # ---------------------------------------------------------------------------
@@ -212,27 +200,12 @@ def _avl_installed() -> bool:
 
 @pytest.mark.skipif(not _avl_installed(), reason="AVL binary not installed")
 def test_integration_bd_single_point(tmp_path):
-    results = run(BD_AVL, alpha=[5.0], beta=[0.0], out_dir=tmp_path / "out")
+    results = run(BD_AVL, alpha=[5.0], beta=[0.0], out_dir=tmp_path)
     assert len(results) >= 1
     r = results[0]
     assert pytest.approx(5.0, abs=0.1) == r.data["Alpha"]
     assert "CLtot" in r.data
     assert "CLa" in r.data
-
-
-@pytest.mark.req("req-sweep-13")
-@pytest.mark.skipif(not _avl_installed(), reason="AVL binary not installed")
-def test_integration_bd_with_mass_file(tmp_path):
-    """Mass file (bare filename) resolves relative to the .avl directory."""
-    results = run(
-        BD_AVL,
-        alpha=[0.0, 5.0],
-        beta=[0.0],
-        mass_file="bd.mass",
-        out_dir=tmp_path / "out",
-    )
-    assert len(results) == 2
-    assert "CLtot" in results[0].data
 
 
 @pytest.mark.req("req-sweep-14")
@@ -254,8 +227,7 @@ def test_perf_bd_full_aero_table(tmp_path):
         alpha=alpha,
         beta=beta,
         ctrl_sweeps=sweeps,
-        mass_file="bd.mass",
-        out_dir=tmp_path / "out",
+        out_dir=tmp_path,
         out_format="df",
     )
     elapsed = time.perf_counter() - t0

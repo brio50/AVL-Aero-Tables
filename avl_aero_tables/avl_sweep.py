@@ -22,10 +22,9 @@ def run(
     alpha: list[float],
     beta: list[float],
     ctrl_sweeps: dict[str, list[float]] | None = None,
-    out_dir: Path | None = None,
+    out_dir: Path | str | None = None,
     binary: Path | None = None,
     out_format: Literal["csv", "json", "df"] = "csv",
-    mass_file: str | Path | None = None,
 ) -> list[StResult]:
     """Run AVL stability analysis for a sweep of alpha, beta, and deflections.
 
@@ -41,11 +40,10 @@ def run(
         Mapping of control-surface name → deflection sweep values.
         An empty dict (default) produces one run per (alpha, beta) point.
     out_dir:
-        Directory for .st output files.  Defaults to
-        ``out/<geometry_name>/<timestamp>/`` relative to the current working
-        directory, where timestamp is ``YYYY-MM-DD-HHMMSS``.  Each call
-        creates a fresh subdirectory so previous results are never overwritten.
-        Pass an explicit path to write to a fixed location instead.
+        Required. Base directory under which the timestamped run directory is
+        created: ``out_dir / "{avl_stem}_{YYYY-MM-DD-HHMMSS}"``.
+        Created automatically (including parents) if it does not exist.
+        Raises ``TypeError`` if omitted.
     binary:
         Path to the AVL binary.  Auto-detected if not provided.
     out_format:
@@ -53,12 +51,6 @@ def run(
         One of ``"csv"`` (default), ``"json"``,
         or ``"df"`` (DataFrame in memory only — no file written).
         The file is written to ``out_dir/results.<ext>``.
-    mass_file:
-        Optional path to a ``.mass`` file.  If provided, AVL loads the mass
-        and inertia breakdown before running the sweep so that CG and inertia
-        properties reflect the actual vehicle rather than the reset defaults.
-        A bare filename (e.g. ``"bd.mass"``) resolves relative to the
-        directory containing the ``.avl`` file.
 
     Returns
     -------
@@ -67,13 +59,16 @@ def run(
 
     Example
     -------
+    >>> import tempfile, pathlib
     >>> from avl_aero_tables import avl_sweep
-    >>> results = avl_sweep(  # doctest: +ELLIPSIS
-    ...     "examples/bd/bd.avl",
-    ...     alpha=[-5, 0, 5, 10],
-    ...     beta=[0],
-    ...     ctrl_sweeps={"elevator": [-10, 0, 10]},
-    ... )
+    >>> with tempfile.TemporaryDirectory() as tmp:
+    ...     results = avl_sweep(  # doctest: +ELLIPSIS
+    ...         "examples/bd/bd.avl",
+    ...         alpha=[-5, 0, 5, 10],
+    ...         beta=[0],
+    ...         ctrl_sweeps={"elevator": [-10, 0, 10]},
+    ...         out_dir=tmp,
+    ...     )
     AVL sweep complete → ...  (12 cases)
     >>> len(results)  # 4 alpha × 3 elevator deflections
     12
@@ -92,26 +87,12 @@ def run(
         ctrl_sweeps = {}
 
     if out_dir is None:
-        timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
-        out_dir = Path("out") / avl_name / timestamp
-        out_dir = Path(out_dir).resolve()
-        out_dir.mkdir(parents=True, exist_ok=True)
-    else:
-        out_dir = Path(out_dir).resolve()
-        out_dir.mkdir(parents=True, exist_ok=True)
-        for stale in out_dir.glob("*.st"):
-            stale.unlink()
+        raise TypeError("out_dir is required — pass a base directory (e.g. Path('runs'))")
+    timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+    run_dir = Path(out_dir).resolve() / f"{avl_file.stem}_{timestamp}"
+    run_dir.mkdir(parents=True, exist_ok=True)
 
     geometry = avl_fileread(avl_file)
-
-    # Resolve mass_file to an absolute path (used as CLI arg; cwd=avl_dir so a
-    # bare filename also works when the mass file lives alongside the .avl).
-    mass_arg: str | None = None
-    if mass_file is not None:
-        mass_path = Path(mass_file)
-        if not mass_path.is_absolute():
-            mass_path = (avl_dir / mass_path).resolve()
-        mass_arg = str(mass_path) if mass_path.parent != avl_dir else mass_path.name
 
     # AVL has an ~80-char Fortran string limit for filenames.  Stage .st files
     # and reset.run in a short /tmp directory so their paths stay within the
@@ -123,8 +104,8 @@ def run(
 
         # reset.run in staging: short path for the CLI arg
         (staging / "reset.run").write_text(reset_run_content)
-        # reference copy in out_dir alongside results
-        (out_dir / "reset.run").write_text(reset_run_content)
+        # reference copy in run_dir alongside results
+        (run_dir / "reset.run").write_text(reset_run_content)
 
         cmd_text = make_run_command(
             list(alpha),
@@ -135,12 +116,11 @@ def run(
         )
 
         # sweep.log: human-readable record with a replay comment at the top
-        mass_part = f" {mass_arg}" if mass_arg else ""
         replay = (
-            f"# avl {avl_file.name} {out_dir / 'reset.run'}{mass_part}"
-            f" < {out_dir / 'sweep.log'}"
+            f"# avl {avl_file.name} {run_dir / 'reset.run'}"
+            f" < {run_dir / 'sweep.log'}"
         )
-        (out_dir / "sweep.log").write_text(
+        (run_dir / "sweep.log").write_text(
             replay
             + "\n"
             + make_run_command(
@@ -148,17 +128,18 @@ def run(
                 list(beta),
                 geometry.ctrl_names,
                 ctrl_sweeps,
-                out_dir,
+                run_dir,
             )
         )
 
+        # .mass files are only needed for dynamic stability (.eig) output,
+        # which is not part of this package's scope.
         result = avl_runner.run(
             cmd_text,
             binary=binary,
             cwd=avl_dir,
             avl_file=avl_file.name,
             run_file=str(staging / "reset.run"),
-            mass_file=mass_arg,
         )
         if result.returncode != 0:
             raise RuntimeError(
@@ -168,16 +149,16 @@ def run(
             )
 
         for st_file in sorted(staging.glob("*.st")):
-            shutil.move(str(st_file), out_dir / st_file.name)
+            shutil.move(str(st_file), run_dir / st_file.name)
 
-    results = st_fileread(out_dir)
+    results = st_fileread(run_dir)
 
     if out_format != "df":
         df = results_to_dataframe(results)
         if out_format == "csv":
-            df.to_csv(out_dir / "results.csv", index=False)
+            df.to_csv(run_dir / "results.csv", index=False)
         elif out_format == "json":
-            df.to_json(out_dir / "results.json", orient="records", indent=2)
+            df.to_json(run_dir / "results.json", orient="records", indent=2)
 
-    print(f"AVL sweep complete → {out_dir}  ({len(results)} cases)")
+    print(f"AVL sweep complete → {run_dir}  ({len(results)} cases)")
     return results

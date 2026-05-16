@@ -57,7 +57,7 @@ def st_fileread(path: str | Path) -> list[StResult]:
     Example
     -------
     >>> from avl_aero_tables.st_fileread import st_fileread
-    >>> results = st_fileread("tests/data/bd_alpha5_beta0.st")
+    >>> results = st_fileread("examples/bd/bd_alpha5_beta0.st")
     >>> len(results)
     1
     >>> results[0].filename

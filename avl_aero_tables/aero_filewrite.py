@@ -94,9 +94,11 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
 
     Example
     -------
+    >>> import tempfile
     >>> from avl_aero_tables import avl_sweep
     >>> from avl_aero_tables.aero_filewrite import aero_filewrite
-    >>> results = avl_sweep("examples/bd/bd.avl", alpha=[-5, 0, 5, 10], beta=[0])  # doctest: +ELLIPSIS
+    >>> with tempfile.TemporaryDirectory() as tmp:  # doctest: +ELLIPSIS
+    ...     results = avl_sweep("examples/bd/bd.avl", alpha=[-5, 0, 5, 10], beta=[0], out_dir=tmp)
     AVL sweep complete → ...  (4 cases)
     >>> db = aero_filewrite(results)
     >>> db.stab["CLtot"].data.shape
@@ -182,9 +184,11 @@ def results_to_dataframe(results: list[StResult]) -> pd.DataFrame:
 
     Example
     -------
+    >>> import tempfile
     >>> from avl_aero_tables import avl_sweep
     >>> from avl_aero_tables.aero_filewrite import results_to_dataframe
-    >>> results = avl_sweep("examples/bd/bd.avl", alpha=[0, 5], beta=[0])  # doctest: +ELLIPSIS
+    >>> with tempfile.TemporaryDirectory() as tmp:  # doctest: +ELLIPSIS
+    ...     results = avl_sweep("examples/bd/bd.avl", alpha=[0, 5], beta=[0], out_dir=tmp)
     AVL sweep complete → ...
     >>> df = results_to_dataframe(results)
     >>> "Alpha" in df.columns and "CLtot" in df.columns

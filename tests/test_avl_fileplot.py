@@ -15,7 +15,7 @@ from avl_aero_tables.avl_fileread import avl_fileread
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
 BD_AVL = EXAMPLES / "bd" / "bd.avl"
-ELLIPG_AVL = Path(__file__).parent / "data" / "ellipg.avl"
+PLANE_AVL = EXAMPLES / "plane" / "plane.avl"
 
 
 # ---------------------------------------------------------------------------
@@ -101,8 +101,8 @@ def test_no_body_geometry_runs(bd_geometry):
 
 @pytest.mark.req("req-plot-8")
 def test_no_body_geometry_no_crash():
-    """ellipg.avl has no body; should plot surfaces only."""
-    geom = avl_fileread(ELLIPG_AVL)
+    """plane.avl has no body; should plot surfaces only."""
+    geom = avl_fileread(PLANE_AVL)
     fig = avl_fileplot(geom)
     assert isinstance(fig, plt.Figure)
     plt.close(fig)

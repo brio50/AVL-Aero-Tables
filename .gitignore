@@ -19,10 +19,10 @@ build/
 # Ruff
 .ruff_cache/
 
-# AVL outputs
-out/
+# Sweep outputs — created on demand by examples/quickstart.py
+runs/
 *.st
-!tests/data/*.st
+!examples/**/*.st
 
 # Docs build
 docs/_build/

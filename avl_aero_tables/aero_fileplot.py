@@ -44,15 +44,18 @@ def aero_fileplot(
 
     Example
     -------
+    >>> import tempfile
     >>> from avl_aero_tables import avl_sweep
     >>> from avl_aero_tables.aero_filewrite import aero_filewrite
     >>> from avl_aero_tables.aero_fileplot import aero_fileplot
-    >>> results = avl_sweep(  # doctest: +ELLIPSIS
-    ...     "examples/bd/bd.avl",
-    ...     alpha=[-5, 0, 5, 10],
-    ...     beta=[-5, 0, 5],
-    ...     ctrl_sweeps={"elevator": [-10, 0, 10]},
-    ... )
+    >>> with tempfile.TemporaryDirectory() as tmp:  # doctest: +ELLIPSIS
+    ...     results = avl_sweep(
+    ...         "examples/bd/bd.avl",
+    ...         alpha=[-5, 0, 5, 10],
+    ...         beta=[-5, 0, 5],
+    ...         ctrl_sweeps={"elevator": [-10, 0, 10]},
+    ...         out_dir=tmp,
+    ...     )
     AVL sweep complete → ...  (36 cases)
     >>> db = aero_filewrite(results)
     >>> figs = aero_fileplot(db)

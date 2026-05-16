@@ -66,20 +66,19 @@ def run(
     cwd: Path | None = None,
     avl_file: str | None = None,
     run_file: str | None = None,
-    mass_file: str | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Feed command_text to AVL via stdin and return the completed process.
 
-    avl_file, run_file, and mass_file are passed as positional CLI arguments
-    to the AVL binary before stdin is read — matching AVL's documented CLI
-    interface: ``avl [avl_file [run_file [mass_file]]]``.  Set cwd to the
-    directory containing the .avl file so bare filenames resolve correctly.
+    avl_file and run_file are passed as positional CLI arguments to the AVL
+    binary before stdin is read — matching AVL's documented CLI interface:
+    ``avl [avl_file [run_file]]``.  Set cwd to the directory containing the
+    .avl file so bare filenames resolve correctly.
 
     Example
     -------
     >>> from pathlib import Path
     >>> from avl_aero_tables.avl_bin import run
-    >>> result = run("Quit\\n", avl_file="bd.avl", cwd=Path("examples"))
+    >>> result = run("Quit\\n", avl_file="bd.avl", cwd=Path("examples/bd"))
     >>> result.returncode
     0
     """
@@ -89,8 +88,6 @@ def run(
         args.append(avl_file)
     if run_file is not None:
         args.append(run_file)
-    if mass_file is not None:
-        args.append(mass_file)
     return subprocess.run(
         args,
         input=command_text,
@@ -115,7 +112,7 @@ def run_file(
     >>> with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
     ...     _ = f.write("LOAD bd\\nQuit\\n")
     ...     cmd_path = Path(f.name)
-    >>> result = run_file(cmd_path, cwd=Path("examples"))
+    >>> result = run_file(cmd_path, cwd=Path("examples/bd"))
     >>> result.returncode
     0
     """

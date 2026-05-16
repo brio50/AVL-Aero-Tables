@@ -2,13 +2,12 @@
 
 ## Bubble Dancer Walkthrough
 
-The Bubble Dancer (`examples/bd/`) is the canonical reference example — a sailplane with a fuselage body, four control surfaces (flap, aileron, elevator, rudder), external airfoil coordinate files, and a mass/inertia file. Its directory structure is the recommended pattern for any custom geometry:
+The Bubble Dancer (`examples/bd/`) is the canonical reference example — a sailplane with a fuselage body, four control surfaces (flap, aileron, elevator, rudder), and external airfoil coordinate files. Its directory structure is the recommended pattern for any custom geometry:
 
 ```{code-block} text
 :class: no-copybutton
 📁 examples/bd/
 ├── 📄 bd.avl          ← geometry: surfaces, sections, control hinges, reference quantities
-├── 📄 bd.mass         ← mass & inertia: CG location, mass, Ixx/Iyy/Izz
 ├── 📄 fuseBD.dat      ← fuselage body cross-section coordinates (referenced by bd.avl)
 ├── 📄 ag35.dat        ← airfoil coordinates (referenced by bd.avl AFIL entries)
 ├── 📄 ag36.dat
@@ -17,20 +16,28 @@ The Bubble Dancer (`examples/bd/`) is the canonical reference example — a sail
 
 Keep all these files together. `avl_sweep` sets AVL's working directory to the folder containing the `.avl` file, so every relative path inside it (`fuseBD.dat`, `ag35.dat`, etc.) resolves automatically.
 
-For your own geometry, mirror this pattern:
+For your own project, keep geometry inputs versioned in git and runs outside of version control:
 
 ```{code-block} text
 :class: no-copybutton
-📁 my_project/
-├── 📁 geometry/
-│   ├── 📄 my_aircraft.avl      ← geometry: surfaces, sections, control hinges
-│   ├── 📄 my_aircraft.mass     ← CG, mass, Ixx/Iyy/Izz  (passed via mass_file=)
-│   ├── 📄 wing_airfoil.dat     ← airfoil coordinates   (AFIL entry in .avl)
-│   └── 📄 fuselage.dat         ← body cross-sections   (BFIL entry in .avl)
-├── 📁 out/                     ← generated at runtime
-│   └── 📁 my_aircraft/
-│       └── 📁 2026-05-15-143022/
+📁 my_project/          ← git repo
+├── 📁 design_a/
+│   ├── 📄 design_a.avl      ← geometry: surfaces, sections, control hinges
+│   ├── 📄 wing_airfoil.dat  ← airfoil coordinates   (AFIL entry in .avl)
+│   └── 📄 fuselage.dat      ← body cross-sections   (BFIL entry in .avl)
+├── 📁 design_b/
+│   ├── 📄 design_b.avl
+│   └── 📄 wing_airfoil.dat
+├── 📁 runs/                 ← generated at runtime; add to .gitignore
+│   ├── 📁 design_a_2026-05-14-091234/
+│   └── 📁 design_a_2026-05-15-143022/
+├── 📄 .gitignore            ← contains: runs/
 └── 📄 analysis.py
+```
+
+```{note}
+A fully runnable version of this walkthrough is available as `examples/quickstart.py`.
+Run it from the project root with `python examples/quickstart.py`.
 ```
 
 ### Read & Plot Geometry
@@ -52,14 +59,17 @@ fig.savefig("bd_geometry.png", dpi=150)
 
 ### Sweep Alpha / Beta
 
+`out_dir` is a base directory — `avl_sweep` creates `runs/bd_<timestamp>/` inside it automatically:
+
 ```python
+from pathlib import Path
 from avl_aero_tables import avl_sweep
 
 results = avl_sweep(
     avl_file="examples/bd/bd.avl",
     alpha=list(range(-6, 13, 2)),   # -6 to +12 deg, 2 deg steps
     beta=[0.0],
-    mass_file="bd.mass",            # bare filename → resolves to examples/bd/bd.mass
+    out_dir=Path("runs"),
 )
 
 print(f"{len(results)} cases computed")
@@ -68,7 +78,7 @@ for r in results[:3]:
 ```
 
 ```
-AVL sweep complete → /your/project/out/bd/2026-05-15-143022  (10 cases)
+AVL sweep complete → /your/project/runs/bd_2026-05-15-143022  (10 cases)
 10 cases computed
   Alpha= -6.0  CLtot=-0.1669
   Alpha= -4.0  CLtot=0.0311
@@ -83,12 +93,13 @@ results = avl_sweep(
     alpha=[-4.0, 0.0, 4.0, 8.0],
     beta=[0.0],
     ctrl_sweeps={"elevator": [-10.0, -5.0, 0.0, 5.0, 10.0]},
+    out_dir=Path("runs"),
 )
 print(f"{len(results)} cases (4 alpha × 5 elevator deflections)")
 ```
 
 ```
-AVL sweep complete → /your/project/out/bd/2026-05-15-143022  (20 cases)
+AVL sweep complete → /your/project/runs/bd_2026-05-15-143022  (20 cases)
 20 cases (4 alpha × 5 elevator deflections)
 ```
 
@@ -109,7 +120,7 @@ results = avl_sweep(
         "elevator": [-20.0, 0.0, 20.0],
         "rudder":   [-20.0, 0.0, 20.0],
     },
-    mass_file="bd.mass",
+    out_dir=Path("runs"),
 )
 
 aero = aero_filewrite(results)

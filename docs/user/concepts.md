@@ -30,7 +30,6 @@ results = avl_sweep(
     avl_file="examples/bd/bd.avl",
     alpha=list(range(-5, 16, 5)),
     beta=list(range(-5, 6, 5)),
-    mass_file="bd.mass",
 )
 ```
 
@@ -60,25 +59,24 @@ Each run deflects exactly one surface; all others stay at zero. This matches the
 
 ## Output Layout
 
-Every sweep writes its inputs and outputs to a timestamped subdirectory under `out/<geometry_name>/`:
+Every sweep creates a timestamped subdirectory inside the `out_dir` you pass:
 
 ```{code-block} text
 :class: no-copybutton
-📁 out/
-└── 📁 bd/
-    └── 📁 2026-05-15-143022/
-        ├── 📄 reset.run       ← AVL run-case file; all flight conditions zeroed
-        ├── 📄 sweep.log       ← stdin commands piped to AVL; replay shell command at top
-        ├── 📄 case_0001.st
-        ├── 📄 case_0002.st
-        ├── 📄 ...
-        └── 📄 results.csv
+📁 runs/
+└── 📁 bd_2026-05-15-143022/
+    ├── 📄 reset.run       ← AVL run-case file; all flight conditions zeroed
+    ├── 📄 sweep.log       ← stdin commands piped to AVL; replay shell command at top
+    ├── 📄 case_0001.st
+    ├── 📄 case_0002.st
+    ├── 📄 ...
+    └── 📄 results.csv
 ```
 
-Previous runs are never overwritten. To write to a fixed location instead, pass `out_dir` explicitly — stale `.st` files are removed before the new run starts:
+Previous runs are never overwritten — each call to `avl_sweep` creates a fresh `{avl_stem}_{timestamp}/` directory inside `out_dir`:
 
 ```python
-results = avl_sweep("examples/bd/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="out/bd/latest")
+results = avl_sweep("examples/bd/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="runs")
 ```
 
 ## Replay
@@ -86,7 +84,7 @@ results = avl_sweep("examples/bd/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="o
 `sweep.log` opens with a comment line containing the exact shell command needed to replay the run from a terminal:
 
 ```bash
-# avl bd.avl /path/to/out/bd/2026-05-15-143022/reset.run < /path/to/out/bd/2026-05-15-143022/sweep.log
+# avl bd.avl /path/to/runs/bd_2026-05-15-143022/reset.run < /path/to/runs/bd_2026-05-15-143022/sweep.log
 ```
 
 Copy that line, strip the leading `#`, and run it from the directory containing `bd.avl`. This is useful for debugging AVL output or verifying a result without re-running Python.
@@ -95,8 +93,7 @@ Copy that line, strip the leading `#`, and run it from the directory containing 
 
 AVL is written in Fortran and has an internal string limit of approximately 80 characters for filenames. Paths that exceed this limit are silently truncated, producing wrong or missing output files.
 
-To stay under the limit, `avl_sweep` stages `.st` output files in a short `/tmp` directory during the run, then moves them to `out_dir` after AVL exits. The temp directory is cleaned up automatically even if AVL crashes.
+To stay under the limit, `avl_sweep` stages `.st` output files in a short `/tmp` directory during the run, then moves them to the timestamped run directory after AVL exits. The temp directory is cleaned up automatically even if AVL crashes.
 
 This means:
 - `out_dir` paths can be as long as you like — AVL never sees them directly
-- Mass files passed via `mass_file` **are** seen by AVL as CLI arguments; keep them short or use a bare filename (which resolves relative to the `.avl` directory)

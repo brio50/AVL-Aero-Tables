@@ -17,7 +17,7 @@ Before using this wrapper, read the upstream AVL documentation. Understanding AV
 
 A Python package that drives AVL programmatically and returns structured aerodynamic lookup tables.
 
-**The key idea:** AVL is normally operated interactively — you type commands into its terminal menu, load a hand-written `.run` file, and step through each flight condition manually. `avl-aero-tables` bypasses this entirely. It invokes the AVL binary using its documented CLI interface — passing the geometry, run-case, and mass files as positional arguments — then pipes the sweep commands (OPER, alpha/beta/deflection settings, `st` saves) to AVL's stdin, running hundreds of flight conditions in a single Python call.
+**The key idea:** AVL is normally operated interactively — you type commands into its terminal menu, load a hand-written `.run` file, and step through each flight condition manually. `avl-aero-tables` bypasses this entirely. It invokes the AVL binary using its documented CLI interface — passing the geometry and run-case files as positional arguments — then pipes the sweep commands (OPER, alpha/beta/deflection settings, `st` saves) to AVL's stdin, running hundreds of flight conditions in a single Python call.
 
 For each sweep, two files are written to a timestamped subdirectory of 📁 `out/` alongside the results, so previous runs are never overwritten:
 

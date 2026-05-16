@@ -98,7 +98,7 @@ def make_run_command(
 ) -> str:
     """Return the AVL stdin command script for a sweep.
 
-    Geometry, run-case, and mass files are passed as CLI arguments to the AVL
+    The geometry and run-case files are passed as CLI arguments to the AVL
     binary by the caller — this function generates only the interactive OPER
     commands piped to AVL's stdin.
 
