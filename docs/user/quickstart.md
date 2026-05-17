@@ -76,12 +76,22 @@ output:
 
 Check that AVL reads the geometry correctly before running a sweep:
 
-```bash
-avl-aero-tables plot geometry examples/bd/bd.yml
+`````{card}
+:class-card: cli-card
+
+```{code-block} console
+:caption: Input
+$ avl-aero-tables plot geometry examples/bd/bd.yml
+```
+^^^
+```{code-block} text
+:caption: Output
+:class: no-copybutton hide-empty-codeblock
 ```
 
 ```{plotly-figure} _static/html/bd_geometry.html
 ```
+`````
 
 ```{tip}
 The plots on this page are interactive thanks to [plot.ly](https://plotly.com/python/)! Play with the toolbar to the top right of the image, drag and rotate 3dScatter content.
@@ -89,13 +99,20 @@ The plots on this page are interactive thanks to [plot.ly](https://plotly.com/py
 
 ### Run Sweep
 
-```bash
-avl-aero-tables sweep examples/bd/bd.yml
-```
+`````{card}
+:class-card: cli-card
 
+```{code-block} console
+:caption: Input
+$ avl-aero-tables sweep examples/bd/bd.yml
 ```
+^^^
+```{code-block} text
+:caption: Output
+:class: no-copybutton
 AVL sweep complete → _runs/bd/2026-05-15-143022  (45 cases)
 ```
+`````
 
 ```{note}
 Results land in `_runs/<yml-stem>/<timestamp>/` relative to the **project root** — one directory up from the `.yml` file. This differs from the Python API, where you control `out_dir` directly.
@@ -103,13 +120,23 @@ Results land in `_runs/<yml-stem>/<timestamp>/` relative to the **project root**
 
 ### Plot Results
 
-```bash
-avl-aero-tables plot aero _runs/bd/
+Pass a parent directory to plot the latest sweep, or a specific timestamped directory to plot a particular run.
+
+```````{card}
+:class-card: cli-card full-width
+
+```{code-block} console
+:caption: Input
+$ avl-aero-tables plot aero _runs/bd/
+```
+^^^
+```{code-block} text
+:caption: Output
+:class: no-copybutton hide-empty-codeblock
 ```
 
-Pass a parent directory to plot the latest sweep, or a specific timestamped directory to plot a particular run. Opens the aero coefficient surface plots.
-
 `````{tab-set}
+:class: aero-plots
 ````{tab-item} Stability
 ```{plotly-figure} _static/html/bd_stab.html
 ```
@@ -139,6 +166,7 @@ Pass a parent directory to plot the latest sweep, or a specific timestamped dire
 ```
 ````
 `````
+```````
 
 (quickstart:python-api)=
 ## Python API
@@ -153,7 +181,11 @@ Pass a parent directory to plot the latest sweep, or a specific timestamped dire
 
 ### Read & Plot Geometry
 
-```python
+`````{card}
+:class-card: cli-card
+
+```{code-block} python
+:caption: Input
 from avl_aero_tables import avl_fileread, avl_fileplot
 
 geom = avl_fileread("examples/b737/b737.avl")
@@ -166,15 +198,25 @@ print(geom.header.Sref)          # 1260.0  (reference area, sq-ft)
 fig = avl_fileplot(geom)
 fig.write_html("b737_geometry.html", include_plotlyjs="cdn")
 ```
+^^^
+```{code-block} text
+:caption: Output
+:class: no-copybutton hide-empty-codeblock
+```
 
 ```{plotly-figure} _static/html/b737_geometry.html
 ```
+`````
 
 ### Sweep Alpha / Beta
 
 `out_dir` is a base directory — `avl_sweep` creates `_runs/bd_<timestamp>/` inside it automatically:
 
-```python
+`````{card}
+:class-card: cli-card
+
+```{code-block} python
+:caption: Input
 from pathlib import Path
 from avl_aero_tables import avl_sweep
 
@@ -189,18 +231,25 @@ print(f"{len(results)} cases computed")
 for r in results[:3]:
     print(f"  Alpha={r.data['Alpha']:5.1f}  CLtot={r.data['CLtot']:.4f}")
 ```
-
-```
+^^^
+```{code-block} text
+:caption: Output
+:class: no-copybutton
 AVL sweep complete → /your/project/_runs/b737_2026-05-16-101818  (10 cases)
 10 cases computed
   Alpha= -6.0  CLtot=-0.4135
   Alpha= -4.0  CLtot=-0.2376
   Alpha= -2.0  CLtot=0.0362
 ```
+`````
 
 ### Sweep Control Surfaces
 
-```python
+`````{card}
+:class-card: cli-card
+
+```{code-block} python
+:caption: Input
 results = avl_sweep(
     avl_file="examples/b737/b737.avl",
     alpha=[-4.0, 0.0, 4.0, 8.0],
@@ -210,11 +259,14 @@ results = avl_sweep(
 )
 print(f"{len(results)} cases (4 alpha × 5 elevator deflections)")
 ```
-
-```
+^^^
+```{code-block} text
+:caption: Output
+:class: no-copybutton
 AVL sweep complete → /your/project/_runs/b737_2026-05-16-143022  (20 cases)
 20 cases (4 alpha × 5 elevator deflections)
 ```
+`````
 
 ```{seealso}
 See {doc}`concepts` for how `ctrl_sweeps` counts cases and why `0.0` must be included for stability tables.
@@ -222,7 +274,11 @@ See {doc}`concepts` for how `ctrl_sweeps` counts cases and why `0.0` must be inc
 
 ### Build Aero Database
 
-```python
+`````{card}
+:class-card: cli-card
+
+```{code-block} python
+:caption: Input
 from avl_aero_tables import aero_filewrite
 
 results = avl_sweep(
@@ -240,14 +296,22 @@ results = avl_sweep(
 )
 
 aero = aero_filewrite(results)
-
-print(aero.stab["CLtot"].data.shape)               # (5, 3) — alpha × beta
-print(aero.ctrl["CLtot_d04_elevator"].data.shape)  # (5, 3, 3) — alpha × beta × defl
 ```
+^^^
+```{code-block} text
+:caption: Output
+:class: no-copybutton
+AeroDatabase: 5α × 3β  |  δ_slat = 3, δ_flap = 3, δ_aileron = 3, δ_elevator = 3, δ_rudder = 3
+```
+`````
 
 ### Plot Aero Coefficients
 
-```python
+```````{card}
+:class-card: cli-card full-width
+
+```{code-block} python
+:caption: Input
 from avl_aero_tables import aero_fileplot
 
 figs = aero_fileplot(aero, beta_ref=0.0)
@@ -256,8 +320,14 @@ names = ["b737_stab", "b737_ctrl_CLtot", "b737_ctrl_CYtot",
 for fig, name in zip(figs, names):
     fig.write_html(f"{name}.html", include_plotlyjs="cdn")
 ```
+^^^
+```{code-block} text
+:caption: Output
+:class: no-copybutton hide-empty-codeblock
+```
 
 `````{tab-set}
+:class: aero-plots
 ````{tab-item} Stability
 ```{plotly-figure} _static/html/b737_stab.html
 ```
@@ -287,3 +357,4 @@ for fig, name in zip(figs, names):
 ```
 ````
 `````
+```````

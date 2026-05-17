@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-05-16
+
+### Added
+- `verbose: bool = True` module-level flag in `avl_aero_tables`; set `avl_aero_tables.verbose = False` to silence all progress output
+- `avl_sweep` progress line now gated on `verbose`
+- `aero_filewrite` prints a summary (`AeroDatabase: Nα × Nβ  |  δ_surface = N, …`) gated on `verbose`
+- CLI `--quiet` / `-q` flag sets `verbose = False` before dispatch
+
+### Changed
+- Quickstart docs: all CLI and Python API examples use unified Input/Output card layout
+
 ## [1.6.0] - 2026-05-16
 
 ### Changed

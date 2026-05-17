@@ -102,7 +102,8 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
     ...         "examples/bd/bd.avl", alpha=[-5, 0, 5, 10], beta=[0], out_dir=tmp
     ...     )
     AVL sweep complete → ...  (4 cases)
-    >>> db = aero_filewrite(results)
+    >>> db = aero_filewrite(results)  # doctest: +ELLIPSIS
+    AeroDatabase: ...
     >>> db.stab["CLtot"].data.shape
     (4, 1)
     >>> list(db.stab)
@@ -172,6 +173,19 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
                 defl_val = r.data.get(ctrl_name, 0.0)
                 di = _find_idx(surface_defls[d_idx], defl_val)
                 db.ctrl[f"{coef}_{surf_key}"].data[ai, bi, di] = val
+
+    import avl_aero_tables as _pkg
+
+    if _pkg.verbose:
+        na, nb = len(alpha_arr), len(beta_arr)
+        ctrl_summary = ", ".join(
+            f"δ_{s} = {len(surface_defls[d])}"
+            for d, s in ctrl_map.items()
+        )
+        print(
+            f"AeroDatabase: {na}α × {nb}β"
+            + (f"  |  {ctrl_summary}" if ctrl_summary else "")
+        )
 
     return db
 

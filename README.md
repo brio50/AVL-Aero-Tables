@@ -22,10 +22,10 @@ Full installation guide, walkthrough, API reference, and more at the [docs site]
 
 Define a sweep in a YAML project file and run it in one command:
 
-```bash
-avl-aero-tables sweep examples/bd/bd.yml        # run sweep → _runs/bd/<timestamp>/
-avl-aero-tables plot geometry examples/bd/bd.yml # four-view geometry plot
-avl-aero-tables plot aero _runs/bd/              # plot latest sweep results
+```console
+$ avl-aero-tables sweep examples/bd/bd.yml         # run sweep → _runs/bd/<timestamp>/
+$ avl-aero-tables plot geometry examples/bd/bd.yml  # interactive 3-D geometry plot
+$ avl-aero-tables plot aero _runs/bd/               # plot latest sweep results
 ```
 
 ### Python API
@@ -36,7 +36,7 @@ Call the same steps programmatically:
 from avl_aero_tables import avl_fileread, avl_fileplot, avl_sweep, aero_filewrite, aero_fileplot
 
 geom    = avl_fileread("examples/bd/bd.avl")            # parse geometry
-fig     = avl_fileplot(geom)                            # four-view plot
+fig     = avl_fileplot(geom)                            # interactive 3-D plot
 results = avl_sweep("examples/bd/bd.avl", alpha, beta)  # run AVL sweep
 aero    = aero_filewrite(results)                       # build lookup tables
 figs    = aero_fileplot(aero)                           # plot aero database

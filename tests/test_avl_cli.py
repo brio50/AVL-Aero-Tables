@@ -291,12 +291,63 @@ def test_plot_geometry_calls_fileplot(tmp_path):
     with (
         patch("avl_aero_tables.avl_fileread.avl_fileread", return_value=fake_geom),
         patch("avl_aero_tables.avl_fileplot.avl_fileplot") as mock_plot,
-        patch("matplotlib.pyplot.show"),
+        patch("webbrowser.open"),
     ):
         result = main(["plot", "geometry", str(yml)])
 
     assert result == 0
     mock_plot.assert_called_once_with(fake_geom)
+
+
+# ---------------------------------------------------------------------------
+# verify
+# ---------------------------------------------------------------------------
+
+
+def test_verify_ok():
+    with patch("avl_aero_tables.avl_cli.verify", return_value=Path("/usr/local/bin/avl")):
+        result = main(["verify"])
+    assert result == 0
+
+
+def test_verify_binary_not_found():
+    with patch("avl_aero_tables.avl_cli.verify", side_effect=FileNotFoundError("not found")):
+        result = main(["verify"])
+    assert result == 1
+
+
+def test_verify_runtime_error():
+    with patch("avl_aero_tables.avl_cli.verify", side_effect=RuntimeError("bad binary")):
+        result = main(["verify"])
+    assert result == 1
+
+
+# ---------------------------------------------------------------------------
+# plot geometry — output file
+# ---------------------------------------------------------------------------
+
+
+def test_plot_geometry_writes_html(tmp_path):
+    sub = tmp_path / "bd"
+    sub.mkdir()
+    yml = sub / "bd.yml"
+    _write_yml(yml, avl_file="bd.avl")
+    (sub / "bd.avl").touch()
+
+    fake_geom = MagicMock()
+    fake_fig = MagicMock()
+    with (
+        patch("avl_aero_tables.avl_fileread.avl_fileread", return_value=fake_geom),
+        patch("avl_aero_tables.avl_fileplot.avl_fileplot", return_value=fake_fig),
+        patch("webbrowser.open"),
+    ):
+        result = main(["plot", "geometry", str(yml)])
+
+    assert result == 0
+    assert fake_fig.write_html.call_count == 1
+    written_path = Path(fake_fig.write_html.call_args[0][0])
+    assert written_path.name == "bd_geometry.html"
+    assert written_path.parent == sub
 
 
 # ---------------------------------------------------------------------------
@@ -323,7 +374,7 @@ def test_plot_aero_picks_latest_dir(tmp_path):
         patch("avl_aero_tables.avl_fileread.st_fileread", side_effect=fake_st_fileread),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
         patch("avl_aero_tables.aero_fileplot.aero_fileplot"),
-        patch("matplotlib.pyplot.show"),
+        patch("webbrowser.open"),
     ):
         result = main(["plot", "aero", str(runs_base)])
 
@@ -348,7 +399,7 @@ def test_plot_aero_specific_dir(tmp_path):
         patch("avl_aero_tables.avl_fileread.st_fileread", side_effect=fake_st_fileread),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
         patch("avl_aero_tables.aero_fileplot.aero_fileplot"),
-        patch("matplotlib.pyplot.show"),
+        patch("webbrowser.open"),
     ):
         result = main(["plot", "aero", str(specific_dir)])
 
@@ -367,6 +418,98 @@ def test_plot_aero_no_results_exits(tmp_path):
 
     result = main(["plot", "aero", str(empty_dir)])
     assert result == 1
+
+
+def test_plot_aero_nonexistent_dir_exits(tmp_path):
+    missing = tmp_path / "does_not_exist"
+    result = main(["plot", "aero", str(missing)])
+    assert result == 1
+
+
+def test_plot_aero_prefixed_timestamp_dir(tmp_path):
+    """Regression: bd_2026-05-16-215002 style dir passed directly must work."""
+    run_dir = tmp_path / "bd_2026-05-16-215002"
+    run_dir.mkdir()
+
+    captured: list[Path] = []
+
+    def fake_st_fileread(path: Path) -> list[object]:
+        captured.append(path)
+        return []
+
+    fake_aero = MagicMock()
+    with (
+        patch("avl_aero_tables.avl_fileread.st_fileread", side_effect=fake_st_fileread),
+        patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
+        patch("avl_aero_tables.aero_fileplot.aero_fileplot"),
+        patch("webbrowser.open"),
+    ):
+        result = main(["plot", "aero", str(run_dir)])
+
+    assert result == 0
+    assert captured[0] == run_dir / ".raw"
+
+
+def test_plot_aero_raw_dir_fallback(tmp_path):
+    """Dir with .raw subdir (non-timestamp name) is recognized as a run dir."""
+    run_dir = tmp_path / "my_custom_run"
+    (run_dir / ".raw").mkdir(parents=True)
+
+    captured: list[Path] = []
+
+    def fake_st_fileread(path: Path) -> list[object]:
+        captured.append(path)
+        return []
+
+    fake_aero = MagicMock()
+    with (
+        patch("avl_aero_tables.avl_fileread.st_fileread", side_effect=fake_st_fileread),
+        patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
+        patch("avl_aero_tables.aero_fileplot.aero_fileplot"),
+        patch("webbrowser.open"),
+    ):
+        result = main(["plot", "aero", str(run_dir)])
+
+    assert result == 0
+    assert captured[0] == run_dir / ".raw"
+
+
+def test_plot_aero_writes_html_files(tmp_path):
+    run_dir = tmp_path / "2026-01-01-120000"
+    run_dir.mkdir()
+
+    fake_figs = [MagicMock() for _ in range(7)]
+    fake_aero = MagicMock()
+    with (
+        patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
+        patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
+        patch("avl_aero_tables.aero_fileplot.aero_fileplot", return_value=fake_figs),
+        patch("webbrowser.open") as mock_browser,
+    ):
+        result = main(["plot", "aero", str(run_dir)])
+
+    assert result == 0
+    expected_names = [
+        "stab", "ctrl_CLtot", "ctrl_CYtot", "ctrl_CDtot",
+        "ctrl_Cltot", "ctrl_Cmtot", "ctrl_Cntot",
+    ]
+    for fig, name in zip(fake_figs, expected_names):
+        written = Path(fig.write_html.call_args[0][0])
+        assert written == run_dir / f"{name}.html"
+    opened_uri = mock_browser.call_args[0][0]
+    assert opened_uri.endswith("index.html")
+
+
+def test_write_index_html(tmp_path):
+    from avl_aero_tables.avl_cli import _write_index_html
+
+    (tmp_path / "stab.html").touch()
+    (tmp_path / "ctrl_CLtot.html").touch()
+    index = _write_index_html(tmp_path)
+    content = index.read_text()
+    assert "stab" in content
+    assert "ctrl_CLtot" in content
+    assert "index.html" not in content  # index must not list itself
 
 
 # ---------------------------------------------------------------------------

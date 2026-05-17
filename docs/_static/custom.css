@@ -5,9 +5,17 @@ a.external::after {
     opacity: 0.6;
 }
 
-/* Tab card padding */
+/* Tab set: neutral border instead of default blue */
+.sd-tab-set.aero-plots {
+    margin: 15px !important;
+}
 .sd-tab-set .sd-tab-content {
     padding: 1.5em !important;
+    border-color: var(--pst-color-border) !important;
+}
+.sd-tab-set > input:checked + label {
+    border-color: var(--pst-color-border) !important;
+    color: inherit;
 }
 
 /* Language labels on code blocks */
@@ -36,6 +44,33 @@ div.highlight-python::after       { content: "python"; }
 /* Give the sweep internals diagram room to breathe */
 .mermaid-sweep svg {
     min-height: 600px;
+}
+
+/* CLI table: command row on top, output row on bottom, unified border */
+.cli-card.sd-card {
+    border: 1px solid var(--pst-color-border) !important;
+    border-radius: .25rem !important;
+    box-shadow: none !important;
+    overflow: hidden;
+}
+.cli-card .sd-card-header,
+.cli-card .sd-card-body {
+    padding: 0 !important;
+    background: transparent !important;
+}
+.cli-card .sd-card-header {
+    border-bottom: 1px solid var(--pst-color-border) !important;
+}
+.cli-card .literal-block-wrapper {
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+}
+.cli-card .hide-empty-codeblock .highlight {
+    display: none;
+}
+.cli-card .hide-empty-codeblock {
+    margin-bottom: 0 !important;
 }
 
 /* Wrap the test-link column in requirements tables */

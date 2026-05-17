@@ -272,5 +272,8 @@ def run(
         elif out_format == "json":
             df.to_json(run_dir / "results.json", orient="records", indent=2)
 
-    print(f"AVL sweep complete → {run_dir}  ({len(results)} cases)")
+    import avl_aero_tables as _pkg
+
+    if _pkg.verbose:
+        print(f"AVL sweep complete → {run_dir}  ({len(results)} cases)")
     return results

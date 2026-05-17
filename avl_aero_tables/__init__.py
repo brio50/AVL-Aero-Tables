@@ -15,6 +15,8 @@ from avl_aero_tables.avl_fileread import (
 )
 from avl_aero_tables.avl_sweep import run as avl_sweep
 
+verbose: bool = True
+
 __all__ = [
     "AeroDatabase",
     "AvlGeometry",
@@ -28,4 +30,5 @@ __all__ = [
     "avl_fileread",
     "results_to_dataframe",
     "st_fileread",
+    "verbose",
 ]

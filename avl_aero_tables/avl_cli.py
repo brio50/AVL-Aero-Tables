@@ -37,6 +37,9 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--version", action="version", version=f"avl-aero-tables {_package_version()}"
     )
+    p.add_argument(
+        "--quiet", "-q", action="store_true", help="Suppress progress output"
+    )
     sub = p.add_subparsers(dest="command", required=True)
 
     sub.add_parser("verify", help="Check that the AVL binary is installed and works")
@@ -106,6 +109,27 @@ def _cmd_sweep(args: argparse.Namespace) -> int:
     return 0
 
 
+def _write_index_html(directory: Path) -> Path:
+    """Write index.html listing every *.html in directory (excluding itself)."""
+    html_files = sorted(
+        p for p in directory.glob("*.html") if p.name != "index.html"
+    )
+    items = "\n".join(
+        f'    <li><a href="{p.name}">{p.stem}</a></li>' for p in html_files
+    )
+    index = directory / "index.html"
+    index.write_text(
+        f"<!DOCTYPE html>\n"
+        f"<html><head><meta charset='utf-8'>"
+        f"<title>{directory.name}</title>"
+        f"<style>body{{font-family:monospace;padding:2em}}"
+        f"li{{margin:.4em 0}}a{{text-decoration:none}}a:hover{{text-decoration:underline}}"
+        f"</style></head>\n"
+        f"<body><h2>{directory.name}</h2><ul>\n{items}\n</ul></body></html>\n"
+    )
+    return index
+
+
 def _cmd_plot_geometry(args: argparse.Namespace) -> int:
     import webbrowser
 
@@ -121,7 +145,8 @@ def _cmd_plot_geometry(args: argparse.Namespace) -> int:
     out = avl_file.parent / f"{avl_file.stem}_geometry.html"
     fig.write_html(str(out), include_plotlyjs="cdn", config={"displayModeBar": True})
     print(f"Geometry plot → {out}")
-    webbrowser.open(out.as_uri())
+    index = _write_index_html(out.parent)
+    webbrowser.open(index.as_uri())
     return 0
 
 
@@ -137,7 +162,7 @@ def _cmd_plot_aero(args: argparse.Namespace) -> int:
 
     runs_dir = args.runs_dir.resolve()
 
-    if _TIMESTAMP_RE.match(runs_dir.name):
+    if re.search(r"\d{4}-\d{2}-\d{2}-\d{6}", runs_dir.name) or (runs_dir / ".raw").is_dir():
         result_dir = runs_dir
     else:
         subdirs = (
@@ -164,17 +189,14 @@ def _cmd_plot_aero(args: argparse.Namespace) -> int:
         "stab", "ctrl_CLtot", "ctrl_CYtot", "ctrl_CDtot",
         "ctrl_Cltot", "ctrl_Cmtot", "ctrl_Cntot",
     ]
-    first_out = None
     for fig, name in zip(figs, names):
         out = result_dir / f"{name}.html"
         fig.write_html(
             str(out), include_plotlyjs="cdn", config={"displayModeBar": True}
         )
         print(f"  → {out.name}")
-        if first_out is None:
-            first_out = out
-    if first_out:
-        webbrowser.open(first_out.as_uri())
+    index = _write_index_html(result_dir)
+    webbrowser.open(index.as_uri())
     return 0
 
 
@@ -217,6 +239,11 @@ def main(argv: list[str] | None = None) -> int:
     """
     parser = _build_parser()
     args = parser.parse_args(argv)
+
+    import avl_aero_tables as _pkg
+
+    if args.quiet:
+        _pkg.verbose = False
 
     if args.command == "verify":
         try:

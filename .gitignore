@@ -19,10 +19,13 @@ build/
 # Ruff
 .ruff_cache/
 
-# Sweep outputs — created on demand by examples/quickstart.py
-examples/_runs/
+# Sweep outputs — created at project root or inside examples/
+_runs/
 *.st
 !examples/**/*.st
+
+# Plotly HTML files written by example scripts
+examples/**/*.html
 
 # Docs build
 docs/_build/
@@ -31,10 +34,7 @@ docs/_build/
 geometry.png
 stability.png
 /sweep.csv
-
-# Orphaned/intermediate doc images
-docs/_static/img/bd_aero.png
-docs/_static/img/bd_ctrl_C*.png
+geometry.html
 
 # macOS
 .DS_Store

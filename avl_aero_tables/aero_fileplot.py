@@ -19,6 +19,32 @@ if TYPE_CHECKING:
     import plotly.graph_objects as go
 
 
+def _tighten_3d_layout(fig: "go.Figure", n_rows: int, n_cols: int) -> None:
+    """Compact 3-D scene domains and reposition subplot title annotations."""
+    top_pad = 0.03    # equal top/bottom padding centers the scene grid vertically
+    bottom_pad = 0.03
+    row_gap = 0.02
+    col_gap = 0.01
+    ann_offset = 0.01  # annotation sits just below scene domain top
+    avail_h = 1.0 - top_pad - bottom_pad
+    row_h = (avail_h - row_gap * max(n_rows - 1, 0)) / n_rows
+    col_w = (1.0 - col_gap * max(n_cols - 1, 0)) / n_cols
+    updates: dict = {}
+    for r in range(n_rows):
+        y1 = 1.0 - top_pad - r * (row_h + row_gap)
+        y0 = y1 - row_h
+        ann_y = y1 - ann_offset
+        for c in range(n_cols):
+            i = r * n_cols + c
+            x0 = c * (col_w + col_gap)
+            x1 = x0 + col_w
+            name = "scene" if i == 0 else f"scene{i + 1}"
+            updates[name] = {"domain": {"x": [x0, x1], "y": [max(y0, bottom_pad), y1]}}
+            if i < len(fig.layout.annotations):
+                fig.layout.annotations[i].y = ann_y
+    fig.update_layout(**updates)
+
+
 def aero_fileplot(
     aero: AeroDatabase,
     beta_ref: float = 0.0,
@@ -64,7 +90,8 @@ def aero_fileplot(
     ...         out_dir=tmp,
     ...     )
     AVL sweep complete → ...  (36 cases)
-    >>> db = aero_filewrite(results)
+    >>> db = aero_filewrite(results)  # doctest: +ELLIPSIS
+    AeroDatabase: ...
     >>> figs = aero_fileplot(db)
     >>> len(figs)
     7
@@ -111,10 +138,10 @@ def aero_fileplot(
                 zaxis=dict(title=coef, **AXIS_3D),
             )})
         fig_stab.update_layout(
-            title=dict(text="Stability coefficients", x=0.5, xanchor="center"),
-            height=400 * n_rows,
+            title=dict(text="Stability coefficients", x=0.5, xanchor="center", y=0.99, yanchor="top"),
+            height=330 * n_rows,
             showlegend=False,
-            margin=dict(l=10, r=10, t=50, b=10),
+            margin=dict(l=30, r=30, t=55, b=20),
             modebar=dict(
                 orientation="v",
                 bgcolor="rgba(255,255,255,0.6)",
@@ -122,6 +149,7 @@ def aero_fileplot(
                 activecolor="#2563eb",
             ),
         )
+        _tighten_3d_layout(fig_stab, n_rows, n_cols)
         figs.append(fig_stab)
 
     # ------------------------------------------------------------------
@@ -173,11 +201,11 @@ def aero_fileplot(
         fig_ctrl.update_layout(
             title=dict(
                 text=f"{coef}  —  beta = {beta_actual:.1f} deg",
-                x=0.5, xanchor="center",
+                x=0.5, xanchor="center", y=0.99, yanchor="top",
             ),
-            height=400 * n_rows,
+            height=330 * n_rows,
             showlegend=False,
-            margin=dict(l=10, r=10, t=50, b=10),
+            margin=dict(l=30, r=30, t=55, b=20),
             modebar=dict(
                 orientation="v",
                 bgcolor="rgba(255,255,255,0.6)",
@@ -185,6 +213,7 @@ def aero_fileplot(
                 activecolor="#2563eb",
             ),
         )
+        _tighten_3d_layout(fig_ctrl, n_rows, n_cols)
         figs.append(fig_ctrl)
 
     return figs

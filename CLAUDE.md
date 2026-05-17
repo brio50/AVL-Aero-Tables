@@ -11,8 +11,7 @@ A Python package (`avl_aero_tables`) that wraps [AVL](https://web.mit.edu/drela/
 ```
 avl_aero_tables/          # Python package
   __init__.py         # public API
-  avl_fileread.py     # parse .avl geometry files → AvlGeometry dataclass
-  st_fileread.py      # parse .st stability output files → list[StResult]
+  avl_fileread.py     # parse .avl geometry → AvlGeometry; parse .st output → list[StResult]
   avl_rungen.py       # generate AVL run-case and command file strings
   avl_bin.py          # find/verify/invoke the AVL binary; CLI entry point
   avl_sweep.py        # top-level sweep orchestration → list[StResult]
@@ -30,7 +29,7 @@ tests/
   data/               # AVL geometry fixtures for unit testing (supra, allegro, etc.)
                       #   data/supra/, data/ellipg/, data/allegro/, data/b737/, etc.
   test_avl_fileread.py
-  test_st_fileread.py
+  test_st_fileread.py  # tests st_fileread() from avl_fileread.py
   test_avl_rungen.py
   test_avl.py
   test_avl_aerogen.py  # (tests avl_sweep.py)
