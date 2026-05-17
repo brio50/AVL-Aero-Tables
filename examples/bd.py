@@ -73,7 +73,7 @@ def main(write_docs: bool = False) -> None:
 
 
 def _save_html(fig: object, run_path: Path, docs_path: Path, write_docs: bool) -> None:
-    html = fig.to_html(include_plotlyjs="cdn", full_html=False)  # type: ignore[attr-defined]
+    html = fig.to_html(include_plotlyjs="cdn", full_html=False, config={"displayModeBar": True})  # type: ignore[attr-defined]
     run_path.write_text(html)
     print(f"  → {run_path.name}")
     if write_docs:

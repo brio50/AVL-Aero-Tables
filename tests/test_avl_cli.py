@@ -12,7 +12,8 @@ from avl_aero_tables.avl_cli import (
     _TIMESTAMP_RE,
     main,
 )
-from avl_aero_tables.avl_config import ProjectConfig, load_config as _load_config
+from avl_aero_tables.avl_config import ProjectConfig
+from avl_aero_tables.avl_config import load_config as _load_config
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
 BD_YML = EXAMPLES / "bd" / "bd.yml"
@@ -107,6 +108,27 @@ def test_load_config_ctrl_sweeps_empty_list_exits(tmp_path):
     )
     with pytest.raises(SystemExit):
         _load_config(yml)
+
+
+def test_sweep_spec_warns_when_ctrl_sweeps_missing_zero(tmp_path):
+    from avl_aero_tables.avl_config import SweepSpec
+    with pytest.warns(UserWarning, match="no 0.0 deflection"):
+        SweepSpec.model_validate(
+            {"alpha": [0.0], "beta": [0.0], "ctrl_sweeps": {"elevator": [-10.0, 10.0]}}
+        )
+
+
+def test_sweep_spec_inserts_zero_into_ctrl_sweeps():
+    import warnings
+
+    from avl_aero_tables.avl_config import SweepSpec
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        spec = SweepSpec.model_validate(
+            {"alpha": [0.0], "beta": [0.0], "ctrl_sweeps": {"elevator": [-10.0, 10.0]}}
+        )
+    assert 0.0 in spec.ctrl_sweeps["elevator"]
+    assert spec.ctrl_sweeps["elevator"] == sorted(spec.ctrl_sweeps["elevator"])
 
 
 def test_load_config_non_numeric_alpha_exits(tmp_path):

@@ -7,131 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.5.1] - 2026-05-16
+## [1.6.0] - 2026-05-16
 
-### Added
-- `_plot_config.equal_3d_ranges()` — equal-axis range helper added to the shared config module (previously inlined in `avl_fileplot`); available for reuse by any plot function
-- `docs/_ext/plotly_figure.py`: `:height:` option (CSS height, defaults to auto-detected from Plotly layout JSON baked into the file); `:class:` option (extra CSS classes appended to `plotly-iframe`); extension version bumped to 0.2
-
-### Fixed
-- CLI sweep output directory corrected from `runs/` to `_runs/` — the code had regressed while the docs and changelog have specified `_runs/` (underscore prefix, conventional for generated/gitignored directories) since 1.2.0
-- `aero_fileplot`: consistent figure margins (`l=40, r=40, t=80, b=40`) added to stability and control figures; subplot titles were being clipped on narrower viewports
-- `_plot_config.AXIS_3D`: explicit grid, line, and zero-line colors (`#d0d0d0` / `#aaaaaa`) added for consistent appearance across Plotly's light templates
-- `docs/dev/requirements.csv`: `req-plot-*` and `req-aeroplot-*` updated to reflect the plotly backend; matplotlib-era `req-plot-4` (four-view titles) removed; `req-plot-10` (body geometry plotting) added; stale test-function names corrected throughout
+### Changed
+- Plotly modebar always visible; styled with vertical orientation and translucent background
+- Geometry figure whitespace tightened; view buttons (Iso / Right / Front / Top) with corrected camera positions; Iso camera reoriented so nose points toward the viewer (lower-right)
+- Aero coefficient figure margins and title centering improved; `CAMERA_AERO` constant added to `_plot_config`
+- Quickstart docs: MyST comments added pointing to plot regeneration scripts
 
 ## [1.5.0] - 2026-05-16
 
 ### Added
-- `ctrl_sweeps` entries that omit `0.0` now trigger a `UserWarning` and have
-  `0.0` inserted automatically (sorted into the list), ensuring `AeroDatabase.stab`
-  tables are always populated.  Applies to both the Python API (`avl_sweep.run`)
-  and the YAML project-file validator (`SweepSpec` in `avl_config.py`).
-- `avl_aero_tables/_plot_config.py` — shared plotly constants (`AXIS_3D`, `CAMERA_GEOM`, `COLORSCALE_STAB`, `COLORSCALE_CTRL`, `OPACITY_SURFACE`); both plot modules import from here so visual defaults are changed in one place
+- `_plot_config.py` — shared Plotly constants (`AXIS_3D`, camera defaults, colorscales, opacity); all plot modules import from here
+- `equal_3d_ranges()` helper extracted to `_plot_config` for reuse
+- `ctrl_sweeps` entries missing `0.0` now trigger a `UserWarning` and auto-insert it, ensuring stability tables are always populated
+- Coordinate triads on geometry plot (AVL world frame + aircraft body frame at CG); legend distinguishes the two frames
+- Sphinx plotly figures embedded as lazy-loading iframes; `:height:` and `:class:` options on the `plotly-figure` directive
 
 ### Changed
-- `avl_fileplot`: default camera reoriented to nose-left, flying toward viewer (`eye=(-1.5, -1.5, 0.8)`); previously the camera was behind the tail so the aircraft flew away from the viewer
-- `avl_fileplot`, `aero_fileplot`: background planes removed from all 3-D scenes (`showbackground=False` on all axes); axes lines and ticks remain
-
-## [1.4.1] - 2026-05-16
-
-### Added
-- `avl_fileplot`: coordinate triads on geometry plot — AVL world frame (X/Y/Z, grey) at the coordinate origin (0, 0, 0); aircraft body frame (x_b/y_b/z_b, RGB) at the CG; legend distinguishes the two frames
-- Sphinx docs: plotly figures embedded as lazy-loading iframes with `onload` auto-resize; page weight reduced from ~500 KB to ~47 KB; eliminates CDN version mismatch between Sphinx and generated figures
-
-### Changed
-- `avl_fileplot`: four-panel view (Isometric / Top / Front / Side) replaced with a single interactive 3-D scene — user rotates freely
-- `avl_fileplot`: equal-axis scaling via `aspectmode="manual"` with explicit per-axis ranges; true geometric proportions preserved
+- `avl_fileplot`: single interactive 3-D scene replaces four-panel static view; equal-axis scaling; background planes removed
+- `aero_fileplot`: consistent margins and subplot title sizing
 
 ### Fixed
-- `avl_fileplot`: geometry plot now applies each surface's `SCALE` transformation before plotting; previously only `TRANSLATE` was applied, causing surfaces with a Z scale factor (e.g. the b737 wing uses `SCALE 1.0 1.0 0.07`) to plot at grossly incorrect Z values
+- CLI sweep output directory regression (`runs/` → `_runs/`)
+- Geometry `SCALE` transformation now applied before plotting (previously only `TRANSLATE` was applied)
 
 ## [1.4.0] - 2026-05-16
 
 ### Added
-- `avl_config.py` — new module holding `InputSpec`, `SweepSpec`, `OutputSpec`, `ProjectConfig`, and `load_config()`; extracted from `avl_cli.py` to separate schema/validation concerns from CLI dispatch
-- YAML validation now rejects `ctrl_sweeps` entries with empty deflection lists (e.g. `elevator: []`)
-- YAML validation now rejects malformed YAML files with a clean error message (previously raised an unhandled `yaml.YAMLError`)
-- `avl-aero-tables sweep` validates `ctrl_sweeps` keys against control surface names in the `.avl` file before running; exits with a clear error listing the bad keys and valid surface names
-- `examples/b737.py` — Boeing 737-800 end-to-end walkthrough (geometry → sweep → aero database → interactive plots); `--docs` flag writes standalone HTML to `docs/_static/html/`
-- `avl_fileplot` and `aero_fileplot` rewritten for plotly; interactive figures embed directly in Sphinx docs and are drop-in compatible with Dash (`dcc.Graph(figure=fig)`)
-- `plotly` added to core package dependencies
+- `avl_config.py` — Pydantic models (`ProjectConfig`, `InputSpec`, `SweepSpec`, `OutputSpec`) and `load_config()`; YAML validation with clear error messages
+- YAML-driven CLI: `sweep <yml>`, `plot geometry <yml>`, `plot aero <runs_dir>`
+- `avl_fileplot` and `aero_fileplot` rewritten for Plotly; interactive figures embed in Sphinx and Dash
+- `examples/b737.py` — Boeing 737-800 end-to-end walkthrough with `--docs` flag
+- `plotly` added to core dependencies
 
 ### Changed
-- `avl_cli.py` reduced to argument parsing and command dispatch; all Pydantic models and `load_config()` moved to `avl_config.py`
-- `examples/quickstart.py` renamed to `examples/bd.py` — same Bubble Dancer walkthrough; name now matches the aircraft
-- Quickstart docs restructured: intro split into "Input Structure" and "Project Layout" sections; CLI section uses Bubble Dancer (`bd.avl`), Python API section uses Boeing 737-800 (`b737.avl`); B737 plots are now interactive plotly embeds
-- `docs/user/reference/api/avl_fileread.md` description updated to cover both parsers (`.avl` geometry and `.st` stability output); stale `st_fileread.md` (orphaned when the module was merged into `avl_fileread`) removed
+- Quickstart restructured: CLI section uses Bubble Dancer, Python API section uses B737
+- `examples/quickstart.py` renamed to `examples/bd.py`
 
 ## [1.3.0] - 2026-05-16
 
 ### Added
-- Structured run output directory with reproducibility artifacts:
-  - `.in/` — AVL-generated inputs (`reset.run`, `sweep.inp`)
-  - `.in/<avl_stem>/` — snapshot of all user input files at run time (`.avl`, `.yml` for CLI runs, and all referenced airfoil/body `.dat` files discovered from `AFIL`/`BFIL` entries)
-  - `.raw/` — raw AVL output files (`case_*.st`)
-  - `provenance.json` at run root — records `timestamp`, `package_version`, `git_commit`, `git_branch`, `git_dirty`, `entry` (`"cli"` or `"api"`), `source` (input directory), and `snapshot` (relative path to `.in/<avl_stem>/`)
-- `avl_sweep.run()` gains `yml_file` parameter — when provided by the CLI, marks `entry: "cli"` in `provenance.json` and copies the `.yml` into `.in/<avl_stem>/`
-- `--version` flag added to the `avl-aero-tables` CLI; reads version from `pyproject.toml` (source of truth) with `importlib.metadata` fallback for non-editable installs
+- Structured run output: `.in/` (inputs + geometry snapshot), `.raw/` (`.st` files), `provenance.json` (timestamp, version, git state, entry point)
+- `--version` CLI flag
 
 ### Changed
-- `sweep.log` renamed to `sweep.inp` (`.inp` is the conventional extension for stdin-fed solver scripts in scientific computing) and moved from run root to `.in/`
-- `reset.run` moved from run root to `.in/`
-- `case_*.st` files moved from run root to `.raw/`
-- `results.csv` / `results.json` remain at run root alongside `provenance.json`
-- `avl-aero-tables plot aero` updated to read `.st` files from `.raw/` subdirectory
-- `provenance.json` `source` field changed from file path (`.avl` or `.yml`) to the input directory — more accurate since `.avl` depends on co-located airfoil/body `.dat` files
-- `provenance.json` `package_version` reads from `pyproject.toml` directly rather than `importlib.metadata` — stays current during local development without reinstalling
+- `sweep.log` → `sweep.inp`, moved to `.in/`; `reset.run` and `case_*.st` reorganized into `.in/` and `.raw/`
 
 ## [1.2.0] - 2026-05-15
 
-### Changed
-- `plot aero` argument changed from `<yml>` to `<runs_dir>` — pass a parent directory to auto-select the latest timestamped run, or a specific timestamped directory for a particular run; `.yml` is no longer required
-- `avl_sweep()` `out_dir` is now a **base directory** — the timestamped run directory `{out_dir}/{avl_stem}_{YYYY-MM-DD-HHMMSS}/` is created automatically (including parents); raises `TypeError` if omitted
-- All aircraft geometry files consolidated under `examples/` alongside the runnable scripts, mirroring the recommended user project layout: `examples/bd/`, `examples/supra/`, `examples/allegro/`, `examples/b737/`, `examples/plane/`, `examples/supergee/`, `examples/ellipg/`
-- `docs/_static/gen_plots.py` merged into `examples/quickstart.py` — single runnable script does geometry read/plot, full alpha × beta × all-controls sweep, aero database, and all coefficient plots; `--docs` flag also writes PNGs to `docs/_static/img/`
-- Output directory convention: `_runs/bd_<timestamp>/` at project root (gitignored); `examples/quickstart.py` passes `out_dir=Path("_runs")` and `avl_sweep` creates the timestamped subdir automatically
-- AVL is now invoked as `avl` with **no positional CLI arguments** — geometry and run-case are loaded via `LOAD` and `CASE` stdin commands at the top of the script, making the approach fully consistent with the original MATLAB implementation (`avl < command.txt`); `avl_bin.run()` drops its `avl_file` and `run_file` kwargs accordingly
-- `make_run_command()` gains `avl_file` and `run_file` parameters and now emits `LOAD <avl_file>` and `CASE <run_file>` at the top of the generated stdin script
-- `sweep.log` now contains the complete stdin script including `LOAD` and `CASE` — a full record of everything piped to AVL; replay claim removed from docs
-
 ### Added
-- `examples/quickstart.py` — end-to-end walkthrough script (geometry → sweep → aero database → plots); outputs to `_runs/bd_<timestamp>/`; `--docs` flag updates committed doc images
+- `examples/bd.py` end-to-end walkthrough with `--docs` flag
 
-### Fixed
-- Docstring examples in `avl_sweep`, `aero_filewrite`, and `aero_fileplot` now pass `out_dir` to `avl_sweep()` — previously would raise `TypeError` when run as doctests
-- Quickstart docs clarified that `fig.savefig()` writes to the current working directory
-- `sweep.log` replay claim removed — the file uses full `run_dir` paths for human readability which exceed AVL's ~80-char Fortran limit; `sweep.log` is a record, not a runnable script
+### Changed
+- `plot aero` accepts a parent `<runs_dir>` (latest run auto-selected) instead of a `.yml`
+- `avl_sweep()` `out_dir` is a base directory; timestamped subdirectory created automatically
+- AVL invoked as pure stdin script (`avl < script`); `LOAD` / `CASE` commands at top of script
+- `examples/` reorganized into per-aircraft subdirectories with co-located airfoil data
 
 ## [1.1.0] - 2026-05-15
 
-### Fixed
-- All usage guide and docstring examples corrected from `"examples/bd.avl"` to `"examples/bd/bd.avl"` — paths were stale since the 1.1.0 examples reorganization into per-aircraft subdirectories; copy-paste code would have raised `FileNotFoundError`
-- `avl-upstream.md` clarified that `.mass` files are not required by `avl-aero-tables` — `.st` stability derivatives are computed by AVL's vortex lattice solver without mass/inertia data; mass is only needed for dynamic stability eigenvalue (`.eig`) output
-- `docs/dev/reqs/sweep.csv` req-sweep-8 had a dead test link (`test_run_default_out_dir_is_relative_to_avl`) and wrong description — corrected to match the actual test name and behavior (CWD-relative timestamped directory, not avl_dir-relative)
-
 ### Added
-- YAML-driven CLI: `avl-aero-tables sweep <yml>`, `plot geometry <yml>`, `plot aero <runs_dir>` — replaces the removed `run <command_file>` subcommand
-- `examples/<stem>/<stem>.yml` project files for all seven reference aircraft (bd, allegro, b737, ellipg, plane, supergee, supra)
-- `ProjectConfig` / `InputSpec` / `SweepSpec` / `OutputSpec` pydantic models — parse and validate the project file; report structured errors on bad input
-- `sweep.log` written to each output directory — records the stdin commands piped to AVL with a replay comment on the first line showing the exact shell invocation
-- `reset.run` is now a real AVL CLI input (written to a short `/tmp` staging path and passed as the second positional argument to the binary) rather than a reference-only file
-
-### Changed
-- YAML project file schema: `input.geometry` (path to `.avl`, relative to yml), `sweep.{alpha,beta,ctrl_sweeps}`, `output.format` (default `csv`)
-- Sweep output directory: `<yml_dir>/../_runs/<stem>/<YYYY-MM-DD-HHMMSS>/` — e.g. `examples/bd/bd.yml` → `examples/_runs/bd/2026-05-15-120000/`
-- `run <command_file>` subcommand removed — was never the intended interface
-- AVL is now invoked using its documented CLI interface: `avl <avl_file> <reset.run>`, matching the original MATLAB implementation; geometry loading via the `LOAD` stdin command has been removed
-- `make_run_command()` no longer accepts `avl_name` parameter — this is now a CLI argument handled by `avl_bin.run()`; the generated stdin script begins with `PLOP G` then `OPER` rather than `LOAD`
-- `avl_bin.run()` gains `avl_file` and `run_file` keyword arguments passed as positional CLI args to the AVL binary
-- `sweep.cmd` renamed to `sweep.log` to accurately reflect that it is a record of what was sent, not a driver file
-- Custom geometry documentation added to usage guide: recommended project layout for `.avl` and associated airfoil data files
-- `examples/` reorganized: ~80 redundant and standalone AVL models removed, leaving six curated aircraft (Bubble Dancer, Allegro-Lite, Boeing 737-800, Plane Vanilla, SuperGee, Supra); each lives in its own subfolder with all referenced airfoil `.dat` and body `.dat` files co-located; `ellipg.avl` (wing-only test fixture) moved to `tests/data/`
+- YAML project file schema (`input`, `sweep`, `output` sections); Pydantic validation
+- `sweep <yml>`, `plot geometry <yml>`, `plot aero <runs_dir>` CLI subcommands
+- Project files for all seven reference aircraft
 
 ### Removed
-- `mass_file` parameter removed from `avl_sweep()` and `avl_bin.run()` — `.st` stability and control derivatives do not depend on mass or inertia properties; `.mass` files are only needed for AVL's dynamic stability eigenvalue analysis (`.eig`), which is outside the scope of this package
-
-### Dependencies
-- Added `pyyaml` and `pydantic` to `[project] dependencies`
+- `mass_file` parameter (not needed for `.st` vortex-lattice output)
+- `run <command_file>` CLI subcommand
 
 ## [1.0.1] - 2026-05-15
 

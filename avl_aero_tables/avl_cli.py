@@ -28,6 +28,11 @@ def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="avl-aero-tables",
         description="Python wrapper for AVL (Athena Vortex Lattice)",
+        epilog=(
+            "Use --help on any subcommand for details, e.g.:\n"
+            "  avl-aero-tables sweep --help"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument(
         "--version", action="version", version=f"avl-aero-tables {_package_version()}"
@@ -55,7 +60,10 @@ def _build_parser() -> argparse.ArgumentParser:
     aero_p.add_argument(
         "runs_dir",
         type=Path,
-        help="Path to a sweep results directory, or a parent directory (latest run is used)",
+        help=(
+            "Path to a sweep results directory, or a parent directory"
+            " (latest run is used)"
+        ),
     )
 
     return p
@@ -111,7 +119,7 @@ def _cmd_plot_geometry(args: argparse.Namespace) -> int:
     geometry = avl_fileread(avl_file)
     fig = avl_fileplot(geometry)
     out = avl_file.parent / f"{avl_file.stem}_geometry.html"
-    fig.write_html(str(out), include_plotlyjs="cdn")
+    fig.write_html(str(out), include_plotlyjs="cdn", config={"displayModeBar": True})
     print(f"Geometry plot → {out}")
     webbrowser.open(out.as_uri())
     return 0
@@ -152,11 +160,16 @@ def _cmd_plot_aero(args: argparse.Namespace) -> int:
     results = st_fileread(result_dir / ".raw")
     aero = aero_filewrite(results)
     figs = aero_fileplot(aero)
-    names = ["stab", "ctrl_CLtot", "ctrl_CYtot", "ctrl_CDtot", "ctrl_Cltot", "ctrl_Cmtot", "ctrl_Cntot"]
+    names = [
+        "stab", "ctrl_CLtot", "ctrl_CYtot", "ctrl_CDtot",
+        "ctrl_Cltot", "ctrl_Cmtot", "ctrl_Cntot",
+    ]
     first_out = None
     for fig, name in zip(figs, names):
         out = result_dir / f"{name}.html"
-        fig.write_html(str(out), include_plotlyjs="cdn")
+        fig.write_html(
+            str(out), include_plotlyjs="cdn", config={"displayModeBar": True}
+        )
         print(f"  → {out.name}")
         if first_out is None:
             first_out = out
@@ -167,6 +180,14 @@ def _cmd_plot_aero(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     """Entry point for the ``avl-aero-tables`` CLI.
+
+    Global flags:
+
+    ``--help``
+        Show a help message and exit (also works on every subcommand).
+
+    ``--version``
+        Print the installed package version and exit.
 
     Subcommands:
 
@@ -187,6 +208,8 @@ def main(argv: list[str] | None = None) -> int:
     -------
     .. code-block:: shell
 
+        avl-aero-tables --help
+        avl-aero-tables --version
         avl-aero-tables verify
         avl-aero-tables sweep examples/bd/bd.yml
         avl-aero-tables plot geometry examples/bd/bd.yml

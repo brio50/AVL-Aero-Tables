@@ -48,7 +48,7 @@ _PYPROJECT = Path(__file__).resolve().parent.parent / "pyproject.toml"
 
 
 def _package_version() -> str:
-    """Read version from pyproject.toml (source of truth); fall back to importlib.metadata."""
+    """Read version from pyproject.toml (source of truth); fall back to importlib."""
     if _PYPROJECT.exists():
         with _PYPROJECT.open("rb") as f:
             return tomllib.load(f)["project"]["version"]

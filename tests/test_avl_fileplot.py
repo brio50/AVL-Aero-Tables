@@ -55,14 +55,18 @@ def test_figure_title_contains_geometry_name():
 @pytest.mark.req("req-plot-6")
 def test_line_traces_drawn(bd_geometry):
     fig = avl_fileplot(bd_geometry)
-    line_traces = [t for t in fig.data if isinstance(t, go.Scatter3d) and t.mode == "lines"]
+    line_traces = [
+        t for t in fig.data if isinstance(t, go.Scatter3d) and t.mode == "lines"
+    ]
     assert len(line_traces) > 0
 
 
 @pytest.mark.req("req-plot-7")
 def test_cg_marker_present(bd_geometry):
     fig = avl_fileplot(bd_geometry)
-    marker_traces = [t for t in fig.data if isinstance(t, go.Scatter3d) and t.mode == "markers"]
+    marker_traces = [
+        t for t in fig.data if isinstance(t, go.Scatter3d) and t.mode == "markers"
+    ]
     assert len(marker_traces) > 0
 
 
@@ -90,7 +94,9 @@ def test_no_body_geometry_no_crash():
 def test_mirror_doubles_traces(bd_geometry):
     """bd.avl has Ydupl=0 surfaces; mirrored traces should be present."""
     fig = avl_fileplot(bd_geometry)
-    line_traces = [t for t in fig.data if isinstance(t, go.Scatter3d) and t.mode == "lines"]
+    line_traces = [
+        t for t in fig.data if isinstance(t, go.Scatter3d) and t.mode == "lines"
+    ]
     assert len(line_traces) >= 4
 
 

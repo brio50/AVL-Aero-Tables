@@ -52,18 +52,18 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir, binary, out_format, m
     ├─ avl_fileread(avl_file)              → AvlGeometry (header, surfaces, body)
     │   └─ extracts control surface names (ctrl_names, ordered)
     │
-    ├─ avl_rungen.make_run_reset(...)      → reset.run  (written to staging + out_dir)
+    ├─ avl_rungen.make_run_reset(...)      → content string  (avl_sweep writes to staging + .in/reset.run)
     │   └─ AVL native .run format; all flight conditions zeroed
     │
     ├─ avl_rungen.make_run_command(...)    → cmd_text (fed to AVL stdin via staging paths)
-    │   └─ called twice: once with staging paths (→ cmd_text), once with out_dir paths (→ sweep.log)
+    │   └─ called twice: once with staging paths (→ cmd_text), once with raw_dir + .in/ paths (→ .in/sweep.inp)
     │   └─ LOAD <avl_file> / CASE <reset.run> / PLOP G / OPER / per-case: A,B,Di, i, x, st, CINI / Quit
     │
     ├─ avl_bin.run(cmd_text, cwd=avl_dir)
     │   └─ subprocess: avl (no CLI args) + complete stdin script
-    │   └─ .st files written to short /tmp staging dir; moved to out_dir after AVL exits
+    │   └─ .st files written to short /tmp staging dir; moved to .raw/ after AVL exits
     │
-    ├─ st_fileread(out_dir)                → list[StResult]
+    ├─ st_fileread(run_dir/.raw)            → list[StResult]
     │   └─ each StResult has .filename, .controls, .data (dict of floats)
     │
     └─ results_to_dataframe(results)       → DataFrame → results.csv / results.json
@@ -85,19 +85,19 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir, binary, out_format, m
   (`avl < command.txt`).  The script opens with `LOAD <avl_file>` and `CASE <reset.run>`
   then proceeds to `PLOP G` / `OPER` / sweep loop / `Quit`.
 
-- **File-based AVL inputs**: `avl_sweep.run()` writes `reset.run` and `sweep.log`
-  to `out_dir` so the full inputs are on disk alongside the outputs.  `sweep.log`
+- **File-based AVL inputs**: `avl_sweep.run()` writes `.in/reset.run` and `.in/sweep.inp`
+  to the run directory so the full inputs are on disk alongside the outputs.  `sweep.inp`
   contains the complete stdin script (including `LOAD`/`CASE`) and is a record of
-  exactly what was piped to AVL — not a runnable replay script (paths use `out_dir`
-  which may exceed AVL's ~80-char Fortran limit).
+  exactly what was piped to AVL — not a runnable replay script (paths use actual
+  `.raw/` and `.in/` dirs, which may exceed AVL's ~80-char Fortran limit).
 
 - **Two command strings**: `make_run_command` is called twice — once with
-  `out_dir` paths (written to `sweep.log` for human reference) and once with
-  `/tmp` staging paths (fed to AVL stdin to stay under the 80-char Fortran limit).
+  `raw_dir` + `.in/` paths (result written to `.in/sweep.inp` for human reference)
+  and once with `/tmp` staging paths (fed to AVL stdin to stay under the 80-char Fortran limit).
 
 - **Staging in /tmp**: AVL writes `.st` files in a short
   `tempfile.TemporaryDirectory(prefix="avl_")` path to keep all AVL-facing
-  filenames under the ~80-char Fortran string limit.  Files are moved to `out_dir`
+  filenames under the ~80-char Fortran string limit.  Files are moved to `.raw/`
   after AVL exits; the temp directory is deleted automatically even if AVL crashes.
 
 - **cwd = avl_dir**: AVL is invoked with `cwd` set to the directory containing

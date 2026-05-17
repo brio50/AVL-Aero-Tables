@@ -18,13 +18,14 @@ sequenceDiagram
     S->>FR: avl_file
     FR-->>S: AvlGeometry
     S->>RG: make_run_reset()
-    RG->>FS: .in/reset.run
+    RG-->>S: content
+    S->>FS: .in/reset.run
     S->>RG: make_run_command() ×2
-    RG->>FS: .in/sweep.inp
     RG-->>S: cmd_text
+    S->>FS: .in/sweep.inp
     S->>BN: cmd_text
     BN->>FS: .raw/case_NNNN.st
-    FR->>FS: read *.st
+    S->>FR: st_fileread(.raw/)
     FR-->>S: list[StResult]
     S-->>U: list[StResult]
 ```
@@ -64,7 +65,6 @@ sequenceDiagram
     participant FS as 📁 out/
 
     U->>FW: list[StResult]
-    FW->>FS: results.csv / results.json
     FW-->>U: AeroDatabase
     U->>AP: AeroDatabase
     AP-->>U: list[plotly.Figure]
@@ -89,20 +89,32 @@ sequenceDiagram
     participant CFG as avl_config
     participant BN as avl_bin
     participant S as avl_sweep
-    participant FP as avl_fileplot / aero_fileplot
+    participant FR as avl_fileread
+    participant FP as avl_fileplot / aero_filewrite / aero_fileplot
 
-    U->>CLI: avl-aero-tables <cmd> project.yml
-    CLI->>CFG: load_config(yml)
-    CFG-->>CLI: ProjectConfig
+    U->>CLI: avl-aero-tables <cmd> [args]
     alt verify
-        CLI->>BN: locate / verify binary
-        BN-->>CLI: path, version
-    else sweep
-        CLI->>S: avl_sweep(ProjectConfig)
-        S-->>CLI: list[StResult] + results.csv
-    else plot
-        CLI->>FP: avl_fileplot / aero_fileplot
-        FP-->>CLI: Figure(s)
+        CLI->>BN: verify()
+        BN-->>CLI: binary path
+    else sweep <yml>
+        CLI->>CFG: load_config(yml)
+        CFG-->>CLI: ProjectConfig
+        CLI->>S: run(avl_file, α, β, δ, out_dir)
+        S-->>CLI: list[StResult]
+    else plot geometry <yml>
+        CLI->>CFG: load_config(yml)
+        CFG-->>CLI: ProjectConfig
+        CLI->>FR: avl_fileread(avl_file)
+        FR-->>CLI: AvlGeometry
+        CLI->>FP: avl_fileplot(AvlGeometry)
+        FP-->>CLI: Figure
+    else plot aero <runs_dir>
+        CLI->>FR: st_fileread(.raw/)
+        FR-->>CLI: list[StResult]
+        CLI->>FP: aero_filewrite(results)
+        FP-->>CLI: AeroDatabase
+        CLI->>FP: aero_fileplot(db)
+        FP-->>CLI: list[Figure]
     end
     CLI-->>U: output / status
 ```

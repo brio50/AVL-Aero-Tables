@@ -40,7 +40,10 @@ def _build_traces(geometry: AvlGeometry) -> list[dict]:
             zb = np.full(n, zt)
             half = n // 2
             cl_x = xb[:half]
-            traces.append(dict(mode="lines", x=list(xb), y=list(yb), z=list(zb), color="green", width=1))
+            traces.append(dict(
+                mode="lines", x=list(xb), y=list(yb), z=list(zb),
+                color="green", width=1,
+            ))
             traces.append(dict(
                 mode="lines",
                 x=list(cl_x), y=list(np.full(half, yt)), z=list(np.full(half, zt)),
@@ -77,15 +80,35 @@ def _build_traces(geometry: AvlGeometry) -> list[dict]:
         z_te = z_le + chord * np.sin(np.radians(ainc))
 
         for k in range(n_sec):
-            traces.append(dict(mode="lines", x=[x_le[k], x_te[k]], y=[y_le[k], y_le[k]], z=[z_le[k], z_te[k]], color="mediumpurple", width=1))
+            traces.append(dict(
+                mode="lines",
+                x=[x_le[k], x_te[k]], y=[y_le[k], y_le[k]], z=[z_le[k], z_te[k]],
+                color="mediumpurple", width=1,
+            ))
             if mirror:
-                traces.append(dict(mode="lines", x=[x_le[k], x_te[k]], y=[-y_le[k], -y_le[k]], z=[z_le[k], z_te[k]], color="mediumpurple", width=1))
+                traces.append(dict(
+                    mode="lines",
+                    x=[x_le[k], x_te[k]], y=[-y_le[k], -y_le[k]], z=[z_le[k], z_te[k]],
+                    color="mediumpurple", width=1,
+                ))
 
-        traces.append(dict(mode="lines", x=list(x_le), y=list(y_le), z=list(z_le), color="steelblue", width=2))
-        traces.append(dict(mode="lines", x=list(x_te), y=list(y_le), z=list(z_te), color="steelblue", width=2))
+        traces.append(dict(
+            mode="lines", x=list(x_le), y=list(y_le), z=list(z_le),
+            color="steelblue", width=2,
+        ))
+        traces.append(dict(
+            mode="lines", x=list(x_te), y=list(y_le), z=list(z_te),
+            color="steelblue", width=2,
+        ))
         if mirror:
-            traces.append(dict(mode="lines", x=list(x_le), y=list(-y_le), z=list(z_le), color="steelblue", width=2))
-            traces.append(dict(mode="lines", x=list(x_te), y=list(-y_le), z=list(z_te), color="steelblue", width=2))
+            traces.append(dict(
+                mode="lines", x=list(x_le), y=list(-y_le), z=list(z_le),
+                color="steelblue", width=2,
+            ))
+            traces.append(dict(
+                mode="lines", x=list(x_te), y=list(-y_le), z=list(z_te),
+                color="steelblue", width=2,
+            ))
 
     return traces
 
@@ -112,7 +135,9 @@ def avl_fileplot(geometry: AvlGeometry) -> "go.Figure":
     >>> fig = avl_fileplot(geom)
     >>> "Bubble Dancer" in fig.layout.title.text
     True
-    >>> fig.write_html("geometry.html", include_plotlyjs="cdn")
+    >>> fig.write_html(
+    ...     "geometry.html", include_plotlyjs="cdn", config={"displayModeBar": True}
+    ... )
     """
     import plotly.graph_objects as go
 
@@ -174,11 +199,35 @@ def avl_fileplot(geometry: AvlGeometry) -> "go.Figure":
                    (( 0, 0,-1), "blue",  "z<sub>b</sub>"),
                ])
 
+    _up_z = dict(x=0, y=0, z=1)
+    _up_x = dict(x=1, y=0, z=0)  # top-view: nose toward bottom (+X aft → nose down)
+    _cam = "scene.camera"
+    _view_buttons = [
+        dict(label="Iso",   method="relayout",
+             args=[{_cam: {"eye": dict(x=-1.5, y=1.5, z=0.8), "up": _up_z}}]),
+        dict(label="Right", method="relayout",
+             args=[{_cam: {"eye": dict(x=0.0,  y=2.5,  z=0.0), "up": _up_z}}]),
+        dict(label="Front", method="relayout",
+             args=[{_cam: {"eye": dict(x=-2.5, y=0.0,  z=0.0), "up": _up_z}}]),
+        dict(label="Top",   method="relayout",
+             args=[{_cam: {"eye": dict(x=0.0,  y=0.0,  z=2.5), "up": _up_x}}]),
+    ]
+
     fig.update_layout(
-        title_text=geometry.header.name,
+        title=dict(text=geometry.header.name, x=0.5, xanchor="center"),
         height=700,
         showlegend=True,
+        legend=dict(x=0.01, y=0.09, xanchor="left", yanchor="bottom",
+                    bgcolor="rgba(255,255,255,0.6)", borderwidth=0),
+        margin=dict(l=0, r=0, t=40, b=10),
+        modebar=dict(
+            orientation="v",
+            bgcolor="rgba(255,255,255,0.6)",
+            color="#666",
+            activecolor="#2563eb",
+        ),
         scene=dict(
+            domain=dict(y=[0.07, 1.0]),
             aspectmode="manual",
             aspectratio=dict(x=1, y=1, z=1),
             xaxis=dict(title="X", range=axis_ranges[0], **AXIS_3D),
@@ -186,6 +235,16 @@ def avl_fileplot(geometry: AvlGeometry) -> "go.Figure":
             zaxis=dict(title="Z", range=axis_ranges[2], **AXIS_3D),
             camera=CAMERA_GEOM,
         ),
+        updatemenus=[dict(
+            type="buttons",
+            direction="right",
+            showactive=False,
+            x=0.5,
+            xanchor="center",
+            y=0.06,
+            yanchor="top",
+            buttons=_view_buttons,
+        )],
     )
 
     return fig

@@ -326,7 +326,7 @@ class StResult:
 
 
 def _sanitize_coef_name(name: str) -> str:
-    """Scrub characters in AVL coefficient names that are invalid in Python identifiers."""
+    """Remove characters from AVL names that are invalid in Python identifiers."""
     return name.replace("/", "_div_").replace("'", "_prime_")
 
 

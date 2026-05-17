@@ -7,7 +7,7 @@ from avl_aero_tables.avl_fileread import avl_fileread
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
 BD_AVL = EXAMPLES / "bd" / "bd.avl"
-ALL_AVL_FILES = sorted(EXAMPLES.glob("**/*.avl"))
+ALL_AVL_FILES = sorted(p for p in EXAMPLES.glob("**/*.avl") if "_runs" not in p.parts)
 
 
 @pytest.mark.req("req-geom-2")

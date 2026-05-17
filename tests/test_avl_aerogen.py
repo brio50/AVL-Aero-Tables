@@ -182,6 +182,41 @@ def test_out_format_invalid_raises(tmp_path):
         _run_with_format(tmp_path, "xlsx")
 
 
+# ---------------------------------------------------------------------------
+# ctrl_sweeps 0.0 auto-inject
+# ---------------------------------------------------------------------------
+
+
+def test_run_warns_when_ctrl_sweeps_missing_zero(tmp_path):
+    mock_result = _make_mock_result()
+    with patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result):
+        with pytest.warns(UserWarning, match="no 0.0 deflection"):
+            run(
+                BD_AVL, alpha=[0.0], beta=[0.0],
+                ctrl_sweeps={"elevator": [-10.0, 10.0]}, out_dir=tmp_path,
+            )
+
+
+def test_run_inserts_zero_into_ctrl_sweeps(tmp_path):
+    captured_cmd: list[str] = []
+
+    def _fake_run(cmd: str, **kwargs: object) -> MagicMock:
+        captured_cmd.append(cmd)
+        return _make_mock_result()
+
+    with patch("avl_aero_tables.avl_sweep.avl_runner.run", side_effect=_fake_run):
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            run(
+                BD_AVL, alpha=[0.0], beta=[0.0],
+                ctrl_sweeps={"elevator": [-10.0, 10.0]}, out_dir=tmp_path,
+            )
+
+    assert captured_cmd, "avl_runner.run was not called"
+    assert "D1 D1 0.0" in captured_cmd[0] or "0.0" in captured_cmd[0]
+
+
 @pytest.mark.req("req-sweep-15")
 def test_run_writes_sweep_inp(tmp_path):
     mock_result = _make_mock_result()
@@ -246,7 +281,8 @@ def test_perf_bd_full_aero_table(tmp_path):
 
     ms_per_case = elapsed / expected * 1000
     print(
-        f"\nbd full sweep: {expected} cases in {elapsed:.1f}s ({ms_per_case:.0f} ms/case)"
+        f"\nbd full sweep: {expected} cases in {elapsed:.1f}s"
+        f" ({ms_per_case:.0f} ms/case)"
     )
     assert len(results) == expected
     assert ms_per_case < 250, f"{ms_per_case:.0f} ms/case exceeds 250 ms/case budget"

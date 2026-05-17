@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from avl_aero_tables._plot_config import AXIS_3D, COLORSCALE_CTRL, COLORSCALE_STAB, OPACITY_SURFACE
+from avl_aero_tables._plot_config import (
+    AXIS_3D,
+    CAMERA_AERO,
+    COLORSCALE_CTRL,
+    COLORSCALE_STAB,
+    OPACITY_SURFACE,
+)
 from avl_aero_tables.aero_filewrite import COEF_NAMES, AeroDatabase
 
 if TYPE_CHECKING:
@@ -84,25 +90,37 @@ def aero_fileplot(
             specs=[[{"type": "scene"}] * n_cols for _ in range(n_rows)],
             subplot_titles=stab_coefs,
         )
-        scene_names = ["scene" if i == 0 else f"scene{i + 1}" for i in range(n_rows * n_cols)]
+        n_scenes = n_rows * n_cols
+        scene_names = ["scene" if i == 0 else f"scene{i + 1}" for i in range(n_scenes)]
         for i, coef in enumerate(stab_coefs):
             tbl = aero.stab[coef]
             alpha_g, beta_g = np.meshgrid(tbl.alpha, tbl.beta, indexing="ij")
             fig_stab.add_trace(
-                go.Surface(x=alpha_g, y=beta_g, z=tbl.data, colorscale=COLORSCALE_STAB, opacity=OPACITY_SURFACE, showscale=False, name=coef),
+                go.Surface(
+                    x=alpha_g, y=beta_g, z=tbl.data,
+                    colorscale=COLORSCALE_STAB, opacity=OPACITY_SURFACE,
+                    showscale=False, name=coef,
+                ),
                 row=i // n_cols + 1, col=i % n_cols + 1,
             )
             fig_stab.update_layout(**{scene_names[i]: dict(
                 aspectmode="cube",
+                camera=CAMERA_AERO,
                 xaxis=dict(title="Alpha (deg)", **AXIS_3D),
                 yaxis=dict(title="Beta (deg)", **AXIS_3D),
                 zaxis=dict(title=coef, **AXIS_3D),
             )})
         fig_stab.update_layout(
-            title_text="Stability coefficients",
+            title=dict(text="Stability coefficients", x=0.5, xanchor="center"),
             height=400 * n_rows,
             showlegend=False,
-            margin=dict(l=40, r=40, t=80, b=40),
+            margin=dict(l=10, r=10, t=50, b=10),
+            modebar=dict(
+                orientation="v",
+                bgcolor="rgba(255,255,255,0.6)",
+                color="#666",
+                activecolor="#2563eb",
+            ),
         )
         figs.append(fig_stab)
 
@@ -132,25 +150,40 @@ def aero_fileplot(
             specs=[[{"type": "scene"}] * n_cols for _ in range(n_rows)],
             subplot_titles=[aero.ctrl[k].surface for k in ctrl_keys],
         )
-        scene_names = ["scene" if i == 0 else f"scene{i + 1}" for i in range(n_rows * n_cols)]
+        n_scenes = n_rows * n_cols
+        scene_names = ["scene" if i == 0 else f"scene{i + 1}" for i in range(n_scenes)]
         for j, key in enumerate(ctrl_keys):
             tbl = aero.ctrl[key]
             alpha_g, defl_g = np.meshgrid(tbl.alpha, tbl.defl, indexing="ij")
             fig_ctrl.add_trace(
-                go.Surface(x=alpha_g, y=defl_g, z=tbl.data[:, bi, :], colorscale=COLORSCALE_CTRL, opacity=OPACITY_SURFACE, showscale=False, name=tbl.surface),
+                go.Surface(
+                    x=alpha_g, y=defl_g, z=tbl.data[:, bi, :],
+                    colorscale=COLORSCALE_CTRL, opacity=OPACITY_SURFACE,
+                    showscale=False, name=tbl.surface,
+                ),
                 row=j // n_cols + 1, col=j % n_cols + 1,
             )
             fig_ctrl.update_layout(**{scene_names[j]: dict(
                 aspectmode="cube",
+                camera=CAMERA_AERO,
                 xaxis=dict(title="Alpha (deg)", **AXIS_3D),
                 yaxis=dict(title=f"{tbl.ctrl_name} (deg)", **AXIS_3D),
                 zaxis=dict(title=coef, **AXIS_3D),
             )})
         fig_ctrl.update_layout(
-            title_text=f"{coef}  —  beta = {beta_actual:.1f} deg",
+            title=dict(
+                text=f"{coef}  —  beta = {beta_actual:.1f} deg",
+                x=0.5, xanchor="center",
+            ),
             height=400 * n_rows,
             showlegend=False,
-            margin=dict(l=40, r=40, t=80, b=40),
+            margin=dict(l=10, r=10, t=50, b=10),
+            modebar=dict(
+                orientation="v",
+                bgcolor="rgba(255,255,255,0.6)",
+                color="#666",
+                activecolor="#2563eb",
+            ),
         )
         figs.append(fig_ctrl)
 

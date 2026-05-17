@@ -39,6 +39,8 @@ See {ref}`output-layout` for the full contents of each timestamped run directory
 (quickstart:cli)=
 ## CLI
 
+% To update plots in this section: python examples/bd.py --docs
+
 The fastest path from geometry to results — define your sweep in a YAML project file, then run three commands.
 
 ```{seealso}
@@ -81,6 +83,9 @@ avl-aero-tables plot geometry examples/bd/bd.yml
 ```{plotly-figure} _static/html/bd_geometry.html
 ```
 
+```{tip}
+The plots on this page are interactive thanks to [plot.ly](https://plotly.com/python/)! Play with the toolbar to the top right of the image, drag and rotate 3dScatter content.
+```
 
 ### Run Sweep
 
@@ -137,6 +142,8 @@ Pass a parent directory to plot the latest sweep, or a specific timestamped dire
 
 (quickstart:python-api)=
 ## Python API
+
+% To update plots in this section: python examples/b737.py --docs
 
 ```{seealso}
 **Example files** — `examples/b737/b737.avl` · `examples/b737/b737.yml`

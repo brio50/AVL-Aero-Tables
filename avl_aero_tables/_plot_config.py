@@ -30,7 +30,11 @@ AXIS_3D: dict = dict(
 )
 
 # Camera for the geometry figure: nose-left, flying toward viewer.
-CAMERA_GEOM: dict = dict(eye=dict(x=-1.5, y=-1.5, z=0.8))
+CAMERA_GEOM: dict = dict(eye=dict(x=-1.5, y=1.5, z=0.8), up=dict(x=0, y=0, z=1))
+
+# Camera for aero surface plots: isometric view from front-right above.
+CAMERA_AERO: dict = dict(eye=dict(x=1.8, y=1.8, z=1.2))
+
 
 # Surface appearance for aero coefficient plots.
 COLORSCALE_STAB = "Viridis"
