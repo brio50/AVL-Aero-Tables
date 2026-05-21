@@ -24,7 +24,8 @@ examples/             # runnable scripts + Bubble Dancer reference geometry
   quickstart.py       # end-to-end walkthrough (geometry → sweep → plots)
   bd/                 # Bubble Dancer .avl, airfoil .dat, and bd_alpha5_beta0.st
 _runs/                # sweep outputs (generated at runtime, not committed)
-                      #   _runs/<name>_YYYY-MM-DD-HHMMSS/  — one flat dir per run
+                      #   API:  <out_dir>/<avl-stem>_YYYY-MM-DD-HHMMSS/
+                      #   CLI:  <project-root>/_runs/<avl-stem>/<avl-stem>_YYYY-MM-DD-HHMMSS/
 tests/
   data/               # AVL geometry fixtures for unit testing (supra, allegro, etc.)
                       #   data/supra/, data/ellipg/, data/allegro/, data/b737/, etc.
@@ -33,9 +34,11 @@ tests/
   test_avl_rungen.py
   test_avl.py
   test_avl_aerogen.py  # (tests avl_sweep.py)
+  test_avl_cli.py
   test_avl_fileplot.py
   test_aero_filewrite.py
   test_aero_fileplot.py
+  test_integration.py  # end-to-end CLI + Python API against real AVL binary
 ```
 
 ---

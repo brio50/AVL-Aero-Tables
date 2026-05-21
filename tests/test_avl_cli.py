@@ -9,7 +9,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from avl_aero_tables.avl_cli import (
-    _TIMESTAMP_RE,
     main,
 )
 from avl_aero_tables.avl_config import ProjectConfig
@@ -196,10 +195,9 @@ def test_out_dir_pattern(tmp_path):
 
     assert len(captured) == 1
     out_dir = captured[0]
-    assert out_dir.parent.name == "bd"
-    assert out_dir.parent.parent.name == "_runs"
-    assert out_dir.parent.parent.parent == sub.parent
-    assert _TIMESTAMP_RE.match(out_dir.name)
+    assert out_dir.name == "bd"
+    assert out_dir.parent.name == "_runs"
+    assert out_dir.parent.parent == sub.parent
 
 
 # ---------------------------------------------------------------------------

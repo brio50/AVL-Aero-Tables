@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.8.0] - 2026-05-20
+
+### Added
+- End-to-end integration tests covering all CLI commands and the full Python API chain against the real AVL binary
+- CLI requirements table (`docs/dev/reqs/cli.csv`) with 33 entries
+
+### Fixed
+- `plot aero` failed on a parent directory because the CLI was double-stamping the output path; `_runs/<yml-stem>/` now passed directly to `avl_sweep` which owns the timestamped subdirectory
+
+### Removed
+- `docs/_static/custom.js` — dead code (Plotly figures are iframed; parent-page resize handler never fired)
 
 ## [1.7.0] - 2026-05-20
 

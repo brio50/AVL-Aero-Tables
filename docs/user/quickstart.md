@@ -110,12 +110,15 @@ $ avl-aero-tables sweep examples/bd/bd.yml
 ```{code-block} text
 :caption: Output
 :class: no-copybutton
-AVL sweep complete → _runs/bd/2026-05-15-143022  (45 cases)
+AVL sweep complete → /your/project/examples/_runs/bd/bd_2026-05-20-191250  (55 cases)
 ```
 `````
 
 ```{note}
-Results land in `_runs/<yml-stem>/<timestamp>/` relative to the **project root** — one directory up from the `.yml` file. This differs from the Python API, where you control `out_dir` directly.
+While AVL runs, a Rich spinner (`⠹ Running AVL…`) animates in-place on the terminal — it disappears when the sweep finishes, leaving only the completion line.
+Pass `--quiet` to suppress all console output.
+
+Results land in `_runs/<yml-stem>/<avl-stem>_<timestamp>/` relative to the **project root** (one directory up from the `.yml` file). This differs from the Python API, where you control `out_dir` directly.
 ```
 
 ### Plot Results
@@ -210,7 +213,7 @@ fig.write_html("b737_geometry.html", include_plotlyjs="cdn")
 
 ### Sweep Alpha / Beta
 
-`out_dir` is a base directory — `avl_sweep` creates `_runs/bd_<timestamp>/` inside it automatically:
+`out_dir` is a base directory — `avl_sweep` creates `_runs/bd_<timestamp>/` inside it automatically.  The completion message and debug log are written to `<run_dir>/<name>.log`; nothing is printed to the console unless you configure `logging` yourself.
 
 `````{card}
 :class-card: cli-card
@@ -235,7 +238,6 @@ for r in results[:3]:
 ```{code-block} text
 :caption: Output
 :class: no-copybutton
-AVL sweep complete → /your/project/_runs/b737_2026-05-16-101818  (10 cases)
 10 cases computed
   Alpha= -6.0  CLtot=-0.4135
   Alpha= -4.0  CLtot=-0.2376
@@ -263,7 +265,6 @@ print(f"{len(results)} cases (4 alpha × 5 elevator deflections)")
 ```{code-block} text
 :caption: Output
 :class: no-copybutton
-AVL sweep complete → /your/project/_runs/b737_2026-05-16-143022  (20 cases)
 20 cases (4 alpha × 5 elevator deflections)
 ```
 `````

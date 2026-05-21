@@ -7,7 +7,6 @@ import logging
 import re
 import sys
 import tomllib
-from datetime import datetime
 from pathlib import Path
 
 from avl_aero_tables.avl_bin import verify
@@ -95,8 +94,7 @@ def _cmd_sweep(args: argparse.Namespace) -> int:
             )
             sys.exit(1)
 
-    timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
-    out_dir = yml.parent.parent / "_runs" / yml.stem / timestamp
+    out_dir = yml.parent.parent / "_runs" / yml.stem
 
     _sweep_run(
         avl_file=avl_file,
@@ -151,7 +149,7 @@ def _cmd_plot_geometry(args: argparse.Namespace) -> int:
     return 0
 
 
-_TIMESTAMP_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-\d{6}$")
+_TIMESTAMP_RE = re.compile(r".*\d{4}-\d{2}-\d{2}-\d{6}$")
 
 
 def _cmd_plot_aero(args: argparse.Namespace) -> int:

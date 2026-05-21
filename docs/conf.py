@@ -36,7 +36,6 @@ html_show_copyright = False
 templates_path = ["_templates"]
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
-html_js_files = ["custom.js"]
 
 html_theme_options = {
     "repository_url": "https://github.com/brio50/avl-aero-tables",
