@@ -16,6 +16,7 @@ dependencies = [
     "plotly",
     "pyyaml",
     "pydantic",
+    "rich",
 ]
 
 [project.scripts]

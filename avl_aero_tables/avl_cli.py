@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import re
 import sys
 import tomllib
@@ -240,10 +241,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
 
-    import avl_aero_tables as _pkg
-
-    if args.quiet:
-        _pkg.verbose = False
+    if not args.quiet:
+        logging.basicConfig(format="%(message)s", level=logging.INFO)
 
     if args.command == "verify":
         try:

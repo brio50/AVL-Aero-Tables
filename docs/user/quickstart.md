@@ -44,9 +44,9 @@ See {ref}`output-layout` for the full contents of each timestamped run directory
 The fastest path from geometry to results — define your sweep in a YAML project file, then run three commands.
 
 ```{seealso}
-**Example files** — `examples/bd/bd.avl` · `examples/bd/bd.yml`
-
-`examples/bd.py` regenerates all plots in this section (`python examples/bd.py --docs`).
+- [examples/bd/bd.avl](https://github.com/brio50/avl-aero-tables/blob/master/examples/bd/bd.avl) — Bubble Dancer geometry with control surfaces and airfoil references
+- [examples/bd/bd.yml](https://github.com/brio50/avl-aero-tables/blob/master/examples/bd/bd.yml) — project file driving the sweep below
+- [examples/bd.py](https://github.com/brio50/avl-aero-tables/blob/master/examples/bd.py) — regenerates all plots in this section (`--docs` flag)
 ```
 
 ### Project File
@@ -174,9 +174,9 @@ $ avl-aero-tables plot aero _runs/bd/
 % To update plots in this section: python examples/b737.py --docs
 
 ```{seealso}
-**Example files** — `examples/b737/b737.avl` · `examples/b737/b737.yml`
-
-`examples/b737.py` is a fully runnable version of this walkthrough (`python examples/b737.py --docs`).
+- [examples/b737/b737.avl](https://github.com/brio50/avl-aero-tables/blob/master/examples/b737/b737.avl) — Boeing 737 geometry with wing, horizontal tail, and vertical tail
+- [examples/b737/b737.yml](https://github.com/brio50/avl-aero-tables/blob/master/examples/b737/b737.yml) — project file driving the sweep below
+- [examples/b737.py](https://github.com/brio50/avl-aero-tables/blob/master/examples/b737.py) — fully runnable version of this walkthrough (`--docs` flag)
 ```
 
 ### Read & Plot Geometry

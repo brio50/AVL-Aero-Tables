@@ -97,13 +97,11 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
     >>> import tempfile
     >>> from avl_aero_tables import avl_sweep
     >>> from avl_aero_tables.aero_filewrite import aero_filewrite
-    >>> with tempfile.TemporaryDirectory() as tmp:  # doctest: +ELLIPSIS
+    >>> with tempfile.TemporaryDirectory() as tmp:
     ...     results = avl_sweep(
     ...         "examples/bd/bd.avl", alpha=[-5, 0, 5, 10], beta=[0], out_dir=tmp
     ...     )
-    AVL sweep complete → ...  (4 cases)
-    >>> db = aero_filewrite(results)  # doctest: +ELLIPSIS
-    AeroDatabase: ...
+    >>> db = aero_filewrite(results)
     >>> db.stab["CLtot"].data.shape
     (4, 1)
     >>> list(db.stab)
@@ -174,19 +172,6 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
                 di = _find_idx(surface_defls[d_idx], defl_val)
                 db.ctrl[f"{coef}_{surf_key}"].data[ai, bi, di] = val
 
-    import avl_aero_tables as _pkg
-
-    if _pkg.verbose:
-        na, nb = len(alpha_arr), len(beta_arr)
-        ctrl_summary = ", ".join(
-            f"δ_{s} = {len(surface_defls[d])}"
-            for d, s in ctrl_map.items()
-        )
-        print(
-            f"AeroDatabase: {na}α × {nb}β"
-            + (f"  |  {ctrl_summary}" if ctrl_summary else "")
-        )
-
     return db
 
 
@@ -203,11 +188,10 @@ def results_to_dataframe(results: list[StResult]) -> pd.DataFrame:
     >>> import tempfile
     >>> from avl_aero_tables import avl_sweep
     >>> from avl_aero_tables.aero_filewrite import results_to_dataframe
-    >>> with tempfile.TemporaryDirectory() as tmp:  # doctest: +ELLIPSIS
+    >>> with tempfile.TemporaryDirectory() as tmp:
     ...     results = avl_sweep(
     ...         "examples/bd/bd.avl", alpha=[0, 5], beta=[0], out_dir=tmp
     ...     )
-    AVL sweep complete → ...
     >>> df = results_to_dataframe(results)
     >>> "Alpha" in df.columns and "CLtot" in df.columns
     True

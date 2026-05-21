@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
+import logging
 import shutil
 import subprocess
 import tempfile
 import tomllib
-import warnings
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
+
+_log = logging.getLogger(__name__)
 
 from avl_aero_tables import avl_bin as avl_runner
 from avl_aero_tables.aero_filewrite import results_to_dataframe
@@ -32,11 +35,10 @@ def _ensure_neutral_in_sweeps(
         k for k, vals in ctrl_sweeps.items() if not any(abs(v) < 1e-9 for v in vals)
     ]
     if missing:
-        warnings.warn(
-            f"ctrl_sweeps surfaces {missing} have no 0.0 deflection — "
+        _log.warning(
+            "ctrl_sweeps surfaces %s have no 0.0 deflection — "
             "inserting 0.0 so stability tables are populated.",
-            UserWarning,
-            stacklevel=3,
+            missing,
         )
         ctrl_sweeps = {
             k: sorted(vals + [0.0]) if k in missing else vals
@@ -146,14 +148,13 @@ def run(
     >>> import tempfile, pathlib
     >>> from avl_aero_tables import avl_sweep
     >>> with tempfile.TemporaryDirectory() as tmp:
-    ...     results = avl_sweep(  # doctest: +ELLIPSIS
+    ...     results = avl_sweep(
     ...         "examples/bd/bd.avl",
     ...         alpha=[-5, 0, 5, 10],
     ...         beta=[0],
     ...         ctrl_sweeps={"elevator": [-10, 0, 10]},
     ...         out_dir=tmp,
     ...     )
-    AVL sweep complete → ...  (12 cases)
     >>> len(results)  # 4 alpha × 3 elevator deflections
     12
     >>> results[0].data["Alpha"]
@@ -190,90 +191,107 @@ def run(
     raw_dir.mkdir()
     in_src_dir.mkdir()
 
-    geometry = avl_fileread(avl_file)
+    _file_handler = logging.FileHandler(run_dir / f"{avl_name}.log")
+    _file_handler.setLevel(logging.DEBUG)
+    _file_handler.setFormatter(
+        logging.Formatter("%(asctime)s  %(levelname)-8s  %(message)s")
+    )
+    _pkg_log = logging.getLogger("avl_aero_tables")
+    _saved_level = _pkg_log.level
+    _pkg_log.setLevel(logging.DEBUG)
+    _pkg_log.addHandler(_file_handler)
 
-    # AVL has an ~80-char Fortran string limit for filenames.  Stage .st files
-    # and reset.run in a short /tmp directory so their paths stay within the
-    # limit when written into the LOAD/CASE/st commands inside the stdin script.
-    reset_run_content = make_run_reset(avl_name, geometry.ctrl_names)
+    try:
+        geometry = avl_fileread(avl_file)
 
-    with tempfile.TemporaryDirectory(prefix="avl_") as staging_str:
-        staging = Path(staging_str)
+        # AVL has an ~80-char Fortran string limit for filenames.  Stage .st files
+        # and reset.run in a short /tmp directory so their paths stay within the
+        # limit when written into the LOAD/CASE/st commands inside the stdin script.
+        reset_run_content = make_run_reset(avl_name, geometry.ctrl_names)
 
-        (staging / "reset.run").write_text(reset_run_content)
-        (in_dir / "reset.run").write_text(reset_run_content)
+        with tempfile.TemporaryDirectory(prefix="avl_") as staging_str:
+            staging = Path(staging_str)
 
-        cmd_text = make_run_command(
-            list(alpha),
-            list(beta),
-            geometry.ctrl_names,
-            ctrl_sweeps,
-            staging,
-            avl_file=avl_file.name,
-            run_file=str(staging / "reset.run"),
-        )
+            (staging / "reset.run").write_text(reset_run_content)
+            (in_dir / "reset.run").write_text(reset_run_content)
 
-        # sweep.inp: human-readable record of the stdin script fed to AVL;
-        # paths reference .raw/ (where .st files land) and .in/reset.run
-        (in_dir / "sweep.inp").write_text(
-            "# avl  [stdin]\n"
-            + make_run_command(
+            cmd_text = make_run_command(
                 list(alpha),
                 list(beta),
                 geometry.ctrl_names,
                 ctrl_sweeps,
-                raw_dir,
-                avl_file=str(avl_file),
-                run_file=str(in_dir / "reset.run"),
-            )
-        )
-
-        result = avl_runner.run(
-            cmd_text,
-            binary=binary,
-            cwd=avl_dir,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(
-                f"AVL exited with code {result.returncode}.\n"
-                f"stdout (last 2000 chars):\n{result.stdout[-2000:]}\n"
-                f"stderr:\n{result.stderr[-2000:]}"
+                staging,
+                avl_file=avl_file.name,
+                run_file=str(staging / "reset.run"),
             )
 
-        for st_file in sorted(staging.glob("*.st")):
-            shutil.move(str(st_file), raw_dir / st_file.name)
+            # sweep.inp: human-readable record of the stdin script fed to AVL;
+            # paths reference .raw/ (where .st files land) and .in/reset.run
+            (in_dir / "sweep.inp").write_text(
+                "# avl  [stdin]\n"
+                + make_run_command(
+                    list(alpha),
+                    list(beta),
+                    geometry.ctrl_names,
+                    ctrl_sweeps,
+                    raw_dir,
+                    avl_file=str(avl_file),
+                    run_file=str(in_dir / "reset.run"),
+                )
+            )
 
-    # Copy input files into .in/<avl_name>/ as a run snapshot
-    shutil.copy2(avl_file, in_src_dir / avl_file.name)
-    if yml_file is not None:
-        shutil.copy2(yml_file, in_src_dir / yml_file.name)
-    for dat_file in _referenced_dat_files(avl_file, geometry):
-        shutil.copy2(dat_file, in_src_dir / dat_file.name)
+            from rich.console import Console as _Console
 
-    # provenance.json at run root
-    entry = "cli" if yml_file is not None else "api"
-    source_dir = yml_file.parent if yml_file is not None else avl_dir
-    provenance: dict[str, object] = {
-        "timestamp": datetime.now().isoformat(timespec="seconds"),
-        "package_version": _package_version(),
-        **_git_info(avl_dir),
-        "entry": entry,
-        "source": str(source_dir),
-        "snapshot": f".in/{avl_name}/",
-    }
-    (run_dir / "provenance.json").write_text(json.dumps(provenance, indent=2) + "\n")
+            _console = _Console(stderr=True)
+            _show_spinner = bool(logging.root.handlers) and _console.is_terminal
+            with (
+                _console.status("Running AVL…")
+                if _show_spinner
+                else contextlib.nullcontext()
+            ):
+                result = avl_runner.run(cmd_text, binary=binary, cwd=avl_dir)
+            if result.returncode != 0:
+                raise RuntimeError(
+                    f"AVL exited with code {result.returncode}.\n"
+                    f"stdout (last 2000 chars):\n{result.stdout[-2000:]}\n"
+                    f"stderr:\n{result.stderr[-2000:]}"
+                )
 
-    results = st_fileread(raw_dir)
+            for st_file in sorted(staging.glob("*.st")):
+                shutil.move(str(st_file), raw_dir / st_file.name)
 
-    if out_format != "df":
-        df = results_to_dataframe(results)
-        if out_format == "csv":
-            df.to_csv(run_dir / "results.csv", index=False)
-        elif out_format == "json":
-            df.to_json(run_dir / "results.json", orient="records", indent=2)
+        # Copy input files into .in/<avl_name>/ as a run snapshot
+        shutil.copy2(avl_file, in_src_dir / avl_file.name)
+        if yml_file is not None:
+            shutil.copy2(yml_file, in_src_dir / yml_file.name)
+        for dat_file in _referenced_dat_files(avl_file, geometry):
+            shutil.copy2(dat_file, in_src_dir / dat_file.name)
 
-    import avl_aero_tables as _pkg
+        # provenance.json at run root
+        entry = "cli" if yml_file is not None else "api"
+        source_dir = yml_file.parent if yml_file is not None else avl_dir
+        provenance: dict[str, object] = {
+            "timestamp": datetime.now().isoformat(timespec="seconds"),
+            "package_version": _package_version(),
+            **_git_info(avl_dir),
+            "entry": entry,
+            "source": str(source_dir),
+            "snapshot": f".in/{avl_name}/",
+        }
+        (run_dir / "provenance.json").write_text(json.dumps(provenance, indent=2) + "\n")
 
-    if _pkg.verbose:
-        print(f"AVL sweep complete → {run_dir}  ({len(results)} cases)")
-    return results
+        results = st_fileread(raw_dir)
+
+        if out_format != "df":
+            df = results_to_dataframe(results)
+            if out_format == "csv":
+                df.to_csv(run_dir / "results.csv", index=False)
+            elif out_format == "json":
+                df.to_json(run_dir / "results.json", orient="records", indent=2)
+
+        _log.info("AVL sweep complete → %s  (%d cases)", run_dir, len(results))
+        return results
+    finally:
+        _pkg_log.removeHandler(_file_handler)
+        _file_handler.close()
+        _pkg_log.setLevel(_saved_level)

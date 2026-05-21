@@ -7,15 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.7.0] - 2026-05-16
+## [1.7.0] - 2026-05-20
 
 ### Added
-- `verbose: bool = True` module-level flag in `avl_aero_tables`; set `avl_aero_tables.verbose = False` to silence all progress output
-- `avl_sweep` progress line now gated on `verbose`
-- `aero_filewrite` prints a summary (`AeroDatabase: Nα × Nβ  |  δ_surface = N, …`) gated on `verbose`
-- CLI `--quiet` / `-q` flag sets `verbose = False` before dispatch
+- Structured logging via Python `logging` module throughout `avl_aero_tables`
+- Per-run log file written to `{run_dir}/{avl_name}.log` on every sweep (always, regardless of `--quiet`); captures WARNING and above from the whole package
+- Rich indeterminate spinner during the blocking AVL subprocess call; shown only in a TTY, suppressed when piped or `--quiet`
+- `rich` added to core dependencies
 
 ### Changed
+- `verbose` module flag removed; console output is now controlled by the standard Python logging system — API users call `logging.basicConfig(level=logging.INFO)` to enable it, or `logging.getLogger("avl_aero_tables").setLevel(logging.WARNING)` to suppress
+- CLI `--quiet` / `-q` suppresses the console logging handler (log file is still written)
+- `_ensure_neutral_in_sweeps` 0.0 auto-insertion now emits `_log.warning()` instead of `warnings.warn(UserWarning)`, so it appears in the run log file
+- `aero_filewrite` verbose summary print removed (was redundant with user-supplied sweep parameters)
 - Quickstart docs: all CLI and Python API examples use unified Input/Output card layout
 
 ## [1.6.0] - 2026-05-16
