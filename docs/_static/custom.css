@@ -7,7 +7,7 @@ a.external::after {
 
 /* Tab set: neutral border instead of default blue */
 .sd-tab-set.aero-plots {
-    margin: 15px !important;
+    margin: 1rem !important;
 }
 .sd-tab-set .sd-tab-content {
     padding: 1.5em !important;
