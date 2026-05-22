@@ -303,19 +303,25 @@ def test_plot_geometry_calls_fileplot(tmp_path):
 
 
 def test_verify_ok():
-    with patch("avl_aero_tables.avl_cli.verify", return_value=Path("/usr/local/bin/avl")):
+    with patch(
+        "avl_aero_tables.avl_cli.verify", return_value=Path("/usr/local/bin/avl")
+    ):
         result = main(["verify"])
     assert result == 0
 
 
 def test_verify_binary_not_found():
-    with patch("avl_aero_tables.avl_cli.verify", side_effect=FileNotFoundError("not found")):
+    with patch(
+        "avl_aero_tables.avl_cli.verify", side_effect=FileNotFoundError("not found")
+    ):
         result = main(["verify"])
     assert result == 1
 
 
 def test_verify_runtime_error():
-    with patch("avl_aero_tables.avl_cli.verify", side_effect=RuntimeError("bad binary")):
+    with patch(
+        "avl_aero_tables.avl_cli.verify", side_effect=RuntimeError("bad binary")
+    ):
         result = main(["verify"])
     assert result == 1
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 
 def equal_3d_ranges(
     xs: list[float], ys: list[float], zs: list[float]
@@ -22,7 +24,7 @@ def equal_3d_ranges(
 
 
 # Applied to every axis in every 3-D scene.
-AXIS_3D: dict = dict(
+AXIS_3D: dict[str, Any] = dict(
     showbackground=False,
     gridcolor="#d0d0d0",
     linecolor="#aaaaaa",
@@ -30,10 +32,12 @@ AXIS_3D: dict = dict(
 )
 
 # Camera for the geometry figure: nose-left, flying toward viewer.
-CAMERA_GEOM: dict = dict(eye=dict(x=-1.5, y=1.5, z=0.8), up=dict(x=0, y=0, z=1))
+CAMERA_GEOM: dict[str, Any] = dict(
+    eye=dict(x=-1.5, y=1.5, z=0.8), up=dict(x=0, y=0, z=1)
+)
 
 # Camera for aero surface plots: isometric view from front-right above.
-CAMERA_AERO: dict = dict(eye=dict(x=1.8, y=1.8, z=1.2))
+CAMERA_AERO: dict[str, Any] = dict(eye=dict(x=1.8, y=1.8, z=1.2))
 
 
 # Surface appearance for aero coefficient plots.

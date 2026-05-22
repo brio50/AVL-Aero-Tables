@@ -13,8 +13,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-_log = logging.getLogger(__name__)
-
 from avl_aero_tables import avl_bin as avl_runner
 from avl_aero_tables.aero_filewrite import results_to_dataframe
 from avl_aero_tables.avl_fileread import (
@@ -24,6 +22,8 @@ from avl_aero_tables.avl_fileread import (
     st_fileread,
 )
 from avl_aero_tables.avl_rungen import make_run_command, make_run_reset
+
+_log = logging.getLogger(__name__)
 
 _FORMATS = frozenset(("csv", "json", "df"))
 
@@ -53,7 +53,7 @@ def _package_version() -> str:
     """Read version from pyproject.toml (source of truth); fall back to importlib."""
     if _PYPROJECT.exists():
         with _PYPROJECT.open("rb") as f:
-            return tomllib.load(f)["project"]["version"]
+            return str(tomllib.load(f)["project"]["version"])
     from importlib.metadata import version
 
     return version("avl-aero-tables")
@@ -278,7 +278,9 @@ def run(
             "source": str(source_dir),
             "snapshot": f".in/{avl_name}/",
         }
-        (run_dir / "provenance.json").write_text(json.dumps(provenance, indent=2) + "\n")
+        (run_dir / "provenance.json").write_text(
+            json.dumps(provenance, indent=2) + "\n"
+        )
 
         results = st_fileread(raw_dir)
 

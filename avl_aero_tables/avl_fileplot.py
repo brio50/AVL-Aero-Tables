@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -20,10 +20,10 @@ def _trans(surf_or_body: AvlSurface | AvlBody) -> tuple[float, float, float]:
     return float(t[0]), float(t[1]), float(t[2])
 
 
-def _build_traces(geometry: AvlGeometry) -> list[dict]:
+def _build_traces(geometry: AvlGeometry) -> list[dict[str, Any]]:
     """Return geometry as trace-spec dicts (mode, x, y, z, color, width/size)."""
     hdr = geometry.header
-    traces: list[dict] = []
+    traces: list[dict[str, Any]] = []
 
     traces.append(dict(
         mode="markers", x=[hdr.Xref], y=[hdr.Yref], z=[hdr.Zref],

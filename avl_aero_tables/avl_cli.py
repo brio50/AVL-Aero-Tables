@@ -18,7 +18,7 @@ _PYPROJECT = Path(__file__).resolve().parent.parent / "pyproject.toml"
 def _package_version() -> str:
     if _PYPROJECT.exists():
         with _PYPROJECT.open("rb") as f:
-            return tomllib.load(f)["project"]["version"]
+            return str(tomllib.load(f)["project"]["version"])
     from importlib.metadata import version
 
     return version("avl-aero-tables")
@@ -122,7 +122,8 @@ def _write_index_html(directory: Path) -> Path:
         f"<html><head><meta charset='utf-8'>"
         f"<title>{directory.name}</title>"
         f"<style>body{{font-family:monospace;padding:2em}}"
-        f"li{{margin:.4em 0}}a{{text-decoration:none}}a:hover{{text-decoration:underline}}"
+        f"li{{margin:.4em 0}}a{{text-decoration:none}}"
+        f"a:hover{{text-decoration:underline}}"
         f"</style></head>\n"
         f"<body><h2>{directory.name}</h2><ul>\n{items}\n</ul></body></html>\n"
     )
@@ -161,7 +162,11 @@ def _cmd_plot_aero(args: argparse.Namespace) -> int:
 
     runs_dir = args.runs_dir.resolve()
 
-    if re.search(r"\d{4}-\d{2}-\d{2}-\d{6}", runs_dir.name) or (runs_dir / ".raw").is_dir():
+    is_run_dir = (
+        re.search(r"\d{4}-\d{2}-\d{2}-\d{6}", runs_dir.name)
+        or (runs_dir / ".raw").is_dir()
+    )
+    if is_run_dir:
         result_dir = runs_dir
     else:
         subdirs = (
