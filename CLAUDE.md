@@ -13,22 +13,26 @@ avl_aero_tables/          # Python package
   __init__.py         # public API
   avl_fileread.py     # parse .avl geometry → AvlGeometry; parse .st output → list[StResult]
   avl_rungen.py       # generate AVL run-case and command file strings
-  avl_bin.py          # find/verify/invoke the AVL binary; CLI entry point
+  avl_bin.py          # find/verify/invoke the AVL binary
+  avl_cli.py          # CLI entry point (avl_aero_tables.avl_cli:main)
+  avl_config.py       # YAML project-file schema and loader (InputSpec, SweepSpec)
   avl_sweep.py        # top-level sweep orchestration → list[StResult]
   avl_fileplot.py     # four-view geometry plot → Figure
   aero_filewrite.py   # pivot list[StResult] → AeroDatabase (numpy tables)
   aero_fileplot.py    # 3-D surface plots of AeroDatabase tables
+  _plot_config.py     # shared Plotly defaults and utilities
 
 docs/                 # AVL user documentation
-examples/             # runnable scripts + Bubble Dancer reference geometry
-  quickstart.py       # end-to-end walkthrough (geometry → sweep → plots)
-  bd/                 # Bubble Dancer .avl, airfoil .dat, and bd_alpha5_beta0.st
+examples/             # runnable scripts + reference geometries
+  bd.py               # Bubble Dancer end-to-end example
+  b737.py             # B737 end-to-end example
+  bd/                 # Bubble Dancer .avl, airfoil .dat files
+  b737/, allegro/, ellipg/, plane/, supergee/, supra/  # additional geometry sets
 _runs/                # sweep outputs (generated at runtime, not committed)
                       #   API:  <out_dir>/<avl-stem>_YYYY-MM-DD-HHMMSS/
                       #   CLI:  <project-root>/_runs/<avl-stem>/<avl-stem>_YYYY-MM-DD-HHMMSS/
 tests/
-  data/               # AVL geometry fixtures for unit testing (supra, allegro, etc.)
-                      #   data/supra/, data/ellipg/, data/allegro/, data/b737/, etc.
+  supra/, ellipg/, allegro/, b737/, bd/, plane/, supergee/  # AVL geometry fixtures
   test_avl_fileread.py
   test_st_fileread.py  # tests st_fileread() from avl_fileread.py
   test_avl_rungen.py
@@ -49,7 +53,7 @@ tests/
 User code / CLI
     │
     ▼
-avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir, binary, out_format, mass_file)
+avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir, binary, out_format, yml_file)
     │
     ├─ avl_fileread(avl_file)              → AvlGeometry (header, surfaces, body)
     │   └─ extracts control surface names (ctrl_names, ordered)
@@ -94,8 +98,8 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir, binary, out_format, m
   `.raw/` and `.in/` dirs, which may exceed AVL's ~80-char Fortran limit).
 
 - **Two command strings**: `make_run_command` is called twice — once with
-  `raw_dir` + `.in/` paths (result written to `.in/sweep.inp` for human reference)
-  and once with `/tmp` staging paths (fed to AVL stdin to stay under the 80-char Fortran limit).
+  `/tmp` staging paths (result used as `cmd_text`, fed to AVL stdin to stay under the 80-char Fortran limit)
+  and once with `raw_dir` + `.in/` paths (result written to `.in/sweep.inp` for human reference).
 
 - **Staging in /tmp**: AVL writes `.st` files in a short
   `tempfile.TemporaryDirectory(prefix="avl_")` path to keep all AVL-facing
@@ -159,6 +163,13 @@ Before opening a pull request, run these in order:
 
 # 2. Full test suite
 .venv/bin/pytest
+
+# 3. Check that every test is referenced in docs/dev/reqs/*.csv (and vice versa)
+csv_names=$(grep -oh '\[test_[A-Za-z0-9_]*\]' docs/dev/reqs/*.csv | sed 's/\[//;s/\]//' | sort -u)
+code_names=$(grep -rh "^def test_" tests/*.py | sed 's/def \(test_[A-Za-z0-9_]*\).*/\1/' | sort -u)
+missing_from_csv=$(comm -23 <(echo "$code_names") <(echo "$csv_names"))
+stale_in_csv=$(comm -13 <(echo "$code_names") <(echo "$csv_names"))
+[ -z "$missing_from_csv" ] && [ -z "$stale_in_csv" ] && echo "reqs OK" || { echo "MISSING FROM CSV:"; echo "$missing_from_csv"; echo "STALE IN CSV:"; echo "$stale_in_csv"; }
 ```
 
 Remaining `ruff` violations after `--fix` are either `E501` (long lines — wrap
