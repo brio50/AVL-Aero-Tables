@@ -15,6 +15,16 @@ from avl_aero_tables._plot_config import (
 )
 from avl_aero_tables.aero_filewrite import COEF_NAMES, AeroDatabase
 
+# Display labels for each coefficient (standard aerospace notation)
+_COEF_LABEL: dict[str, str] = {
+    "CLtot": "CL",
+    "CYtot": "CY",
+    "CDtot": "CD",
+    "Cltot": "Cl",
+    "Cmtot": "Cm",
+    "Cntot": "Cn",
+}
+
 if TYPE_CHECKING:
     import plotly.graph_objects as go
 
@@ -96,7 +106,7 @@ def aero_fileplot(
     >>> figs[0].layout.title.text
     'Stability coefficients'
     >>> figs[1].layout.title.text
-    'CLtot  —  beta = 0.0 deg'
+    'CL  (β = 0.0°)'
     """
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
@@ -113,7 +123,7 @@ def aero_fileplot(
         fig_stab = make_subplots(
             rows=n_rows, cols=n_cols,
             specs=[[{"type": "scene"}] * n_cols for _ in range(n_rows)],
-            subplot_titles=stab_coefs,
+            subplot_titles=[_COEF_LABEL[c] for c in stab_coefs],
         )
         n_scenes = n_rows * n_cols
         scene_names = ["scene" if i == 0 else f"scene{i + 1}" for i in range(n_scenes)]
@@ -133,7 +143,7 @@ def aero_fileplot(
                 camera=CAMERA_AERO,
                 xaxis=dict(title="Alpha (deg)", **AXIS_3D),
                 yaxis=dict(title="Beta (deg)", **AXIS_3D),
-                zaxis=dict(title=coef, **AXIS_3D),
+                zaxis=dict(title=_COEF_LABEL[coef], **AXIS_3D),
             )})
         fig_stab.update_layout(
             title=dict(
@@ -197,11 +207,11 @@ def aero_fileplot(
                 camera=CAMERA_AERO,
                 xaxis=dict(title="Alpha (deg)", **AXIS_3D),
                 yaxis=dict(title=f"{ctrl_tbl.ctrl_name} (deg)", **AXIS_3D),
-                zaxis=dict(title=coef, **AXIS_3D),
+                zaxis=dict(title=_COEF_LABEL[coef], **AXIS_3D),
             )})
         fig_ctrl.update_layout(
             title=dict(
-                text=f"{coef}  —  beta = {beta_actual:.1f} deg",
+                text=f"{_COEF_LABEL[coef]}  (β = {beta_actual:.1f}°)",
                 x=0.5, xanchor="center", y=0.99, yanchor="top",
             ),
             height=330 * n_rows,

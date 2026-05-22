@@ -64,8 +64,8 @@ def main(write_docs: bool = False) -> None:
     from avl_aero_tables import aero_fileplot
 
     figs = aero_fileplot(aero, beta_ref=0.0)
-    names = ["b737_stab", "b737_ctrl_CLtot", "b737_ctrl_CYtot", "b737_ctrl_CDtot",
-             "b737_ctrl_Cltot", "b737_ctrl_Cmtot", "b737_ctrl_Cntot"]
+    names = ["b737_stab", "b737_ctrl_force_lift", "b737_ctrl_force_side", "b737_ctrl_force_drag",
+             "b737_ctrl_moment_roll", "b737_ctrl_moment_pitch", "b737_ctrl_moment_yaw"]
     for fig, name in zip(figs, names):
         _save_html(fig, run_dir / f"{name}.html", DOCS_HTML / f"{name}.html", write_docs)
 

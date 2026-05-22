@@ -62,8 +62,8 @@ def main(write_docs: bool = False) -> None:
     from avl_aero_tables import aero_fileplot
 
     figs = aero_fileplot(aero, beta_ref=0.0)
-    names = ["bd_stab", "bd_ctrl_CLtot", "bd_ctrl_CYtot", "bd_ctrl_CDtot",
-             "bd_ctrl_Cltot", "bd_ctrl_Cmtot", "bd_ctrl_Cntot"]
+    names = ["bd_stab", "bd_ctrl_force_lift", "bd_ctrl_force_side", "bd_ctrl_force_drag",
+             "bd_ctrl_moment_roll", "bd_ctrl_moment_pitch", "bd_ctrl_moment_yaw"]
     for fig, name in zip(figs, names):
         _save_html(fig, run_dir / f"{name}.html", DOCS_HTML / f"{name}.html", write_docs)
 

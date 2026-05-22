@@ -16,7 +16,7 @@ An AVL geometry is a set of files that must travel together. The Bubble Dancer (
 
 ## Project Layout
 
-Keep all these files together. AVL's working directory is set to the folder containing the `.avl` file, so every relative path inside it (`fuseBD.dat`, `ag35.dat`, etc.) resolves automatically.
+Keep all these files together. AVL's working directory is set to the folder containing the `.avl` file, so every relative path inside it (`fuseBD.dat`, `ag35.dat`, etc.) resolves automatically — relative to the `.avl` file, not your shell's current directory. Moving the `.avl` file without its companions will cause AVL to silently produce geometry with missing surfaces.
 
 For your own project, keep geometry inputs versioned in git and runs outside of version control:
 
@@ -145,31 +145,40 @@ $ avl-aero-tables plot aero _runs/bd/
 ```
 ````
 ````{tab-item} CL
-```{plotly-figure} _static/html/bd_ctrl_CLtot.html
+```{plotly-figure} _static/html/bd_ctrl_force_lift.html
 ```
 ````
 ````{tab-item} CY
-```{plotly-figure} _static/html/bd_ctrl_CYtot.html
+```{plotly-figure} _static/html/bd_ctrl_force_side.html
 ```
 ````
 ````{tab-item} CD
-```{plotly-figure} _static/html/bd_ctrl_CDtot.html
+```{plotly-figure} _static/html/bd_ctrl_force_drag.html
 ```
 ````
 ````{tab-item} Cl
-```{plotly-figure} _static/html/bd_ctrl_Cltot.html
+```{plotly-figure} _static/html/bd_ctrl_moment_roll.html
 ```
 ````
 ````{tab-item} Cm
-```{plotly-figure} _static/html/bd_ctrl_Cmtot.html
+```{plotly-figure} _static/html/bd_ctrl_moment_pitch.html
 ```
 ````
 ````{tab-item} Cn
-```{plotly-figure} _static/html/bd_ctrl_Cntot.html
+```{plotly-figure} _static/html/bd_ctrl_moment_yaw.html
 ```
 ````
 `````
 ```````
+
+```{tip}
+Each control plot shows a **β = 0° slice** of the full 3-D table (α × β × δ). To inspect
+off-zero sideslip, pass a different `beta_ref` to `aero_fileplot()` — e.g. `aero_fileplot(aero, beta_ref=5.0)`.
+```
+
+```{seealso}
+See {ref}`concepts:aero-coefficients` for coefficient definitions, axis conventions, and how to recover dimensional forces and moments.
+```
 
 (quickstart:python-api)=
 ## Python API
@@ -213,7 +222,7 @@ fig.write_html("b737_geometry.html", include_plotlyjs="cdn")
 
 ### Sweep Alpha / Beta
 
-`out_dir` is a base directory — `avl_sweep` creates `_runs/bd_<timestamp>/` inside it automatically.  The completion message and debug log are written to `<run_dir>/<name>.log`; nothing is printed to the console unless you configure `logging` yourself.
+`out_dir` is a base directory — `avl_sweep` creates `_runs/b737_<timestamp>/` inside it automatically.  The completion message and debug log are written to `<run_dir>/<stem>.log` (where `<stem>` is the `.avl` filename without extension — e.g. `b737.log` for `b737.avl`); nothing is printed to the console unless you configure `logging` yourself.
 
 `````{card}
 :class-card: cli-card
@@ -316,8 +325,9 @@ AeroDatabase: 5α × 3β  |  δ_slat = 3, δ_flap = 3, δ_aileron = 3, δ_elevat
 from avl_aero_tables import aero_fileplot
 
 figs = aero_fileplot(aero, beta_ref=0.0)
-names = ["b737_stab", "b737_ctrl_CLtot", "b737_ctrl_CYtot",
-         "b737_ctrl_CDtot", "b737_ctrl_Cltot", "b737_ctrl_Cmtot", "b737_ctrl_Cntot"]
+names = ["b737_stab", "b737_ctrl_force_lift", "b737_ctrl_force_side",
+         "b737_ctrl_force_drag", "b737_ctrl_moment_roll", "b737_ctrl_moment_pitch",
+         "b737_ctrl_moment_yaw"]
 for fig, name in zip(figs, names):
     fig.write_html(f"{name}.html", include_plotlyjs="cdn")
 ```
@@ -334,28 +344,37 @@ for fig, name in zip(figs, names):
 ```
 ````
 ````{tab-item} CL
-```{plotly-figure} _static/html/b737_ctrl_CLtot.html
+```{plotly-figure} _static/html/b737_ctrl_force_lift.html
 ```
 ````
 ````{tab-item} CY
-```{plotly-figure} _static/html/b737_ctrl_CYtot.html
+```{plotly-figure} _static/html/b737_ctrl_force_side.html
 ```
 ````
 ````{tab-item} CD
-```{plotly-figure} _static/html/b737_ctrl_CDtot.html
+```{plotly-figure} _static/html/b737_ctrl_force_drag.html
 ```
 ````
 ````{tab-item} Cl
-```{plotly-figure} _static/html/b737_ctrl_Cltot.html
+```{plotly-figure} _static/html/b737_ctrl_moment_roll.html
 ```
 ````
 ````{tab-item} Cm
-```{plotly-figure} _static/html/b737_ctrl_Cmtot.html
+```{plotly-figure} _static/html/b737_ctrl_moment_pitch.html
 ```
 ````
 ````{tab-item} Cn
-```{plotly-figure} _static/html/b737_ctrl_Cntot.html
+```{plotly-figure} _static/html/b737_ctrl_moment_yaw.html
 ```
 ````
 `````
 ```````
+
+```{tip}
+Each control plot shows a **β = 0° slice** of the full 3-D table (α × β × δ). To inspect
+off-zero sideslip, pass a different `beta_ref` to `aero_fileplot()` — e.g. `aero_fileplot(aero, beta_ref=5.0)`.
+```
+
+```{seealso}
+See {ref}`concepts:aero-coefficients` for coefficient definitions, axis conventions, and how to recover dimensional forces and moments.
+```

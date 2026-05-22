@@ -63,6 +63,6 @@ Prerequisites (one-time setup):
 Linting is handled by [Ruff](https://docs.astral.sh/ruff/):
 
 ```bash
-ruff check avl_aero_tables
-ruff check --fix avl_aero_tables
+ruff check avl_aero_tables tests/
+ruff check --fix avl_aero_tables tests/
 ```
