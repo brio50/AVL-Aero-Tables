@@ -31,10 +31,8 @@ examples/**/*.html
 docs/_build/
 
 # Doctest-generated artifacts
-geometry.png
-stability.png
-/sweep.csv
-geometry.html
+/tests/sweep.csv
+/tests/geometry.html
 
 # macOS
 .DS_Store

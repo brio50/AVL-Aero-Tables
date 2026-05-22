@@ -136,7 +136,7 @@ def avl_fileplot(geometry: AvlGeometry) -> "go.Figure":
     >>> "Bubble Dancer" in fig.layout.title.text
     True
     >>> fig.write_html(
-    ...     "geometry.html", include_plotlyjs="cdn", config={"displayModeBar": True}
+    ...     "tests/geometry.html", include_plotlyjs="cdn", config={"displayModeBar": True}
     ... )
     """
     import plotly.graph_objects as go

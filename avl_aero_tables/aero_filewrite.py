@@ -195,7 +195,7 @@ def results_to_dataframe(results: list[StResult]) -> pd.DataFrame:
     >>> df = results_to_dataframe(results)
     >>> "Alpha" in df.columns and "CLtot" in df.columns
     True
-    >>> df.to_csv("sweep.csv", index=False)
+    >>> df.to_csv("tests/sweep.csv", index=False)
     """
     import pandas as pd
 
