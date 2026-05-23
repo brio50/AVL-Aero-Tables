@@ -11,7 +11,10 @@ from avl_aero_tables._plot_config import (
     CAMERA_AERO,
     COLORSCALE_CTRL,
     COLORSCALE_STAB,
+    LABEL_ALPHA,
+    LABEL_BETA,
     OPACITY_SURFACE,
+    label_delta,
 )
 from avl_aero_tables.aero_filewrite import COEF_NAMES, AeroDatabase
 
@@ -99,7 +102,7 @@ def aero_fileplot(
             rows=n_rows, cols=n_cols,
             specs=[[{"type": "scene"}] * n_cols for _ in range(n_rows)],
             subplot_titles=[_COEF_LABEL[c] for c in stab_coefs],
-            vertical_spacing=0.05,
+            vertical_spacing=0.12,
             horizontal_spacing=0.01,
         )
         n_scenes = n_rows * n_cols
@@ -118,8 +121,8 @@ def aero_fileplot(
             fig_stab.update_layout(**{scene_names[i]: dict(
                 aspectmode="cube",
                 camera=CAMERA_AERO,
-                xaxis=dict(title="Alpha (deg)", **AXIS_3D),
-                yaxis=dict(title="Beta (deg)", **AXIS_3D),
+                xaxis=dict(title=LABEL_ALPHA, **AXIS_3D),
+                yaxis=dict(title=LABEL_BETA, **AXIS_3D),
                 zaxis=dict(title=_COEF_LABEL[coef], **AXIS_3D),
             )})
         fig_stab.update_layout(
@@ -164,7 +167,7 @@ def aero_fileplot(
             rows=n_rows, cols=n_cols,
             specs=[[{"type": "scene"}] * n_cols for _ in range(n_rows)],
             subplot_titles=[aero.ctrl[k].surface for k in ctrl_keys],
-            vertical_spacing=0.05,
+            vertical_spacing=0.12,
             horizontal_spacing=0.01,
         )
         n_scenes = n_rows * n_cols
@@ -183,8 +186,8 @@ def aero_fileplot(
             fig_ctrl.update_layout(**{scene_names[j]: dict(
                 aspectmode="cube",
                 camera=CAMERA_AERO,
-                xaxis=dict(title="Alpha (deg)", **AXIS_3D),
-                yaxis=dict(title=f"{ctrl_tbl.ctrl_name} (deg)", **AXIS_3D),
+                xaxis=dict(title=LABEL_ALPHA, **AXIS_3D),
+                yaxis=dict(title=label_delta(ctrl_tbl.surface), **AXIS_3D),
                 zaxis=dict(title=_COEF_LABEL[coef], **AXIS_3D),
             )})
         fig_ctrl.update_layout(

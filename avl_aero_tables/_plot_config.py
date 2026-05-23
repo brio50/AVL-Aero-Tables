@@ -44,3 +44,12 @@ CAMERA_AERO: dict[str, Any] = dict(eye=dict(x=1.8, y=1.8, z=1.2))
 COLORSCALE_STAB = "Viridis"
 COLORSCALE_CTRL = "Plasma"
 OPACITY_SURFACE = 0.9
+
+# Axis labels for aero surface plots.
+LABEL_ALPHA = "α (deg)"
+LABEL_BETA = "β (deg)"
+
+
+def label_delta(surface: str) -> str:
+    """Return the y-axis label for a control surface deflection axis."""
+    return f"δ_{surface} (deg)"

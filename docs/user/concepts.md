@@ -13,7 +13,7 @@ Three right-handed frames are used in aero analysis — body, stability, and win
 
 **Body axes ($x_b$, $y_b$, $z_b$)** — fixed to the airframe, independent of the flow, with $x_b$ out the nose, $y_b$ out the right (starboard) wing, and $z_b$ down through the belly.
 
-**Stability axes ($x_s$, $y_s$, $z_s$)** — body axes rotated nose-down by $\alpha$ about the $y_b$ axis, so that $x_s$ points into the freestream when sideslip is zero. AVL reports all forces and moments in this frame:
+**Stability axes ($x_s$, $y_s$, $z_s$)** — body axes tilted up by $\alpha$ about the $y_b$ axis, so that $x_s$ points into the freestream when sideslip is zero. AVL reports all forces and moments in this frame:
 
 $$\begin{pmatrix}x_s\\y_s\\z_s\end{pmatrix} = \begin{pmatrix}\cos\alpha & 0 & \sin\alpha\\0 & 1 & 0\\-\sin\alpha & 0 & \cos\alpha\end{pmatrix} \begin{pmatrix}x_b\\y_b\\z_b\end{pmatrix}$$
 
@@ -40,6 +40,10 @@ Figure 2.1 — Air Vehicle Reference Frames ([Borra, 2012](https://digitalcommon
 Figure 2.2 — Axis Relationships: Body, Stability, and Wind Axes ([Borra, 2012](https://digitalcommons.calpoly.edu/theses/713/))
 ```
 
+```{seealso}
+**B. L. Stevens & F. L. Lewis** — *Aircraft Simulation and Control*, 2nd ed. (Wiley, 2003) — standard reference for body, stability, and wind axis definitions and the rotation matrices between them.
+```
+
 ### Definitions
 
 Let $q = \tfrac{1}{2}\rho V^2$ be dynamic pressure, $S_\text{ref}$ the reference wing area, $b$ the reference span (Bref), and $\bar{c}$ the mean aerodynamic chord (Cref).
@@ -54,6 +58,10 @@ Let $q = \tfrac{1}{2}\rho V^2$ be dynamic pressure, $S_\text{ref}$ the reference
 | `Cn` | $M_z \;/\; (q \cdot S_\text{ref} \cdot b)$ | Yaw moment — positive nose-right |
 
 Upper-case (CL, CY, CD) denotes forces; lower-case (Cl, Cm, Cn) denotes moments. This casing convention is standard throughout AVL output and the **Stability** plot tab's derivative matrix (e.g. CLa = $\partial C_L / \partial \alpha$).
+
+```{seealso}
+**AVL documentation** (*avl_doc.txt*, section "Body, Stability and Wind Axes") — authoritative source for AVL's stability-axis reporting and the exact normalizations CD = $F_x/(q S_\text{ref})$, CL = $F_z/(q S_\text{ref})$, etc.
+```
 
 ### Normalizing Forces & Moments
 
@@ -71,13 +79,15 @@ D &= C_D \cdot \tfrac{1}{2}\rho V^2 \cdot S_\text{ref} \\
 \end{aligned}
 ```
 
-where $L$, $Y$, $D$ are lift, side force, and drag (lbf); $\bar{L}$, $\bar{M}$, $\bar{N}$ are roll, pitch, and yaw moments (lb·ft). These are exact at $\beta = 0$. For nonzero sideslip, $C_D$ and $C_Y$ require correction before scaling — see {eq}`eq-wind-coeffs`.
+where $L$, $Y$, $D$ are lift, side force, and drag; $\bar{L}$, $\bar{M}$, $\bar{N}$ are roll, pitch, and yaw moments — all in units consistent with the input geometry. These are exact at $\beta = 0$. For nonzero sideslip, $C_D$ and $C_Y$ require correction before scaling — see {eq}`eq-wind-coeffs`.
 
 ### Sideslip Correction
 
 When $\beta \neq 0$, stability-axis `CD` and `CY` are not the true wind-axis drag and side force. AVL's stability axes account for angle of attack ($\alpha$) but not sideslip ($\beta$) — when $\beta \neq 0$, $x_s$ does *not* fully point into the relative wind. As a result, what AVL labels `CD` is not purely the force opposing the velocity vector, and `CY` is not purely the perpendicular side force.
 
-Since the stability→wind rotation is about $z_s$, the z-component (lift) is unchanged. Only $C_D$ and $C_Y$ are affected. Apply the $\beta$ rotation directly to the force vector to recover true wind-axis coefficients:
+Since the stability→wind rotation is about $z_s$, the z-component is unchanged — $C_L$ and $C_n$ are unaffected. The AVL documentation notes that $C_D$, $C_Y$, $C_l$, and $C_m$ are all affected when $\beta \neq 0$. The force corrections are:
+
+
 
 ```{math}
 :label: eq-wind-coeffs
@@ -109,9 +119,9 @@ The aero tables store stability-axis coefficients exactly as AVL computed them �
 ```
 
 ```{seealso}
-**B. L. Stevens & F. L. Lewis** — *Aircraft Simulation and Control*, 2nd ed. (Wiley, 2003).
-§2.3 covers body, stability, and wind axis definitions and rotation matrices.
-This is the standard reference for 6DOF flight simulation and the source for the axis conventions above.
+**AVL documentation** (*avl_doc.txt*, section "Body, Stability and Wind Axes") — authoritative source confirming that AVL reports all coefficients in stability axes, and for the exact normalizations CD = $F_x/(q S_\text{ref})$, CL = $F_z/(q S_\text{ref})$, etc.
+
+**B. L. Stevens & F. L. Lewis** — *Aircraft Simulation and Control*, 2nd ed. (Wiley, 2003) — standard reference for body, stability, and wind axis definitions and the rotation matrices between them.
 ```
 
 ## Neutral Runs
