@@ -1,5 +1,7 @@
 # Requirements
 
+![Tests](https://github.com/brio50/avl-aero-tables/actions/workflows/test.yml/badge.svg)
+
 Behavioral requirements derived from the test suite. Each row is asserted by
 at least one pytest. Source CSVs live in `docs/dev/reqs/`.
 

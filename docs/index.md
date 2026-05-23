@@ -1,7 +1,5 @@
 # avl-aero-tables
 
-![Tests](https://github.com/brio50/avl-aero-tables/actions/workflows/test.yml/badge.svg)
-
 ## What is AVL?
 
 AVL (Athena Vortex Lattice) is a vortex lattice method (VLM) solver for aerodynamic and flight-dynamic analysis of fixed-wing aircraft. It is developed and maintained by Mark Drela and Harold Youngren at MIT and is widely used in preliminary design for its speed and accuracy at low computational cost.

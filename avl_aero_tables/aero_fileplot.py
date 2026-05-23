@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -28,31 +28,6 @@ _COEF_LABEL: dict[str, str] = {
 if TYPE_CHECKING:
     import plotly.graph_objects as go
 
-
-def _tighten_3d_layout(fig: "go.Figure", n_rows: int, n_cols: int) -> None:
-    """Compact 3-D scene domains and reposition subplot title annotations."""
-    top_pad = 0.03    # equal top/bottom padding centers the scene grid vertically
-    bottom_pad = 0.03
-    row_gap = 0.02
-    col_gap = 0.01
-    ann_offset = 0.01  # annotation sits just below scene domain top
-    avail_h = 1.0 - top_pad - bottom_pad
-    row_h = (avail_h - row_gap * max(n_rows - 1, 0)) / n_rows
-    col_w = (1.0 - col_gap * max(n_cols - 1, 0)) / n_cols
-    updates: dict[str, Any] = {}
-    for r in range(n_rows):
-        y1 = 1.0 - top_pad - r * (row_h + row_gap)
-        y0 = y1 - row_h
-        ann_y = y1 - ann_offset
-        for c in range(n_cols):
-            i = r * n_cols + c
-            x0 = c * (col_w + col_gap)
-            x1 = x0 + col_w
-            name = "scene" if i == 0 else f"scene{i + 1}"
-            updates[name] = {"domain": {"x": [x0, x1], "y": [max(y0, bottom_pad), y1]}}
-            if i < len(fig.layout.annotations):
-                fig.layout.annotations[i].y = ann_y
-    fig.update_layout(**updates)
 
 
 def aero_fileplot(
@@ -124,6 +99,8 @@ def aero_fileplot(
             rows=n_rows, cols=n_cols,
             specs=[[{"type": "scene"}] * n_cols for _ in range(n_rows)],
             subplot_titles=[_COEF_LABEL[c] for c in stab_coefs],
+            vertical_spacing=0.05,
+            horizontal_spacing=0.01,
         )
         n_scenes = n_rows * n_cols
         scene_names = ["scene" if i == 0 else f"scene{i + 1}" for i in range(n_scenes)]
@@ -160,7 +137,6 @@ def aero_fileplot(
                 activecolor="#2563eb",
             ),
         )
-        _tighten_3d_layout(fig_stab, n_rows, n_cols)
         figs.append(fig_stab)
 
     # ------------------------------------------------------------------
@@ -188,6 +164,8 @@ def aero_fileplot(
             rows=n_rows, cols=n_cols,
             specs=[[{"type": "scene"}] * n_cols for _ in range(n_rows)],
             subplot_titles=[aero.ctrl[k].surface for k in ctrl_keys],
+            vertical_spacing=0.05,
+            horizontal_spacing=0.01,
         )
         n_scenes = n_rows * n_cols
         scene_names = ["scene" if i == 0 else f"scene{i + 1}" for i in range(n_scenes)]
@@ -224,7 +202,6 @@ def aero_fileplot(
                 activecolor="#2563eb",
             ),
         )
-        _tighten_3d_layout(fig_ctrl, n_rows, n_cols)
         figs.append(fig_ctrl)
 
     return figs

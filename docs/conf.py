@@ -20,13 +20,14 @@ extensions = [
     "sphinxcontrib.mermaid",
     "sphinx_design",
     "plotly_figure",
+    "sphinx.ext.mathjax",
 ]
 
 # -- Source ---------------------------------------------------------------
 
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-myst_enable_extensions = ["deflist"]
+myst_enable_extensions = ["deflist", "amsmath", "dollarmath"]
 
 # -- HTML -----------------------------------------------------------------
 

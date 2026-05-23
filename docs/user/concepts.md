@@ -7,54 +7,102 @@ These concepts span multiple functions in the pipeline. Understanding them helps
 
 AVL reports all forces and moments as **dimensionless coefficients** normalized by the dynamic pressure and the reference geometry declared in the `.avl` file header.
 
-### Axes: body → stability → wind
+### Reference Frames
 
-Three right-handed frames are used in aero analysis. Each is a rotation of the previous.
+Three right-handed frames are used in aero analysis — body, stability, and wind — each a rotation of the previous.
 
-**Body axes (X, Y, Z)** — fixed to the airframe, independent of the flow:
-- X: out the nose
-- Y: out the right (starboard) wing
-- Z: down through the belly
+**Body axes ($x_b$, $y_b$, $z_b$)** — fixed to the airframe, independent of the flow, with $x_b$ out the nose, $y_b$ out the right (starboard) wing, and $z_b$ down through the belly.
 
-**Stability axes (x, y, z)** — body axes rotated nose-down by $\alpha$ about the body Y axis, so that x points into the freestream when sideslip is zero. AVL reports all forces and moments in this frame:
+**Stability axes ($x_s$, $y_s$, $z_s$)** — body axes rotated nose-down by $\alpha$ about the $y_b$ axis, so that $x_s$ points into the freestream when sideslip is zero. AVL reports all forces and moments in this frame:
 
-$$\begin{pmatrix}x\\y\\z\end{pmatrix}_\text{stab} = \begin{pmatrix}\cos\alpha & 0 & \sin\alpha\\0 & 1 & 0\\-\sin\alpha & 0 & \cos\alpha\end{pmatrix} \begin{pmatrix}X\\Y\\Z\end{pmatrix}_\text{body}$$
+$$\begin{pmatrix}x_s\\y_s\\z_s\end{pmatrix} = \begin{pmatrix}\cos\alpha & 0 & \sin\alpha\\0 & 1 & 0\\-\sin\alpha & 0 & \cos\alpha\end{pmatrix} \begin{pmatrix}x_b\\y_b\\z_b\end{pmatrix}$$
 
-**Wind axes** — stability axes rotated by sideslip $\beta$ about the stability z axis, so that x is fully aligned with the relative wind in both the pitch and yaw planes:
+**Wind axes ($x_w$, $y_w$, $z_w$)** — stability axes rotated by sideslip $\beta$ about the $z_s$ axis, so that $x_w$ is fully aligned with the relative wind in both the pitch and yaw planes:
 
-$$\begin{pmatrix}x\\y\\z\end{pmatrix}_\text{wind} = \begin{pmatrix}\cos\beta & -\sin\beta & 0\\\sin\beta & \cos\beta & 0\\0 & 0 & 1\end{pmatrix} \begin{pmatrix}x\\y\\z\end{pmatrix}_\text{stab}$$
+$$\begin{pmatrix}x_w\\y_w\\z_w\end{pmatrix} = \begin{pmatrix}\cos\beta & -\sin\beta & 0\\\sin\beta & \cos\beta & 0\\0 & 0 & 1\end{pmatrix} \begin{pmatrix}x_s\\y_s\\z_s\end{pmatrix}$$
 
 | Frame | Aligned with | Used for |
 |-------|-------------|----------|
-| Body (X, Y, Z) | Airframe geometry | Equations of motion, inertia |
-| **Stability (x, y, z)** | Freestream in pitch only ($\beta = 0$ assumed) | **AVL output — all coefficients here** |
-| Wind | Full relative wind (both $\alpha$ and $\beta$) | True drag / lift / sideforce |
+| Body ($x_b$, $y_b$, $z_b$) | Airframe geometry | Equations of motion, inertia |
+| **Stability ($x_s$, $y_s$, $z_s$)** | Freestream in pitch only ($\beta = 0$ assumed) | **AVL output — all coefficients here** |
+| Wind ($x_w$, $y_w$, $z_w$) | Full relative wind (both $\alpha$ and $\beta$) | True drag / lift / sideforce |
 
-### When $\beta \neq 0$: stability-axis CD and CY are not true drag and side force
+```{figure} ../_static/img/fig2.1-air_vehicle_frame.png
+:alt: Air Vehicle Reference Frames
+:align: center
+Figure 2.1 — Air Vehicle Reference Frames ([Borra, 2012](https://digitalcommons.calpoly.edu/theses/713/))
+```
 
-This is a subtle but important point for simulation use.
+```{figure} ../_static/img/fig2.2-axes_relationships.png
+:alt: Axis Relationships: Body, Stability, and Wind Axes
+:align: center
+:width: 80%
+Figure 2.2 — Axis Relationships: Body, Stability, and Wind Axes ([Borra, 2012](https://digitalcommons.calpoly.edu/theses/713/))
+```
 
-AVL's stability axes account for angle of attack ($\alpha$) but not sideslip ($\beta$). When $\beta \neq 0$, the stability-axis x does *not* fully point into the relative wind — it is still rotated by $\beta$ away from it. As a result, what AVL labels `CD` is not purely the force opposing the velocity vector, and `CY` is not purely the perpendicular side force.
+### Definitions
 
-To recover the **true wind-axis forces**, apply the $\beta$ rotation to the stability-axis coefficients:
+Let $q = \tfrac{1}{2}\rho V^2$ be dynamic pressure, $S_\text{ref}$ the reference wing area, $b$ the reference span (Bref), and $\bar{c}$ the mean aerodynamic chord (Cref).
 
-$$C_{D,\text{wind}} = C_D \cos\beta + C_Y \sin\beta$$
+| Symbol | Definition | Physical meaning |
+|--------|-----------|-----------------|
+| `CL` | $F_z \;/\; (q \cdot S_\text{ref})$ | Lift — force opposing gravity |
+| `CY` | $F_y \;/\; (q \cdot S_\text{ref})$ | Side force — positive toward starboard |
+| `CD` | $F_x \;/\; (q \cdot S_\text{ref})$ | Drag — force opposing freestream |
+| `Cl` | $M_x \;/\; (q \cdot S_\text{ref} \cdot b)$ | Roll moment — positive right-wing-down |
+| `Cm` | $M_y \;/\; (q \cdot S_\text{ref} \cdot \bar{c})$ | Pitch moment — positive nose-up |
+| `Cn` | $M_z \;/\; (q \cdot S_\text{ref} \cdot b)$ | Yaw moment — positive nose-right |
 
-$$C_{Y,\text{wind}} = -C_D \sin\beta + C_Y \cos\beta$$
+Upper-case (CL, CY, CD) denotes forces; lower-case (Cl, Cm, Cn) denotes moments. This casing convention is standard throughout AVL output and the **Stability** plot tab's derivative matrix (e.g. CLa = $\partial C_L / \partial \alpha$).
 
-$$C_{L,\text{wind}} = C_L \qquad \text{(z-axis rotation leaves z unchanged)}$$
+### Normalizing Forces & Moments
 
-**Worked example** — $\beta = 10°$, $C_D = 0.025$, $C_Y = -0.05$:
+AVL normalizes forces and moments by dynamic pressure $q$ and reference geometry. The dimensional equivalents are:
 
-$$C_{D,\text{wind}} = 0.025\cos(10°) + (-0.05)\sin(10°) = 0.0246 - 0.0087 = 0.0159$$
+```{math}
+:label: eq-recover
+\begin{aligned}
+L &= C_L \cdot \tfrac{1}{2}\rho V^2 \cdot S_\text{ref} \\
+Y &= C_Y \cdot \tfrac{1}{2}\rho V^2 \cdot S_\text{ref} \\
+D &= C_D \cdot \tfrac{1}{2}\rho V^2 \cdot S_\text{ref} \\
+\bar{L} &= C_l \cdot \tfrac{1}{2}\rho V^2 \cdot S_\text{ref} \cdot b \\
+\bar{M} &= C_m \cdot \tfrac{1}{2}\rho V^2 \cdot S_\text{ref} \cdot \bar{c} \\
+\bar{N} &= C_n \cdot \tfrac{1}{2}\rho V^2 \cdot S_\text{ref} \cdot b
+\end{aligned}
+```
 
-The uncorrected stability-axis drag is $0.025$ — the true wind-axis drag is $0.016$, a 37% overestimate. At realistic sideslip angles the error is not negligible.
+where $L$, $Y$, $D$ are lift, side force, and drag (lbf); $\bar{L}$, $\bar{M}$, $\bar{N}$ are roll, pitch, and yaw moments (lb·ft). These are exact at $\beta = 0$. For nonzero sideslip, $C_D$ and $C_Y$ require correction before scaling — see {eq}`eq-wind-coeffs`.
 
-**For simulation use**, compute dimensional forces in wind axes first, then rotate to body axes for the equations of motion (see Stevens & Lewis, *Aircraft Simulation and Control*, §2.4 for the complete body-axis force transformation):
+### Sideslip Correction
 
-$$D = C_{D,\text{wind}} \cdot qS \qquad L = C_L \cdot qS \qquad Y = C_{Y,\text{wind}} \cdot qS$$
+When $\beta \neq 0$, stability-axis `CD` and `CY` are not the true wind-axis drag and side force. AVL's stability axes account for angle of attack ($\alpha$) but not sideslip ($\beta$) — when $\beta \neq 0$, $x_s$ does *not* fully point into the relative wind. As a result, what AVL labels `CD` is not purely the force opposing the velocity vector, and `CY` is not purely the perpendicular side force.
 
-$$\begin{pmatrix}F_X\\F_Y\\F_Z\end{pmatrix}_\text{body} = R_y(\alpha)\,R_z(\beta) \begin{pmatrix}-D\\Y\\-L\end{pmatrix}$$
+Since the stability→wind rotation is about $z_s$, the z-component (lift) is unchanged. Only $C_D$ and $C_Y$ are affected. Apply the $\beta$ rotation directly to the force vector to recover true wind-axis coefficients:
+
+```{math}
+:label: eq-wind-coeffs
+\begin{aligned}
+C_{L,\text{wind}} &= C_L \\
+C_{D,\text{wind}} &= C_D \cos\beta - C_Y \sin\beta \\
+C_{Y,\text{wind}} &= C_D \sin\beta + C_Y \cos\beta
+\end{aligned}
+```
+
+Substitute $C_{D,\text{wind}}$ and $C_{Y,\text{wind}}$ into {eq}`eq-recover` in place of $C_D$ and $C_Y$ to obtain the correct dimensional $D$ and $Y$ for your wind-axis EOM.
+
+````{admonition} Example — β correction at typical sideslip
+Applying {eq}`eq-wind-coeffs` with $\beta = 10°$, $C_D = 0.025$, $C_Y = -0.05$ (negative side force is typical for positive sideslip):
+
+```{math}
+\begin{aligned}
+C_{L,\text{wind}} &= C_L \quad \text{(unchanged)}\\
+C_{D,\text{wind}} &= 0.025\cos(10°) - (-0.05)\sin(10°) &= 0.0246 + 0.0087 &= 0.0333\\
+C_{Y,\text{wind}} &= 0.025\sin(10°) + (-0.05)\cos(10°) &= 0.0043 - 0.0492 &= -0.0449
+\end{aligned}
+```
+
+The stability-axis $C_D = 0.025$ **underestimates** the true wind-axis drag ($0.033$) by 33% — the negative side force has a component that adds to drag when projected onto the velocity direction. At realistic sideslip angles the error is not negligible.
+````
 
 ```{important}
 The aero tables store stability-axis coefficients exactly as AVL computed them — **do not pre-apply the β correction when building the table**. Apply it at force-computation time in the simulation, where $\beta$ is known.
@@ -63,40 +111,8 @@ The aero tables store stability-axis coefficients exactly as AVL computed them �
 ```{seealso}
 **B. L. Stevens & F. L. Lewis** — *Aircraft Simulation and Control*, 2nd ed. (Wiley, 2003).
 §2.3 covers body, stability, and wind axis definitions and rotation matrices.
-§2.4 derives the full body-axis aerodynamic force equations from wind-axis lift, drag, and side force.
-This is the standard reference for 6DOF flight simulation and the source for the body-axis force transformation above.
+This is the standard reference for 6DOF flight simulation and the source for the axis conventions above.
 ```
-
-### Definitions
-
-Let $Q = \tfrac{1}{2}\rho V^2$ be dynamic pressure, $S_\text{ref}$ the reference wing area, $b$ the reference span (Bref), and $\bar{c}$ the mean aerodynamic chord (Cref).
-
-| Symbol | Definition | Physical meaning |
-|--------|-----------|-----------------|
-| `CL` | $F_z \;/\; (Q \cdot S_\text{ref})$ | Lift — force opposing gravity |
-| `CY` | $F_y \;/\; (Q \cdot S_\text{ref})$ | Side force — positive toward starboard |
-| `CD` | $F_x \;/\; (Q \cdot S_\text{ref})$ | Drag — force opposing freestream |
-| `Cl` | $M_x \;/\; (Q \cdot S_\text{ref} \cdot b)$ | Roll moment — positive right-wing-down |
-| `Cm` | $M_y \;/\; (Q \cdot S_\text{ref} \cdot \bar{c})$ | Pitch moment — positive nose-up |
-| `Cn` | $M_z \;/\; (Q \cdot S_\text{ref} \cdot b)$ | Yaw moment — positive nose-right |
-
-Upper-case (CL, CY, CD) denotes forces; lower-case (Cl, Cm, Cn) denotes moments. This casing convention is standard throughout AVL output and the **Stability** plot tab's derivative matrix (e.g. CLa = $\partial C_L / \partial \alpha$).
-
-### Recovering actual forces and moments
-
-Rearrange each definition to get dimensional quantities:
-
-$$F_L = C_L \cdot \tfrac{1}{2}\rho V^2 \cdot S_\text{ref}$$
-
-$$F_Y = C_Y \cdot \tfrac{1}{2}\rho V^2 \cdot S_\text{ref}$$
-
-$$F_D = C_D \cdot \tfrac{1}{2}\rho V^2 \cdot S_\text{ref}$$
-
-$$M_\text{roll} = C_l \cdot \tfrac{1}{2}\rho V^2 \cdot S_\text{ref} \cdot b$$
-
-$$M_\text{pitch} = C_m \cdot \tfrac{1}{2}\rho V^2 \cdot S_\text{ref} \cdot \bar{c}$$
-
-$$M_\text{yaw} = C_n \cdot \tfrac{1}{2}\rho V^2 \cdot S_\text{ref} \cdot b$$
 
 ## Neutral Runs
 
@@ -107,7 +123,7 @@ A **neutral-control run** is a case where every control surface deflection is ze
 - **`aero.stab`** — aerodynamic coefficients (CL, CD, Cm, …) as functions of alpha and beta; filled **only** from neutral-control runs
 - **`aero.ctrl`** — control derivatives (ΔCL/Δδ, …) as functions of alpha, beta, and deflection; filled from all runs
 
-Stability tables are populated **only from neutral-control runs** — cases where every surface deflection is zero. This ensures that off-neutral sweeps (e.g. elevator at ±20°) do not corrupt the baseline aero map.
+This ensures that off-neutral sweeps (e.g. elevator at ±20°) do not corrupt the baseline aero map.
 
 ````{important}
 Include `0.0` in every `ctrl_sweeps` deflection list, or `aero.stab` will be empty.
