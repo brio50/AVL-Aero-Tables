@@ -93,11 +93,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Get version without v prefix
+        id: ver
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
       - name: Extract changelog for this version
         id: changelog
         uses: mindsers/changelog-reader-action@v2
         with:
-          version: ${{ github.ref_name }}
+          version: ${{ steps.ver.outputs.version }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
