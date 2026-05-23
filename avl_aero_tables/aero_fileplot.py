@@ -84,7 +84,7 @@ def aero_fileplot(
     >>> figs[0].layout.title.text
     'Stability coefficients'
     >>> figs[1].layout.title.text
-    'CL  (β = 0.0°)'
+    'CLtot  (β = 0.0°)'
     """
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
@@ -101,7 +101,7 @@ def aero_fileplot(
         fig_stab = make_subplots(
             rows=n_rows, cols=n_cols,
             specs=[[{"type": "scene"}] * n_cols for _ in range(n_rows)],
-            subplot_titles=[_COEF_LABEL[c] for c in stab_coefs],
+            subplot_titles=list(stab_coefs),
             vertical_spacing=0.12,
             horizontal_spacing=0.01,
         )
@@ -192,7 +192,7 @@ def aero_fileplot(
             )})
         fig_ctrl.update_layout(
             title=dict(
-                text=f"{_COEF_LABEL[coef]}  (β = {beta_actual:.1f}°)",
+                text=f"{coef}  (β = {beta_actual:.1f}°)",
                 x=0.5, xanchor="center", y=0.99, yanchor="top",
             ),
             height=330 * n_rows,
