@@ -1,3 +1,7 @@
+---
+orphan: true
+---
+
 # Changelog
 
 `````{container} full-width
