@@ -40,10 +40,6 @@ Figure 2.1 — Air Vehicle Reference Frames ([Borra, 2012](https://digitalcommon
 Figure 2.2 — Axis Relationships: Body, Stability, and Wind Axes ([Borra, 2012](https://digitalcommons.calpoly.edu/theses/713/))
 ```
 
-```{seealso}
-**B. L. Stevens & F. L. Lewis** — *Aircraft Simulation and Control*, 2nd ed. (Wiley, 2003) — standard reference for body, stability, and wind axis definitions and the rotation matrices between them.
-```
-
 ### Definitions
 
 Let $q = \tfrac{1}{2}\rho V^2$ be dynamic pressure, $S_\text{ref}$ the reference wing area, $b$ the reference span (Bref), and $\bar{c}$ the mean aerodynamic chord (Cref).
@@ -118,11 +114,6 @@ The stability-axis $C_D = 0.025$ **underestimates** the true wind-axis drag ($0.
 The aero tables store stability-axis coefficients exactly as AVL computed them — **do not pre-apply the β correction when building the table**. Apply it at force-computation time in the simulation, where $\beta$ is known.
 ```
 
-```{seealso}
-**AVL documentation** (*avl_doc.txt*, section "Body, Stability and Wind Axes") — authoritative source confirming that AVL reports all coefficients in stability axes, and for the exact normalizations CD = $F_x/(q S_\text{ref})$, CL = $F_z/(q S_\text{ref})$, etc.
-
-**B. L. Stevens & F. L. Lewis** — *Aircraft Simulation and Control*, 2nd ed. (Wiley, 2003) — standard reference for body, stability, and wind axis definitions and the rotation matrices between them.
-```
 
 ## Neutral Runs
 
