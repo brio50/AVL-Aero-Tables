@@ -1,3 +1,22 @@
+/* Version badge below the project title in the navbar */
+.navbar-brand-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+.navbar-version {
+    font-size: 0.85rem;
+    opacity: 0.55;
+    margin-top: -0.2rem;
+    text-decoration: none;
+    line-height: 1;
+}
+.navbar-version:hover {
+    opacity: 0.9;
+    text-decoration: underline;
+}
+
 a.external::after {
     content: " ↗";
     font-size: 0.75em;
@@ -5,9 +24,17 @@ a.external::after {
     opacity: 0.6;
 }
 
-/* Tab card padding */
+/* Tab set: neutral border instead of default blue */
+.sd-tab-set.aero-plots {
+    margin: 1rem !important;
+}
 .sd-tab-set .sd-tab-content {
     padding: 1.5em !important;
+    border-color: var(--pst-color-border) !important;
+}
+.sd-tab-set > input:checked + label {
+    border-color: var(--pst-color-border) !important;
+    color: inherit;
 }
 
 /* Language labels on code blocks */
@@ -27,6 +54,43 @@ div[class*=" highlight-"]::after {
 div.highlight-bash::after         { content: "bash"; }
 div.highlight-powershell::after   { content: "powershell"; }
 div.highlight-python::after       { content: "python"; }
+
+/* Looser line-height for folder tree blocks */
+.filetree .highlight pre {
+    line-height: 1.6em !important;
+}
+
+/* Give the sweep internals diagram room to breathe */
+.mermaid-sweep svg {
+    min-height: 600px;
+}
+
+/* CLI table: command row on top, output row on bottom, unified border */
+.cli-card.sd-card {
+    border: 1px solid var(--pst-color-border) !important;
+    border-radius: .25rem !important;
+    box-shadow: none !important;
+    overflow: hidden;
+}
+.cli-card .sd-card-header,
+.cli-card .sd-card-body {
+    padding: 0 !important;
+    background: transparent !important;
+}
+.cli-card .sd-card-header {
+    border-bottom: 1px solid var(--pst-color-border) !important;
+}
+.cli-card .literal-block-wrapper {
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+}
+.cli-card .hide-empty-codeblock .highlight {
+    display: none;
+}
+.cli-card .hide-empty-codeblock {
+    margin-bottom: 0 !important;
+}
 
 /* Wrap the test-link column in requirements tables */
 .req-table td:last-child,

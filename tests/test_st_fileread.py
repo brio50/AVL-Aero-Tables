@@ -4,9 +4,9 @@ import pandas as pd
 import pytest
 
 from avl_aero_tables.aero_filewrite import results_to_dataframe
-from avl_aero_tables.st_fileread import st_fileread
+from avl_aero_tables.avl_fileread import st_fileread
 
-FIXTURES = Path(__file__).parent / "data"
+FIXTURES = Path(__file__).parent.parent / "examples" / "bd"
 
 
 @pytest.mark.req("req-stab-1")

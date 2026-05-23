@@ -1,4 +1,3 @@
-
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -6,7 +5,101 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.8.0] - 2026-05-20
+
+### Added
+- End-to-end integration tests covering all CLI commands and the full Python API chain against the real AVL binary
+- CLI requirements table (`docs/dev/reqs/cli.csv`) with 33 entries
+
+### Fixed
+- `plot aero` failed on a parent directory because the CLI was double-stamping the output path; `_runs/<yml-stem>/` now passed directly to `avl_sweep` which owns the timestamped subdirectory
+
+### Removed
+- `docs/_static/custom.js` — dead code (Plotly figures are iframed; parent-page resize handler never fired)
+
+## [1.7.0] - 2026-05-20
+
+### Added
+- Structured logging via Python `logging` module throughout `avl_aero_tables`
+- Per-run log file written to `{run_dir}/{avl_name}.log` on every sweep (always, regardless of `--quiet`); captures WARNING and above from the whole package
+- Rich indeterminate spinner during the blocking AVL subprocess call; shown only in a TTY, suppressed when piped or `--quiet`
+- `rich` added to core dependencies
+
+### Changed
+- `verbose` module flag removed; console output is now controlled by the standard Python logging system — API users call `logging.basicConfig(level=logging.INFO)` to enable it, or `logging.getLogger("avl_aero_tables").setLevel(logging.WARNING)` to suppress
+- CLI `--quiet` / `-q` suppresses the console logging handler (log file is still written)
+- `_ensure_neutral_in_sweeps` 0.0 auto-insertion now emits `_log.warning()` instead of `warnings.warn(UserWarning)`, so it appears in the run log file
+- `aero_filewrite` verbose summary print removed (was redundant with user-supplied sweep parameters)
+- Quickstart docs: all CLI and Python API examples use unified Input/Output card layout
+
+## [1.6.0] - 2026-05-16
+
+### Changed
+- Plotly modebar always visible; styled with vertical orientation and translucent background
+- Geometry figure whitespace tightened; view buttons (Iso / Right / Front / Top) with corrected camera positions; Iso camera reoriented so nose points toward the viewer (lower-right)
+- Aero coefficient figure margins and title centering improved; `CAMERA_AERO` constant added to `_plot_config`
+- Quickstart docs: MyST comments added pointing to plot regeneration scripts
+
+## [1.5.0] - 2026-05-16
+
+### Added
+- `_plot_config.py` — shared Plotly constants (`AXIS_3D`, camera defaults, colorscales, opacity); all plot modules import from here
+- `equal_3d_ranges()` helper extracted to `_plot_config` for reuse
+- `ctrl_sweeps` entries missing `0.0` now trigger a `UserWarning` and auto-insert it, ensuring stability tables are always populated
+- Coordinate triads on geometry plot (AVL world frame + aircraft body frame at CG); legend distinguishes the two frames
+- Sphinx plotly figures embedded as lazy-loading iframes; `:height:` and `:class:` options on the `plotly-figure` directive
+
+### Changed
+- `avl_fileplot`: single interactive 3-D scene replaces four-panel static view; equal-axis scaling; background planes removed
+- `aero_fileplot`: consistent margins and subplot title sizing
+
+### Fixed
+- CLI sweep output directory regression (`runs/` → `_runs/`)
+- Geometry `SCALE` transformation now applied before plotting (previously only `TRANSLATE` was applied)
+
+## [1.4.0] - 2026-05-16
+
+### Added
+- `avl_config.py` — Pydantic models (`ProjectConfig`, `InputSpec`, `SweepSpec`, `OutputSpec`) and `load_config()`; YAML validation with clear error messages
+- YAML-driven CLI: `sweep <yml>`, `plot geometry <yml>`, `plot aero <runs_dir>`
+- `avl_fileplot` and `aero_fileplot` rewritten for Plotly; interactive figures embed in Sphinx and Dash
+- `examples/b737.py` — Boeing 737-800 end-to-end walkthrough with `--docs` flag
+- `plotly` added to core dependencies
+
+### Changed
+- Quickstart restructured: CLI section uses Bubble Dancer, Python API section uses B737
+- `examples/quickstart.py` renamed to `examples/bd.py`
+
+## [1.3.0] - 2026-05-16
+
+### Added
+- Structured run output: `.in/` (inputs + geometry snapshot), `.raw/` (`.st` files), `provenance.json` (timestamp, version, git state, entry point)
+- `--version` CLI flag
+
+### Changed
+- `sweep.log` → `sweep.inp`, moved to `.in/`; `reset.run` and `case_*.st` reorganized into `.in/` and `.raw/`
+
+## [1.2.0] - 2026-05-15
+
+### Added
+- `examples/bd.py` end-to-end walkthrough with `--docs` flag
+
+### Changed
+- `plot aero` accepts a parent `<runs_dir>` (latest run auto-selected) instead of a `.yml`
+- `avl_sweep()` `out_dir` is a base directory; timestamped subdirectory created automatically
+- AVL invoked as pure stdin script (`avl < script`); `LOAD` / `CASE` commands at top of script
+- `examples/` reorganized into per-aircraft subdirectories with co-located airfoil data
+
+## [1.1.0] - 2026-05-15
+
+### Added
+- YAML project file schema (`input`, `sweep`, `output` sections); Pydantic validation
+- `sweep <yml>`, `plot geometry <yml>`, `plot aero <runs_dir>` CLI subcommands
+- Project files for all seven reference aircraft
+
+### Removed
+- `mass_file` parameter (not needed for `.st` vortex-lattice output)
+- `run <command_file>` CLI subcommand
 
 ## [1.0.1] - 2026-05-15
 

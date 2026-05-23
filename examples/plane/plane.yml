@@ -1,0 +1,13 @@
+input:
+  geometry: plane.avl
+
+sweep:
+  alpha: [-5, 0, 5, 10, 15]
+  beta: [0]
+  ctrl_sweeps:
+    aileron:  [-10, 0, 10]
+    elevator: [-10, 0, 10]
+    rudder:   [-10, 0, 10]
+
+output:
+  format: csv

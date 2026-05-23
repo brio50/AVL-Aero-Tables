@@ -7,9 +7,13 @@ from avl_aero_tables.aero_filewrite import (
     results_to_dataframe,
 )
 from avl_aero_tables.avl_fileplot import avl_fileplot
-from avl_aero_tables.avl_fileread import AvlGeometry, avl_fileread
+from avl_aero_tables.avl_fileread import (
+    AvlGeometry,
+    StResult,
+    avl_fileread,
+    st_fileread,
+)
 from avl_aero_tables.avl_sweep import run as avl_sweep
-from avl_aero_tables.st_fileread import StResult, st_fileread
 
 __all__ = [
     "AeroDatabase",

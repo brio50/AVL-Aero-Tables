@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from avl_aero_tables.st_fileread import StResult
+from avl_aero_tables.avl_fileread import StResult
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -94,10 +94,13 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
 
     Example
     -------
+    >>> import tempfile
     >>> from avl_aero_tables import avl_sweep
     >>> from avl_aero_tables.aero_filewrite import aero_filewrite
-    >>> results = avl_sweep("examples/bd.avl", alpha=[-5, 0, 5, 10], beta=[0])  # doctest: +ELLIPSIS
-    AVL sweep complete → ...  (4 cases)
+    >>> with tempfile.TemporaryDirectory() as tmp:
+    ...     results = avl_sweep(
+    ...         "examples/bd/bd.avl", alpha=[-5, 0, 5, 10], beta=[0], out_dir=tmp
+    ...     )
     >>> db = aero_filewrite(results)
     >>> db.stab["CLtot"].data.shape
     (4, 1)
@@ -182,14 +185,17 @@ def results_to_dataframe(results: list[StResult]) -> pd.DataFrame:
 
     Example
     -------
+    >>> import tempfile
     >>> from avl_aero_tables import avl_sweep
     >>> from avl_aero_tables.aero_filewrite import results_to_dataframe
-    >>> results = avl_sweep("examples/bd.avl", alpha=[0, 5], beta=[0])  # doctest: +ELLIPSIS
-    AVL sweep complete → ...
+    >>> with tempfile.TemporaryDirectory() as tmp:
+    ...     results = avl_sweep(
+    ...         "examples/bd/bd.avl", alpha=[0, 5], beta=[0], out_dir=tmp
+    ...     )
     >>> df = results_to_dataframe(results)
     >>> "Alpha" in df.columns and "CLtot" in df.columns
     True
-    >>> df.to_csv("sweep.csv", index=False)
+    >>> df.to_csv("tests/sweep.csv", index=False)
     """
     import pandas as pd
 

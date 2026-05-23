@@ -28,7 +28,7 @@ AVL is a Fortran program distributed as source by MIT. Build it and place the bi
    This creates:
 
    ```{code-block} text
-   :class: no-copybutton
+   :class: no-copybutton filetree
    📁 ~/Downloads/AVL<version>/
    ├── 📁 eispack/
    ├── 📁 plotlib/
@@ -70,7 +70,7 @@ AVL is a Fortran program distributed as source by MIT. Build it and place the bi
    This creates:
 
    ```{code-block} text
-   :class: no-copybutton
+   :class: no-copybutton filetree
    📁 ~/Downloads/AVL<version>/
    ├── 📁 eispack/
    ├── 📁 plotlib/

@@ -19,22 +19,20 @@ build/
 # Ruff
 .ruff_cache/
 
-# AVL outputs
-out/
+# Sweep outputs — created at project root or inside examples/
+_runs/
 *.st
-!tests/data/*.st
+!examples/**/*.st
+
+# Plotly HTML files written by example scripts
+examples/**/*.html
 
 # Docs build
 docs/_build/
 
 # Doctest-generated artifacts
-geometry.png
-stability.png
-/sweep.csv
-
-# Orphaned/intermediate doc images
-docs/_static/img/bd_aero.png
-docs/_static/img/bd_ctrl_C*.png
+/tests/sweep.csv
+/tests/geometry.html
 
 # macOS
 .DS_Store

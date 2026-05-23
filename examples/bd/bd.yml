@@ -1,0 +1,13 @@
+input:
+  geometry: bd.avl
+
+sweep:
+  alpha: [-5, 0, 5, 10, 15]
+  beta: [0]
+  ctrl_sweeps:
+    elevator: [-10, -5, 0, 5, 10]
+    rudder:   [-10, 0, 10]
+    aileron:  [-10, 0, 10]
+
+output:
+  format: csv

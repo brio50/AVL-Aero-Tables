@@ -67,15 +67,15 @@ def run(
 ) -> subprocess.CompletedProcess[str]:
     """Feed command_text to AVL via stdin and return the completed process.
 
-    Set cwd to the directory containing the .avl file so that AVL's
-    'LOAD <name>' resolves correctly.
+    AVL is driven entirely via stdin — geometry and run-case are loaded with
+    LOAD and CASE commands inside command_text.  Set cwd to the directory
+    containing the .avl file so bare filenames in LOAD resolve correctly.
 
     Example
     -------
     >>> from pathlib import Path
-    >>> from avl_aero_tables.avl_bin import find_avl, run
-    >>> binary = find_avl()
-    >>> result = run("LOAD bd\\nQuit\\n", cwd=Path("examples"))
+    >>> from avl_aero_tables.avl_bin import run
+    >>> result = run("LOAD bd.avl\\nQuit\\n", cwd=Path("examples/bd"))
     >>> result.returncode
     0
     """
@@ -104,7 +104,7 @@ def run_file(
     >>> with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
     ...     _ = f.write("LOAD bd\\nQuit\\n")
     ...     cmd_path = Path(f.name)
-    >>> result = run_file(cmd_path, cwd=Path("examples"))
+    >>> result = run_file(cmd_path, cwd=Path("examples/bd"))
     >>> result.returncode
     0
     """

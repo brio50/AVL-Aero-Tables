@@ -31,16 +31,29 @@ sphinx-autobuild docs docs/_build/html
 The server watches for file changes and rebuilds automatically.
 
 
-## Publishing to PyPI
+## Publishing a release
 
-Releases are published automatically via GitHub Actions when a version tag is pushed. Tags can be pushed from any branch — to ensure releases only originate from `main`, create the tag from there.
+Pushing a `v*` tag triggers the full `publish.yml` pipeline:
+
+1. **Tests** — full matrix (Python 3.12 + 3.13) must pass
+2. **Version check** — tag (e.g. `v1.5.0`) must match `version` in `pyproject.toml`
+3. **PyPI publish** — wheel + sdist uploaded via OIDC trusted publishing
+4. **GitHub Release** — created automatically with notes pulled from the matching `## [X.Y.Z]` section of `CHANGELOG.md`
+
+Before tagging:
+
+1. Bump `version` in `pyproject.toml`
+2. Add a `## [X.Y.Z] - YYYY-MM-DD` section to `CHANGELOG.md`
+3. Commit and merge to `main`
+
+Then tag from `main`:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.5.0
+git push origin v1.5.0
 ```
 
-The `publish.yml` workflow builds the distribution and uploads it to PyPI using OIDC trusted publishing — no API token needed. Prerequisites:
+Prerequisites (one-time setup):
 
 - A `pypi` environment must exist in the repository settings (Settings → Environments)
 - PyPI must have a trusted publisher configured: repository `brio50/avl-aero-tables`, workflow `publish.yml`, environment `pypi`
@@ -50,6 +63,6 @@ The `publish.yml` workflow builds the distribution and uploads it to PyPI using 
 Linting is handled by [Ruff](https://docs.astral.sh/ruff/):
 
 ```bash
-ruff check avl_aero_tables
-ruff check --fix avl_aero_tables
+ruff check avl_aero_tables tests/
+ruff check --fix avl_aero_tables tests/
 ```

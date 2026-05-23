@@ -1,8 +1,8 @@
-# Python AVL Wrapper
+# avl-aero-tables
 
 ![Tests](https://github.com/brio50/avl-aero-tables/actions/workflows/test.yml/badge.svg)
 
-A Python wrapper for [AVL](https://web.mit.edu/drela/Public/web/avl/) (Athena Vortex Lattice) by Mark Drela and Harold Youngren (MIT). Drives AVL via stdin command scripts, parses its `.st` output, and returns structured Python data — no manual file editing required.
+A Python package that drives [AVL](https://web.mit.edu/drela/Public/web/avl/) (Athena Vortex Lattice) by Mark Drela and Harold Youngren (MIT) programmatically — piping sweep commands to AVL's stdin, parsing its `.st` output, and returning structured aerodynamic lookup tables.
 
 ## Install
 
@@ -18,14 +18,28 @@ Full installation guide, walkthrough, API reference, and more at the [docs site]
 
 ## Quick look
 
-```python
-from avl_aero_tables import avl_fileread, avl_fileplot, avl, aero_filewrite, aero_fileplot
+### CLI
 
-geom    = avl_fileread("examples/bd.avl")          # parse geometry
-fig     = avl_fileplot(geom)                        # four-view plot
-results = avl("examples/bd.avl", alpha, beta)       # run AVL sweep
-aero    = aero_filewrite(results)                   # build lookup tables
-figs    = aero_fileplot(aero)                       # plot aero database
+Define a sweep in a YAML project file and run it in one command:
+
+```console
+$ avl-aero-tables sweep examples/bd/bd.yml         # run sweep → _runs/bd/<timestamp>/
+$ avl-aero-tables plot geometry examples/bd/bd.yml  # interactive 3-D geometry plot
+$ avl-aero-tables plot aero _runs/bd/               # plot latest sweep results
+```
+
+### Python API
+
+Call the same steps programmatically:
+
+```python
+from avl_aero_tables import avl_fileread, avl_fileplot, avl_sweep, aero_filewrite, aero_fileplot
+
+geom    = avl_fileread("examples/bd/bd.avl")            # parse geometry
+fig     = avl_fileplot(geom)                            # interactive 3-D plot
+results = avl_sweep("examples/bd/bd.avl", alpha, beta, out_dir="_runs")  # run AVL sweep
+aero    = aero_filewrite(results)                       # build lookup tables
+figs    = aero_fileplot(aero)                           # plot aero database
 ```
 
 ## References

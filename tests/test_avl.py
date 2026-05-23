@@ -90,8 +90,9 @@ def test_run_calls_binary_with_stdin():
     ):
         run("quit\n")
         mock_run.assert_called_once()
-        call_kwargs = mock_run.call_args
-        assert call_kwargs.kwargs["input"] == "quit\n"
+        call_args, call_kwargs = mock_run.call_args
+        assert call_kwargs["input"] == "quit\n"
+        assert call_args[0] == ["/bin/avl"]
 
 
 # ---------------------------------------------------------------------------
@@ -118,21 +119,6 @@ def test_cli_verify_subcommand_failure():
     ):
         code = main(["verify"])
         assert code == 1
-
-
-@pytest.mark.req("req-bin-8")
-def test_cli_run_subcommand(tmp_path):
-    cmd_file = tmp_path / "command.txt"
-    cmd_file.write_text("quit\n")
-
-    mock_result = MagicMock()
-    mock_result.returncode = 0
-    mock_result.stdout = ""
-    mock_result.stderr = ""
-
-    with patch("avl_aero_tables.avl_cli.run_file", return_value=mock_result):
-        code = main(["run", str(cmd_file)])
-        assert code == 0
 
 
 @pytest.mark.req("req-bin-9")

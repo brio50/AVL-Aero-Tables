@@ -1,5 +1,7 @@
 # Requirements
 
+![Tests](https://github.com/brio50/avl-aero-tables/actions/workflows/test.yml/badge.svg)
+
 Behavioral requirements derived from the test suite. Each row is asserted by
 at least one pytest. Source CSVs live in `docs/dev/reqs/`.
 
@@ -30,10 +32,19 @@ at least one pytest. Source CSVs live in `docs/dev/reqs/`.
 :class: req-table
 ```
 
-## Binary management (`avl_bin` / `avl_cli`)
+## Binary management (`avl_bin`)
 
 ```{csv-table}
 :file: reqs/bin.csv
+:header-rows: 1
+:widths: 12 38 38 12
+:class: req-table
+```
+
+## CLI commands and config (`avl_cli` / `avl_config`)
+
+```{csv-table}
+:file: reqs/cli.csv
 :header-rows: 1
 :widths: 12 38 38 12
 :class: req-table

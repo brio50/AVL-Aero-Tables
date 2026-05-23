@@ -3,6 +3,7 @@ from importlib.metadata import version as _pkg_version
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent / "_ext"))
 
 # -- Project --------------------------------------------------------------
 
@@ -18,13 +19,15 @@ extensions = [
     "sphinx_copybutton",
     "sphinxcontrib.mermaid",
     "sphinx_design",
+    "plotly_figure",
+    "sphinx.ext.mathjax",
 ]
 
 # -- Source ---------------------------------------------------------------
 
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-myst_enable_extensions = ["deflist"]
+myst_enable_extensions = ["deflist", "amsmath", "dollarmath"]
 
 # -- HTML -----------------------------------------------------------------
 
@@ -40,6 +43,7 @@ html_theme_options = {
     "use_repository_button": True,
     "use_issues_button": True,
     "use_download_button": True,
+    "show_toc_level": 2,
 }
 
 # -- Extensions -----------------------------------------------------------
@@ -54,3 +58,22 @@ autodoc_default_options = {
 autodoc_typehints = "description"
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
+
+# -- Dependencies for included external files ---------------------------------
+# Tells Sphinx to re-read these pages when the included external file changes.
+
+_ROOT = Path(__file__).parent.parent
+_INCLUDE_DEPS = {
+    "dev/changelog": _ROOT / "CHANGELOG.md",
+    "dev/contributing": _ROOT / "CONTRIBUTING.md",
+    "dev/license": _ROOT / "LICENSE.md",
+}
+
+
+def setup(app):
+    app.connect("source-read", _note_include_deps)
+
+
+def _note_include_deps(app, docname, source):
+    if docname in _INCLUDE_DEPS:
+        app.env.note_dependency(str(_INCLUDE_DEPS[docname]))
