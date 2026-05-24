@@ -210,7 +210,7 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
 
     for d_idx, ctrl_name in ctrl_map.items():
         for coef in CTRL_DERIV_COEFS:
-            avl_key = f"{coef}{d_idx}"          # "CLd01" — key in StResult.data
+            avl_key = f"{coef}{d_idx}"  # "CLd01" — key in StResult.data
             db_key = f"{coef}_{d_idx}_{ctrl_name}"  # "CL_d01_flap" — dict key
             db.ctrl_deriv[db_key] = StabTable(
                 coef=avl_key,

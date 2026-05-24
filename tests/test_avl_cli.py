@@ -566,9 +566,7 @@ def test_plot_stab_deriv_writes_html_files(tmp_path):
     with (
         patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
-        patch(
-            "avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value=fake_figs
-        ),
+        patch("avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value=fake_figs),
         patch("webbrowser.open") as mock_browser,
     ):
         result = main(["plot", "stab-deriv", str(run_dir)])
@@ -620,15 +618,15 @@ def test_plot_ctrl_deriv_writes_html_files(tmp_path):
     with (
         patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
-        patch(
-            "avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value=fake_figs
-        ),
+        patch("avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value=fake_figs),
         patch("webbrowser.open") as mock_browser,
     ):
         result = main(["plot", "ctrl-deriv", str(run_dir)])
 
     assert result == 0
-    written_names = [Path(fig.write_html.call_args[0][0]).name for fig in fake_figs.values()]
+    written_names = [
+        Path(fig.write_html.call_args[0][0]).name for fig in fake_figs.values()
+    ]
     assert written_names == ["deriv_ctrl_flap.html", "deriv_ctrl_elevator.html"]
     assert mock_browser.call_args[0][0].endswith("index.html")
 

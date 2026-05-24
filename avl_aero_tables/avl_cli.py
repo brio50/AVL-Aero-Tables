@@ -159,7 +159,13 @@ def _cmd_plot_geometry(args: argparse.Namespace) -> int:
     geometry = avl_fileread(avl_file)
     fig = avl_fileplot(geometry)
     out = avl_file.parent / f"{avl_file.stem}_geometry.html"
-    fig.write_html(str(out), include_plotlyjs="cdn", include_mathjax="cdn", post_script=MATHJAX_RETYPESET, config={"displayModeBar": True})
+    fig.write_html(
+        str(out),
+        include_plotlyjs="cdn",
+        include_mathjax="cdn",
+        post_script=MATHJAX_RETYPESET,
+        config={"displayModeBar": True},
+    )
     print(f"Geometry plot → {out}")
     index = _write_index_html(out.parent)
     webbrowser.open(index.as_uri())
@@ -213,7 +219,11 @@ def _cmd_plot_totals(args: argparse.Namespace) -> int:
     for key, fig in figs.items():
         out = result_dir / f"total_{key}.html"
         fig.write_html(
-            str(out), include_plotlyjs="cdn", include_mathjax="cdn", post_script=MATHJAX_RETYPESET, config={"displayModeBar": True}
+            str(out),
+            include_plotlyjs="cdn",
+            include_mathjax="cdn",
+            post_script=MATHJAX_RETYPESET,
+            config={"displayModeBar": True},
         )
         print(f"  → {out.name}")
     index = _write_index_html(result_dir)
@@ -234,7 +244,11 @@ def _cmd_plot_stab_deriv(args: argparse.Namespace) -> int:
     for key, fig in figs.items():
         out = result_dir / f"deriv_stab_{key}.html"
         fig.write_html(
-            str(out), include_plotlyjs="cdn", include_mathjax="cdn", post_script=MATHJAX_RETYPESET, config={"displayModeBar": True}
+            str(out),
+            include_plotlyjs="cdn",
+            include_mathjax="cdn",
+            post_script=MATHJAX_RETYPESET,
+            config={"displayModeBar": True},
         )
         print(f"  → {out.name}")
     index = _write_index_html(result_dir)
@@ -255,7 +269,11 @@ def _cmd_plot_ctrl_deriv(args: argparse.Namespace) -> int:
     for key, fig in figs.items():
         out = result_dir / f"deriv_ctrl_{key}.html"
         fig.write_html(
-            str(out), include_plotlyjs="cdn", include_mathjax="cdn", post_script=MATHJAX_RETYPESET, config={"displayModeBar": True}
+            str(out),
+            include_plotlyjs="cdn",
+            include_mathjax="cdn",
+            post_script=MATHJAX_RETYPESET,
+            config={"displayModeBar": True},
         )
         print(f"  → {out.name}")
     index = _write_index_html(result_dir)

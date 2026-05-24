@@ -35,10 +35,10 @@ _COEF_LABEL: dict[str, str] = {
 # Maps plain perturbation identifier → Unicode string used in axis labels and titles.
 _PERTURB_UNICODE: dict[str, str] = {
     "alpha": "α",
-    "beta":  "β",
-    "p":     "p'",
-    "q":     "q'",
-    "r":     "r'",
+    "beta": "β",
+    "p": "p'",
+    "q": "q'",
+    "r": "r'",
 }
 
 # Single-letter subscript for each short-form coefficient prefix.
@@ -74,10 +74,10 @@ _CTRL_DERIV_SUBPLOT_LABEL: dict[str, str] = {
 # Perturbation-variable groupings for stability-derivative figures.
 _DERIV_GROUPS: dict[str, tuple[str, ...]] = {
     "alpha": ("CLa", "CYa", "CDa", "Cla", "Cma", "Cna"),
-    "beta":  ("CLb", "CYb", "CDb", "Clb", "Cmb", "Cnb"),
-    "p":     ("CLp", "CYp", "CDp", "Clp", "Cmp", "Cnp"),
-    "q":     ("CLq", "CYq", "CDq", "Clq", "Cmq", "Cnq"),
-    "r":     ("CLr", "CYr", "CDr", "Clr", "Cmr", "Cnr"),
+    "beta": ("CLb", "CYb", "CDb", "Clb", "Cmb", "Cnb"),
+    "p": ("CLp", "CYp", "CDp", "Clp", "Cmp", "Cnp"),
+    "q": ("CLq", "CYq", "CDq", "Clq", "Cmq", "Cnq"),
+    "r": ("CLr", "CYr", "CDr", "Clr", "Cmr", "Cnr"),
 }
 
 # Generated from _COEF_SUBSCRIPT × _PERTURB_UNICODE.
@@ -246,7 +246,8 @@ def plot_totals(
         n_cols = 3
         n_rows = (len(stab_coefs) + n_cols - 1) // n_cols
         fig_stab, scene_names = _init_figure(
-            n_rows, n_cols,
+            n_rows,
+            n_cols,
             [_COEF_LABEL.get(c, c) for c in stab_coefs],
             "Aerodynamic Coefficients — Neutral Controls",
         )
@@ -254,10 +255,17 @@ def plot_totals(
             tbl = aero.stab[coef]
             alpha_g, beta_g = np.meshgrid(tbl.alpha, tbl.beta, indexing="ij")
             _add_surface_trace(
-                fig_stab, scene_names, i, n_cols,
-                alpha_g, beta_g, tbl.data,
+                fig_stab,
+                scene_names,
+                i,
+                n_cols,
+                alpha_g,
+                beta_g,
+                tbl.data,
                 COLORSCALE_STAB,
-                LABEL_ALPHA, LABEL_BETA, _COEF_LABEL[coef],
+                LABEL_ALPHA,
+                LABEL_BETA,
+                _COEF_LABEL[coef],
                 coef,
             )
         figs["stab"] = fig_stab
@@ -285,7 +293,8 @@ def plot_totals(
 
         coef_short = coef[:-3]  # "CLtot" → "CL"
         fig_ctrl, scene_names = _init_figure(
-            n_rows_ctrl, n_cols_ctrl,
+            n_rows_ctrl,
+            n_cols_ctrl,
             [aero.ctrl[k].surface for k in ctrl_keys],
             f"{_COEF_LABEL[coef]} vs. α, δ  (β = {beta_actual:.1f}°)",
         )
@@ -293,10 +302,17 @@ def plot_totals(
             ctrl_tbl = aero.ctrl[key]
             alpha_g, defl_g = np.meshgrid(ctrl_tbl.alpha, ctrl_tbl.defl, indexing="ij")
             _add_surface_trace(
-                fig_ctrl, scene_names, j, n_cols_ctrl,
-                alpha_g, defl_g, ctrl_tbl.data[:, bi, :],
+                fig_ctrl,
+                scene_names,
+                j,
+                n_cols_ctrl,
+                alpha_g,
+                defl_g,
+                ctrl_tbl.data[:, bi, :],
                 COLORSCALE_CTRL,
-                LABEL_ALPHA, label_delta(ctrl_tbl.surface), _COEF_LABEL[coef],
+                LABEL_ALPHA,
+                label_delta(ctrl_tbl.surface),
+                _COEF_LABEL[coef],
                 ctrl_tbl.surface,
             )
         figs[f"ctrl_{_COEF_WORD[coef_short]}"] = fig_ctrl
@@ -355,7 +371,8 @@ def plot_stab_derivs(aero: AeroDatabase) -> "dict[str, go.Figure]":
             continue
 
         fig, scene_names = _init_figure(
-            n_rows, n_cols,
+            n_rows,
+            n_cols,
             [_STAB_DERIV_LABEL.get(k, k) for k in keys],
             f"Stability Derivatives — ∂C*/∂{_PERTURB_UNICODE[perturb_var]}",
         )
@@ -365,10 +382,17 @@ def plot_stab_derivs(aero: AeroDatabase) -> "dict[str, go.Figure]":
             tbl = aero.stab_deriv[key]
             alpha_g, beta_g = np.meshgrid(tbl.alpha, tbl.beta, indexing="ij")
             _add_surface_trace(
-                fig, scene_names, i, n_cols,
-                alpha_g, beta_g, tbl.data,
+                fig,
+                scene_names,
+                i,
+                n_cols,
+                alpha_g,
+                beta_g,
+                tbl.data,
                 COLORSCALE_STAB,
-                LABEL_ALPHA, LABEL_BETA, _STAB_DERIV_LABEL.get(key, key),
+                LABEL_ALPHA,
+                LABEL_BETA,
+                _STAB_DERIV_LABEL.get(key, key),
                 key,
             )
         figs[perturb_var] = fig
@@ -449,7 +473,8 @@ def plot_ctrl_derivs(aero: AeroDatabase) -> "dict[str, go.Figure]":
             for c in CTRL_DERIV_COEFS
         ]
         fig, scene_names = _init_figure(
-            n_rows, n_cols,
+            n_rows,
+            n_cols,
             subplot_titles,
             f"Control Derivatives — ∂C*/∂δ_{ctrl_name}",
         )
@@ -461,10 +486,17 @@ def plot_ctrl_derivs(aero: AeroDatabase) -> "dict[str, go.Figure]":
             sub = _COEF_SUBSCRIPT.get(c, c)
             alpha_g, beta_g = np.meshgrid(tbl.alpha, tbl.beta, indexing="ij")
             _add_surface_trace(
-                fig, scene_names, i, n_cols,
-                alpha_g, beta_g, tbl.data,
+                fig,
+                scene_names,
+                i,
+                n_cols,
+                alpha_g,
+                beta_g,
+                tbl.data,
                 COLORSCALE_CTRL,
-                LABEL_ALPHA, LABEL_BETA, f"C{sub}δ_{ctrl_name}",
+                LABEL_ALPHA,
+                LABEL_BETA,
+                f"C{sub}δ_{ctrl_name}",
                 key,
             )
         figs[ctrl_name] = fig
