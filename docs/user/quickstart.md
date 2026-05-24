@@ -218,23 +218,23 @@ $ avl-aero-tables plot stab-deriv _runs/bd/
 
 `````{tab-set}
 :class: aero-plots
-````{tab-item} ∂/∂α
+````{tab-item} ∂C*/∂α
 ```{plotly-figure} _static/html/bd_deriv_stab_alpha.html
 ```
 ````
-````{tab-item} ∂/∂β
+````{tab-item} ∂C*/∂β
 ```{plotly-figure} _static/html/bd_deriv_stab_beta.html
 ```
 ````
-````{tab-item} ∂/∂p'
+````{tab-item} ∂C*/∂p'
 ```{plotly-figure} _static/html/bd_deriv_stab_p.html
 ```
 ````
-````{tab-item} ∂/∂q'
+````{tab-item} ∂C*/∂q'
 ```{plotly-figure} _static/html/bd_deriv_stab_q.html
 ```
 ````
-````{tab-item} ∂/∂r'
+````{tab-item} ∂C*/∂r'
 ```{plotly-figure} _static/html/bd_deriv_stab_r.html
 ```
 ````
@@ -511,23 +511,23 @@ for name, fig in plot_stab_derivs(aero).items():
 
 `````{tab-set}
 :class: aero-plots
-````{tab-item} ∂/∂α
+````{tab-item} ∂C*/∂α
 ```{plotly-figure} _static/html/b737_deriv_stab_alpha.html
 ```
 ````
-````{tab-item} ∂/∂β
+````{tab-item} ∂C*/∂β
 ```{plotly-figure} _static/html/b737_deriv_stab_beta.html
 ```
 ````
-````{tab-item} ∂/∂p'
+````{tab-item} ∂C*/∂p'
 ```{plotly-figure} _static/html/b737_deriv_stab_p.html
 ```
 ````
-````{tab-item} ∂/∂q'
+````{tab-item} ∂C*/∂q'
 ```{plotly-figure} _static/html/b737_deriv_stab_q.html
 ```
 ````
-````{tab-item} ∂/∂r'
+````{tab-item} ∂C*/∂r'
 ```{plotly-figure} _static/html/b737_deriv_stab_r.html
 ```
 ````

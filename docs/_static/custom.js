@@ -1,25 +1,39 @@
-// Plotly resize on visibility change.
+// Plotly WebGL context management via IntersectionObserver.
 //
-// Plotly figures inside sphinx-design tabs start hidden, so they render at
-// 0x0.  An IntersectionObserver fires when a .plotly-graph-div enters the
-// viewport (tab click, scroll-back, initial load) and dispatches a window
-// resize event.  All figures are created with responsive:true, so Plotly's
-// built-in resize handler re-measures the container and redraws the figure.
+// Each Plotly 3-D figure uses one WebGL context per subplot (up to 6 per
+// iframe).  Chrome limits concurrent WebGL contexts to ~16 per page.  With
+// several tab sets on the page, contexts accumulate as the user visits tabs
+// and scrolls — older iframes (Stability, CL) get evicted and go blank.
+//
+// Fix: watch every iframe.plotly-iframe in the parent page.  When an iframe
+// leaves the viewport (tab hidden, scrolled away), blank its src to release
+// its WebGL contexts.  When it enters the viewport, restore its src so it
+// reloads fresh.  Only iframes actually on-screen ever hold contexts.
+//
+// rootMargin "400px" gives a small preload buffer so the iframe starts
+// loading before it fully enters view.
 
 document.addEventListener("DOMContentLoaded", function () {
-    if (typeof Plotly === "undefined") return;
+    var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            var iframe = entry.target;
+            if (entry.isIntersecting) {
+                if (iframe._plotlySrc && iframe.getAttribute("src") !== iframe._plotlySrc) {
+                    iframe.setAttribute("src", iframe._plotlySrc);
+                }
+            } else {
+                if (!iframe._plotlySrc) {
+                    iframe._plotlySrc = iframe.getAttribute("src");
+                }
+                if (iframe.getAttribute("src") !== "about:blank") {
+                    iframe.setAttribute("src", "about:blank");
+                }
+            }
+        });
+    }, { rootMargin: "400px" });
 
-    var observer = new IntersectionObserver(
-        function (entries) {
-            entries.forEach(function (entry) {
-                if (!entry.isIntersecting) return;
-                window.dispatchEvent(new Event("resize"));
-            });
-        },
-        { threshold: 0.01 }
-    );
-
-    document.querySelectorAll(".plotly-graph-div").forEach(function (gd) {
-        observer.observe(gd);
+    document.querySelectorAll("iframe.plotly-iframe").forEach(function (iframe) {
+        if (!iframe._plotlySrc) iframe._plotlySrc = iframe.getAttribute("src");
+        observer.observe(iframe);
     });
 });

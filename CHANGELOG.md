@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Plot titles no longer mislabel total-coefficient plots as stability/control derivatives
+- Plotly 3-D figures in sphinx-design tabs went blank when cycling between tabs or scrolling between tab sets; root cause was Chrome's ~16-context WebGL limit being exhausted as iframes accumulated across multiple tab sets — fixed by re-adding `docs/_static/custom.js` with an `IntersectionObserver` that blanks each `iframe.plotly-iframe` when it leaves the viewport and restores its `src` when it returns, keeping live WebGL contexts limited to what is actually on screen
 
 ## [1.8.0] - 2026-05-20
 
