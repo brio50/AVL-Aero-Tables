@@ -16,6 +16,47 @@ if TYPE_CHECKING:
 COEF_NAMES = ("CLtot", "CYtot", "CDtot", "Cltot", "Cmtot", "Cntot")
 REF_FIELDS = ("Sref", "Cref", "Bref", "Xref", "Yref", "Zref")
 
+# Stability-axis derivatives — keys exactly as written in AVL .st files
+STAB_DERIV_ALPHA_BETA = (
+    "CLa",
+    "CLb",
+    "CYa",
+    "CYb",
+    "CDa",
+    "CDb",
+    "Cla",
+    "Clb",
+    "Cma",
+    "Cmb",
+    "Cna",
+    "Cnb",
+)
+STAB_DERIV_RATES = (
+    "CLp",
+    "CLq",
+    "CLr",
+    "CYp",
+    "CYq",
+    "CYr",
+    "CDp",
+    "CDq",
+    "CDr",
+    "Clp",
+    "Clq",
+    "Clr",
+    "Cmp",
+    "Cmq",
+    "Cmr",
+    "Cnp",
+    "Cnq",
+    "Cnr",
+)
+STAB_DERIV_NAMES = STAB_DERIV_ALPHA_BETA + STAB_DERIV_RATES  # 30 total
+
+# Control-derivative prefixes — AVL writes CLd01, CYd01, CDd01, Cld01, Cmd01, Cnd01
+# (no "tot" suffix — these are linearised ∂coef/∂δ, not integrated totals)
+CTRL_DERIV_COEFS = ("CL", "CY", "CD", "Cl", "Cm", "Cn")
+
 
 @dataclass
 class StabTable:
@@ -47,8 +88,10 @@ class CtrlTable:
 class AeroDatabase:
     """Aero coefficient tables built from a sweep of AVL .st results.
 
-    stab[coef]          → StabTable for neutral-control cases
-    ctrl[coef_surface]  → CtrlTable for control-deflection cases
+    stab[coef]           → StabTable  total coefficients, neutral-control, indexed α×β
+    ctrl[coef_surface]   → CtrlTable  total coefficients, all deflections, indexed α×β×δ
+    stab_deriv[key]      → StabTable  stability derivatives (CLa, CLb, CLp, …, Cnr), neutral-control only, indexed α×β
+    ctrl_deriv[key]      → StabTable  control derivatives (CL_d01_flap, …), neutral-control only, indexed α×β
     """
 
     date: str
@@ -60,6 +103,8 @@ class AeroDatabase:
     Zref: float = 0.0
     stab: dict[str, StabTable] = field(default_factory=dict)
     ctrl: dict[str, CtrlTable] = field(default_factory=dict)
+    stab_deriv: dict[str, StabTable] = field(default_factory=dict)
+    ctrl_deriv: dict[str, StabTable] = field(default_factory=dict)
 
 
 def _sorted_unique(vals: list[float]) -> np.ndarray:
@@ -155,6 +200,25 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
                 data=np.full((len(alpha_arr), len(beta_arr), len(defl_arr)), np.nan),
             )
 
+    for key in STAB_DERIV_NAMES:
+        db.stab_deriv[key] = StabTable(
+            coef=key,
+            alpha=alpha_arr,
+            beta=beta_arr,
+            data=np.full((len(alpha_arr), len(beta_arr)), np.nan),
+        )
+
+    for d_idx, ctrl_name in ctrl_map.items():
+        for coef in CTRL_DERIV_COEFS:
+            avl_key = f"{coef}{d_idx}"          # "CLd01" — key in StResult.data
+            db_key = f"{coef}_{d_idx}_{ctrl_name}"  # "CL_d01_flap" — dict key
+            db.ctrl_deriv[db_key] = StabTable(
+                coef=avl_key,
+                alpha=alpha_arr,
+                beta=beta_arr,
+                data=np.full((len(alpha_arr), len(beta_arr)), np.nan),
+            )
+
     for r in results:
         ai = _find_idx(alpha_arr, r.data["Alpha"])
         bi = _find_idx(beta_arr, r.data["Beta"])
@@ -172,10 +236,73 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
                 di = _find_idx(surface_defls[d_idx], defl_val)
                 db.ctrl[f"{coef}_{surf_key}"].data[ai, bi, di] = val
 
+        if all_neutral:
+            for key in STAB_DERIV_NAMES:
+                db.stab_deriv[key].data[ai, bi] = r.data.get(key, np.nan)
+            for d_idx, ctrl_name in ctrl_map.items():
+                for coef in CTRL_DERIV_COEFS:
+                    avl_key = f"{coef}{d_idx}"
+                    db_key = f"{coef}_{d_idx}_{ctrl_name}"
+                    db.ctrl_deriv[db_key].data[ai, bi] = r.data.get(avl_key, np.nan)
+
     return db
 
 
-def results_to_dataframe(results: list[StResult]) -> pd.DataFrame:
+def _is_neutral(r: StResult) -> bool:
+    return all(abs(r.data.get(name, 0.0)) < 1e-6 for name in r.controls.values())
+
+
+def stab_deriv_to_dataframe(results: list[StResult]) -> "pd.DataFrame":
+    """Return a DataFrame of stability derivatives for neutral-control cases only.
+
+    Columns: filename, Alpha, Beta, CLa, CLb, …, Cnr (30 derivative columns).
+    One row per neutral-control (α, β) point.
+    """
+    import pandas as pd
+
+    rows = []
+    for r in results:
+        if not _is_neutral(r):
+            continue
+        row: dict[str, object] = {
+            "filename": r.filename,
+            "Alpha": r.data.get("Alpha"),
+            "Beta": r.data.get("Beta"),
+        }
+        for key in STAB_DERIV_NAMES:
+            row[key] = r.data.get(key, float("nan"))
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def ctrl_deriv_to_dataframe(results: list[StResult]) -> "pd.DataFrame":
+    """Return a DataFrame of control derivatives for neutral-control cases only.
+
+    Columns: filename, Alpha, Beta, CLd01, CYd01, …, Cnd{n} (6 × n_surfaces columns).
+    One row per neutral-control (α, β) point.
+    AVL notation: CLd01 = ∂CL/∂δ_surface1, no "tot" suffix.
+    """
+    import pandas as pd
+
+    ctrl_map = dict(results[0].controls) if results else {}
+    rows = []
+    for r in results:
+        if not _is_neutral(r):
+            continue
+        row: dict[str, object] = {
+            "filename": r.filename,
+            "Alpha": r.data.get("Alpha"),
+            "Beta": r.data.get("Beta"),
+        }
+        for d_idx in ctrl_map:
+            for coef in CTRL_DERIV_COEFS:
+                avl_key = f"{coef}{d_idx}"  # e.g. "CLd01"
+                row[avl_key] = r.data.get(avl_key, float("nan"))
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def results_to_dataframe(results: list[StResult]) -> "pd.DataFrame":
     """Convert a list of StResult to a pandas DataFrame (one row per case).
 
     Each row contains the filename plus every key from StResult.data

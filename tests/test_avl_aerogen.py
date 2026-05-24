@@ -189,12 +189,16 @@ def test_out_format_invalid_raises(tmp_path):
 
 def test_run_warns_when_ctrl_sweeps_missing_zero(tmp_path, caplog):
     import logging
+
     mock_result = _make_mock_result()
     with patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result):
         with caplog.at_level(logging.WARNING, logger="avl_aero_tables"):
             run(
-                BD_AVL, alpha=[0.0], beta=[0.0],
-                ctrl_sweeps={"elevator": [-10.0, 10.0]}, out_dir=tmp_path,
+                BD_AVL,
+                alpha=[0.0],
+                beta=[0.0],
+                ctrl_sweeps={"elevator": [-10.0, 10.0]},
+                out_dir=tmp_path,
             )
     assert any("no 0.0 deflection" in r.message for r in caplog.records)
 
@@ -208,8 +212,11 @@ def test_run_inserts_zero_into_ctrl_sweeps(tmp_path):
 
     with patch("avl_aero_tables.avl_sweep.avl_runner.run", side_effect=_fake_run):
         run(
-            BD_AVL, alpha=[0.0], beta=[0.0],
-            ctrl_sweeps={"elevator": [-10.0, 10.0]}, out_dir=tmp_path,
+            BD_AVL,
+            alpha=[0.0],
+            beta=[0.0],
+            ctrl_sweeps={"elevator": [-10.0, 10.0]},
+            out_dir=tmp_path,
         )
 
     assert captured_cmd, "avl_runner.run was not called"

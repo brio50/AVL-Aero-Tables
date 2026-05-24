@@ -9,6 +9,7 @@ import sys
 import tomllib
 from pathlib import Path
 
+from avl_aero_tables._plot_config import MATHJAX_RETYPESET
 from avl_aero_tables.avl_bin import verify
 from avl_aero_tables.avl_config import load_config
 
@@ -57,17 +58,34 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     geom_p.add_argument("yml", type=Path, help="Path to the .yml project file")
 
-    aero_p = plot_sub.add_parser(
-        "aero", help="3-D aero coefficient surfaces from sweep results"
+    _runs_help = (
+        "Path to a sweep results directory, or a parent directory (latest run is used)"
     )
-    aero_p.add_argument(
-        "runs_dir",
-        type=Path,
-        help=(
-            "Path to a sweep results directory, or a parent directory"
-            " (latest run is used)"
-        ),
+
+    totals_p = plot_sub.add_parser(
+        "totals",
+        help="3-D total-coefficient surfaces (CLtot, CDtot, …) from sweep results",
     )
+    totals_p.add_argument("runs_dir", type=Path, help=_runs_help)
+    totals_p.add_argument(
+        "--beta-ref",
+        type=float,
+        default=0.0,
+        metavar="DEG",
+        help="Sideslip angle (deg) for control-surface slices (default: 0.0)",
+    )
+
+    stabderiv_p = plot_sub.add_parser(
+        "stab-deriv",
+        help="3-D stability-derivative surfaces (CLa, CLb, CLp, …) from sweep results",
+    )
+    stabderiv_p.add_argument("runs_dir", type=Path, help=_runs_help)
+
+    ctrlderiv_p = plot_sub.add_parser(
+        "ctrl-deriv",
+        help="3-D control-derivative surfaces (CLd01, CYd01, …) from sweep results",
+    )
+    ctrlderiv_p.add_argument("runs_dir", type=Path, help=_runs_help)
 
     return p
 
@@ -110,9 +128,7 @@ def _cmd_sweep(args: argparse.Namespace) -> int:
 
 def _write_index_html(directory: Path) -> Path:
     """Write index.html listing every *.html in directory (excluding itself)."""
-    html_files = sorted(
-        p for p in directory.glob("*.html") if p.name != "index.html"
-    )
+    html_files = sorted(p for p in directory.glob("*.html") if p.name != "index.html")
     items = "\n".join(
         f'    <li><a href="{p.name}">{p.stem}</a></li>' for p in html_files
     )
@@ -143,7 +159,7 @@ def _cmd_plot_geometry(args: argparse.Namespace) -> int:
     geometry = avl_fileread(avl_file)
     fig = avl_fileplot(geometry)
     out = avl_file.parent / f"{avl_file.stem}_geometry.html"
-    fig.write_html(str(out), include_plotlyjs="cdn", config={"displayModeBar": True})
+    fig.write_html(str(out), include_plotlyjs="cdn", include_mathjax="cdn", post_script=MATHJAX_RETYPESET, config={"displayModeBar": True})
     print(f"Geometry plot → {out}")
     index = _write_index_html(out.parent)
     webbrowser.open(index.as_uri())
@@ -153,50 +169,114 @@ def _cmd_plot_geometry(args: argparse.Namespace) -> int:
 _TIMESTAMP_RE = re.compile(r".*\d{4}-\d{2}-\d{2}-\d{6}$")
 
 
-def _cmd_plot_aero(args: argparse.Namespace) -> int:
-    import webbrowser
-
-    from avl_aero_tables.aero_fileplot import aero_fileplot
-    from avl_aero_tables.aero_filewrite import aero_filewrite
-    from avl_aero_tables.avl_fileread import st_fileread
-
-    runs_dir = args.runs_dir.resolve()
-
+def _resolve_result_dir(runs_dir: Path) -> Path | None:
+    """Return the timestamped run directory, or None if not found."""
     is_run_dir = (
         re.search(r"\d{4}-\d{2}-\d{2}-\d{6}", runs_dir.name)
         or (runs_dir / ".raw").is_dir()
     )
     if is_run_dir:
-        result_dir = runs_dir
-    else:
-        subdirs = (
-            sorted(
-                d
-                for d in runs_dir.iterdir()
-                if d.is_dir() and _TIMESTAMP_RE.match(d.name)
-            )
-            if runs_dir.exists()
-            else []
+        return runs_dir
+    subdirs = (
+        sorted(
+            d for d in runs_dir.iterdir() if d.is_dir() and _TIMESTAMP_RE.match(d.name)
         )
-        if not subdirs:
-            print(
-                f"ERROR: No sweep results found in {runs_dir}.",
-                file=sys.stderr,
-            )
-            return 1
-        result_dir = subdirs[-1]
+        if runs_dir.exists()
+        else []
+    )
+    return subdirs[-1] if subdirs else None
 
+
+def _load_aero(runs_dir: Path):  # type: ignore[return]
+    """Resolve runs_dir to a result directory; return (result_dir, AeroDatabase)."""
+    from avl_aero_tables.aero_filewrite import aero_filewrite
+    from avl_aero_tables.avl_fileread import st_fileread
+
+    result_dir = _resolve_result_dir(runs_dir)
+    if result_dir is None:
+        print(f"ERROR: No sweep results found in {runs_dir}.", file=sys.stderr)
+        return None, None
     results = st_fileread(result_dir / ".raw")
-    aero = aero_filewrite(results)
-    figs = aero_fileplot(aero)
+    return result_dir, aero_filewrite(results)
+
+
+def _cmd_plot_totals(args: argparse.Namespace) -> int:
+    import webbrowser
+
+    from avl_aero_tables.aero_fileplot import aero_fileplot
+
+    result_dir, aero = _load_aero(args.runs_dir.resolve())
+    if aero is None:
+        return 1
+
+    figs = aero_fileplot(aero, beta_ref=args.beta_ref)
     names = [
-        "stab", "ctrl_CLtot", "ctrl_CYtot", "ctrl_CDtot",
-        "ctrl_Cltot", "ctrl_Cmtot", "ctrl_Cntot",
+        "total_stability",
+        "total_control_CL",
+        "total_control_CY",
+        "total_control_CD",
+        "total_control_Cl",
+        "total_control_Cm",
+        "total_control_Cn",
     ]
     for fig, name in zip(figs, names):
         out = result_dir / f"{name}.html"
         fig.write_html(
-            str(out), include_plotlyjs="cdn", config={"displayModeBar": True}
+            str(out), include_plotlyjs="cdn", include_mathjax="cdn", post_script=MATHJAX_RETYPESET, config={"displayModeBar": True}
+        )
+        print(f"  → {out.name}")
+    index = _write_index_html(result_dir)
+    webbrowser.open(index.as_uri())
+    return 0
+
+
+def _cmd_plot_stab_deriv(args: argparse.Namespace) -> int:
+    import webbrowser
+
+    from avl_aero_tables.aero_fileplot import aero_stabderivplot
+
+    result_dir, aero = _load_aero(args.runs_dir.resolve())
+    if aero is None:
+        return 1
+
+    perturb_names = ["alpha", "beta", "p", "q", "r"]
+    figs = aero_stabderivplot(aero)
+    for fig, name in zip(figs, perturb_names):
+        out = result_dir / f"deriv_stability_{name}.html"
+        fig.write_html(
+            str(out), include_plotlyjs="cdn", include_mathjax="cdn", post_script=MATHJAX_RETYPESET, config={"displayModeBar": True}
+        )
+        print(f"  → {out.name}")
+    index = _write_index_html(result_dir)
+    webbrowser.open(index.as_uri())
+    return 0
+
+
+def _cmd_plot_ctrl_deriv(args: argparse.Namespace) -> int:
+    import webbrowser
+
+    from avl_aero_tables.aero_fileplot import aero_ctrlderivplot
+
+    result_dir, aero = _load_aero(args.runs_dir.resolve())
+    if aero is None:
+        return 1
+
+    # Derive surface names from ctrl_deriv keys (preserve insertion order)
+    surfaces: list[str] = []
+    seen: set[str] = set()
+    for key in aero.ctrl_deriv:
+        parts = key.split("_", 1)
+        surf = parts[1] if len(parts) == 2 else key
+        ctrl_name = "_".join(surf.split("_")[1:])
+        if ctrl_name not in seen:
+            seen.add(ctrl_name)
+            surfaces.append(ctrl_name)
+
+    figs = aero_ctrlderivplot(aero)
+    for fig, name in zip(figs, surfaces):
+        out = result_dir / f"deriv_control_{name}.html"
+        fig.write_html(
+            str(out), include_plotlyjs="cdn", include_mathjax="cdn", post_script=MATHJAX_RETYPESET, config={"displayModeBar": True}
         )
         print(f"  → {out.name}")
     index = _write_index_html(result_dir)
@@ -226,9 +306,19 @@ def main(argv: list[str] | None = None) -> int:
     ``plot geometry <yml>``
         Four-view geometry plot from the .avl file.
 
-    ``plot aero <runs_dir>``
-        3-D aero coefficient surfaces from sweep results. Pass a specific
-        timestamped run directory, or a parent directory to use the latest run.
+    ``plot totals [--beta-ref DEG] <runs_dir>``
+        3-D total-coefficient surfaces (CLtot, CDtot, …) from sweep results.
+        Pass a specific timestamped run directory, or a parent directory to use
+        the latest run.  ``--beta-ref`` slices control-surface plots at the
+        nearest available sideslip angle (default 0°).
+
+    ``plot stab-deriv <runs_dir>``
+        3-D stability-derivative surfaces (CLa, CLb, CLp, …, Cnr) — one
+        figure per perturbation variable (α, β, p', q', r').
+
+    ``plot ctrl-deriv <runs_dir>``
+        3-D control-derivative surfaces (CLd01, CYd01, …) — one figure per
+        control surface.
 
     Example
     -------
@@ -239,7 +329,10 @@ def main(argv: list[str] | None = None) -> int:
         avl-aero-tables verify
         avl-aero-tables sweep examples/bd/bd.yml
         avl-aero-tables plot geometry examples/bd/bd.yml
-        avl-aero-tables plot aero _runs/bd/
+        avl-aero-tables plot totals _runs/bd/
+        avl-aero-tables plot totals --beta-ref 5 _runs/bd/
+        avl-aero-tables plot stab-deriv _runs/bd/
+        avl-aero-tables plot ctrl-deriv _runs/bd/
     """
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -262,8 +355,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "plot":
         if args.plot_command == "geometry":
             return _cmd_plot_geometry(args)
-        if args.plot_command == "aero":
-            return _cmd_plot_aero(args)
+        if args.plot_command == "totals":
+            return _cmd_plot_totals(args)
+        if args.plot_command == "stab-deriv":
+            return _cmd_plot_stab_deriv(args)
+        if args.plot_command == "ctrl-deriv":
+            return _cmd_plot_ctrl_deriv(args)
 
     return 0
 

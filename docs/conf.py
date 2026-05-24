@@ -1,15 +1,20 @@
 import sys
-from importlib.metadata import version as _pkg_version
+import tomllib
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent / "_ext"))
 
+_ROOT = Path(__file__).resolve().parent.parent
+with (_ROOT / "pyproject.toml").open("rb") as _f:
+    _pyproject = tomllib.load(_f)
+
+release = str(_pyproject["project"]["version"])
+
 # -- Project --------------------------------------------------------------
 
 project = "avl-aero-tables"
 author = "Brian Borra"
-release = _pkg_version("avl-aero-tables")
 
 extensions = [
     "myst_parser",
@@ -37,6 +42,7 @@ html_show_copyright = False
 templates_path = ["_templates"]
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
+html_js_files = ["custom.js"]
 
 html_theme_options = {
     "repository_url": "https://github.com/brio50/avl-aero-tables",
@@ -59,14 +65,9 @@ autodoc_typehints = "description"
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 
-# -- Dependencies for included external files ---------------------------------
-# Tells Sphinx to re-read these pages when the included external file changes.
-
-_ROOT = Path(__file__).parent.parent
 _INCLUDE_DEPS = {
-    "dev/changelog": _ROOT / "CHANGELOG.md",
-    "dev/contributing": _ROOT / "CONTRIBUTING.md",
-    "dev/license": _ROOT / "LICENSE.md",
+    docname: _ROOT / relpath
+    for docname, relpath in _pyproject["tool"]["sphinx-build"]["include_deps"].items()
 }
 
 

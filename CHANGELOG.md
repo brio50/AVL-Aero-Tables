@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-05-23
+
+### Added
+- `AeroDatabase` now captures all three `.st` output categories: `stab`/`ctrl` (total coefficients, unchanged), `stab_deriv` (30 stability-axis derivatives at neutral controls), and `ctrl_deriv` (6 × n_surfaces control derivatives at neutral controls)
+- `results_stab_deriv.{csv,json}` and `results_ctrl_deriv.{csv,json}` written alongside `results.csv` on every sweep
+- `aero_stabderivplot(aero)` — 5 Plotly figures (one per perturbation variable), 6 subplots each
+- `aero_ctrlderivplot(aero)` — one Plotly figure per control surface, 6 subplots each
+- `stab_deriv_to_dataframe(results)` and `ctrl_deriv_to_dataframe(results)` DataFrame helpers
+- CLI `plot stab-deriv` and `plot ctrl-deriv` subcommands
+
+### Changed
+- `plot aero` CLI subcommand renamed to `plot totals`; `--beta-ref DEG` option added (breaking — update scripts/aliases)
+- `examples/bd.py` updated to produce all three plot types
+
+### Fixed
+- Plot titles no longer mislabel total-coefficient plots as stability/control derivatives
+
 ## [1.8.0] - 2026-05-20
 
 ### Added

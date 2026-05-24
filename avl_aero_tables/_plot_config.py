@@ -46,10 +46,21 @@ COLORSCALE_CTRL = "Plasma"
 OPACITY_SURFACE = 0.9
 
 # Axis labels for aero surface plots.
-LABEL_ALPHA = "α (deg)"
-LABEL_BETA = "β (deg)"
+LABEL_ALPHA = "α (°)"
+LABEL_BETA = "β (°)"
 
 
 def label_delta(surface: str) -> str:
     """Return the y-axis label for a control surface deflection axis."""
-    return f"δ_{surface} (deg)"
+    return f"δ_{surface} (°)"
+
+
+# Post-script injected into every write_html call to re-trigger MathJax after
+# Plotly finishes rendering (including 3-D scene axis labels).
+MATHJAX_RETYPESET = (
+    "var gd=document.getElementById('{plot_id}');"
+    "gd.on('plotly_afterplot',function(){"
+    "if(window.MathJax&&window.MathJax.Hub)"
+    "{MathJax.Hub.Queue(['Typeset',MathJax.Hub,gd]);}"
+    "});"
+)

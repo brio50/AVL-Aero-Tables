@@ -5,9 +5,9 @@
 ```bash
 git clone https://github.com/brio50/avl-aero-tables.git
 cd avl-aero-tables
-python3 -m venv .venv
+uv venv --python 3.12 .venv
 source .venv/bin/activate
-pip install -e ".[dev,docs]"
+uv pip install -e ".[dev,docs]"
 ```
 
 ## Running tests

@@ -7,6 +7,8 @@ import pytest
 
 from avl_aero_tables.aero_filewrite import (
     COEF_NAMES,
+    CTRL_DERIV_COEFS,
+    STAB_DERIV_NAMES,
     AeroDatabase,
     CtrlTable,
     StabTable,
@@ -46,6 +48,50 @@ def _make_result(
         "Cntot": 0.0,
         "flap": 0.0,
         "aileron": 0.0,
+        # Stability derivatives (AVL notation)
+        "CLa": 5.0,
+        "CLb": 0.0,
+        "CYa": 0.0,
+        "CYb": -0.4,
+        "CDa": 0.1,
+        "CDb": 0.0,
+        "Cla": 0.0,
+        "Clb": -0.2,
+        "Cma": -0.9,
+        "Cmb": 0.0,
+        "Cna": 0.0,
+        "Cnb": 0.06,
+        "CLp": 0.0,
+        "CLq": 7.0,
+        "CLr": 0.0,
+        "CYp": -0.4,
+        "CYq": 0.0,
+        "CYr": 0.3,
+        "CDp": 0.0,
+        "CDq": 0.2,
+        "CDr": 0.0,
+        "Clp": -0.6,
+        "Clq": 0.0,
+        "Clr": 0.1,
+        "Cmp": 0.0,
+        "Cmq": -12.0,
+        "Cmr": 0.0,
+        "Cnp": -0.06,
+        "Cnq": 0.0,
+        "Cnr": -0.06,
+        # Control derivatives (AVL notation: CLd01 = ∂CL/∂δ_flap)
+        "CLd01": 0.02,
+        "CYd01": 0.0,
+        "CDd01": 0.001,
+        "Cld01": 0.0,
+        "Cmd01": 0.005,
+        "Cnd01": 0.0,
+        "CLd02": 0.0,
+        "CYd02": 0.0,
+        "CDd02": 0.0,
+        "Cld02": 0.05,
+        "Cmd02": 0.0,
+        "Cnd02": -0.002,
     }
     if coef_vals:
         r.data.update(coef_vals)
@@ -256,3 +302,61 @@ def test_missing_coef_produces_nan():
     del r.data["CDtot"]
     db = aero_filewrite([r])
     assert np.isnan(db.stab["CDtot"].data[0, 0])
+
+
+# ---------------------------------------------------------------------------
+# stab_deriv tables
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.req("req-write-20")
+def test_stab_deriv_tables_exist():
+    db = aero_filewrite([_make_result(5.0, 0.0)])
+    assert set(db.stab_deriv.keys()) == set(STAB_DERIV_NAMES)
+    for key in STAB_DERIV_NAMES:
+        assert isinstance(db.stab_deriv[key], StabTable)
+
+
+@pytest.mark.req("req-write-21")
+def test_stab_deriv_alpha_value():
+    db = aero_filewrite([_make_result(5.0, 0.0)])
+    assert db.stab_deriv["CLa"].data[0, 0] == pytest.approx(5.0)
+    assert db.stab_deriv["Cmq"].data[0, 0] == pytest.approx(-12.0)
+
+
+@pytest.mark.req("req-write-22")
+def test_stab_deriv_only_neutral():
+    r = _make_result(5.0, 0.0, deflections={"flap": 10.0})
+    db = aero_filewrite([r])
+    assert np.isnan(db.stab_deriv["CLa"].data[0, 0])
+
+
+# ---------------------------------------------------------------------------
+# ctrl_deriv tables
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.req("req-write-23")
+def test_ctrl_deriv_tables_exist():
+    db = aero_filewrite([_make_result(5.0, 0.0)])
+    for coef in CTRL_DERIV_COEFS:
+        for d_idx, ctrl_name in CTRL_MAP.items():
+            key = f"{coef}_{d_idx}_{ctrl_name}"
+            assert key in db.ctrl_deriv, f"Missing key: {key}"
+            assert isinstance(db.ctrl_deriv[key], StabTable)
+
+
+@pytest.mark.req("req-write-24")
+def test_ctrl_deriv_value():
+    db = aero_filewrite([_make_result(5.0, 0.0)])
+    # "CL_d01_flap" maps to AVL key "CLd01" = 0.02
+    assert db.ctrl_deriv["CL_d01_flap"].data[0, 0] == pytest.approx(0.02)
+    # "Cl_d02_aileron" maps to AVL key "Cld02" = 0.05
+    assert db.ctrl_deriv["Cl_d02_aileron"].data[0, 0] == pytest.approx(0.05)
+
+
+@pytest.mark.req("req-write-25")
+def test_ctrl_deriv_only_neutral():
+    r = _make_result(5.0, 0.0, deflections={"flap": 10.0})
+    db = aero_filewrite([r])
+    assert np.isnan(db.ctrl_deriv["CL_d01_flap"].data[0, 0])

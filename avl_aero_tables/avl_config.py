@@ -37,9 +37,7 @@ class SweepSpec(BaseModel):
             raise ValueError(
                 f"ctrl_sweeps entries must have at least one value: {empty}"
             )
-        missing = [
-            k for k, vals in v.items() if not any(abs(x) < 1e-9 for x in vals)
-        ]
+        missing = [k for k, vals in v.items() if not any(abs(x) < 1e-9 for x in vals)]
         if missing:
             warnings.warn(
                 f"ctrl_sweeps surfaces {missing} have no 0.0 deflection — "

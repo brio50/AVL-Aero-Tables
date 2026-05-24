@@ -25,10 +25,16 @@ def _build_traces(geometry: AvlGeometry) -> list[dict[str, Any]]:
     hdr = geometry.header
     traces: list[dict[str, Any]] = []
 
-    traces.append(dict(
-        mode="markers", x=[hdr.Xref], y=[hdr.Yref], z=[hdr.Zref],
-        color="black", size=8,
-    ))
+    traces.append(
+        dict(
+            mode="markers",
+            x=[hdr.Xref],
+            y=[hdr.Yref],
+            z=[hdr.Zref],
+            color="black",
+            size=8,
+        )
+    )
 
     if geometry.body is not None:
         body = geometry.body
@@ -40,25 +46,39 @@ def _build_traces(geometry: AvlGeometry) -> list[dict[str, Any]]:
             zb = np.full(n, zt)
             half = n // 2
             cl_x = xb[:half]
-            traces.append(dict(
-                mode="lines", x=list(xb), y=list(yb), z=list(zb),
-                color="green", width=1,
-            ))
-            traces.append(dict(
-                mode="lines",
-                x=list(cl_x), y=list(np.full(half, yt)), z=list(np.full(half, zt)),
-                color="red", width=1,
-            ))
+            traces.append(
+                dict(
+                    mode="lines",
+                    x=list(xb),
+                    y=list(yb),
+                    z=list(zb),
+                    color="green",
+                    width=1,
+                )
+            )
+            traces.append(
+                dict(
+                    mode="lines",
+                    x=list(cl_x),
+                    y=list(np.full(half, yt)),
+                    z=list(np.full(half, zt)),
+                    color="red",
+                    width=1,
+                )
+            )
             for i in range(0, half, 2):
                 r = (abs(yb[i]) + abs(yb[n - 1 - i])) / 2.0
                 theta = np.linspace(0, 2 * np.pi, 33)
-                traces.append(dict(
-                    mode="lines",
-                    x=list(np.full_like(theta, cl_x[i])),
-                    y=list(yt + r * np.cos(theta)),
-                    z=list(zt + r * np.sin(theta)),
-                    color="mediumpurple", width=1,
-                ))
+                traces.append(
+                    dict(
+                        mode="lines",
+                        x=list(np.full_like(theta, cl_x[i])),
+                        y=list(yt + r * np.cos(theta)),
+                        z=list(zt + r * np.sin(theta)),
+                        color="mediumpurple",
+                        width=1,
+                    )
+                )
 
     for surf in geometry.surface.values():
         sections = surf.sections
@@ -80,35 +100,69 @@ def _build_traces(geometry: AvlGeometry) -> list[dict[str, Any]]:
         z_te = z_le + chord * np.sin(np.radians(ainc))
 
         for k in range(n_sec):
-            traces.append(dict(
-                mode="lines",
-                x=[x_le[k], x_te[k]], y=[y_le[k], y_le[k]], z=[z_le[k], z_te[k]],
-                color="mediumpurple", width=1,
-            ))
-            if mirror:
-                traces.append(dict(
+            traces.append(
+                dict(
                     mode="lines",
-                    x=[x_le[k], x_te[k]], y=[-y_le[k], -y_le[k]], z=[z_le[k], z_te[k]],
-                    color="mediumpurple", width=1,
-                ))
+                    x=[x_le[k], x_te[k]],
+                    y=[y_le[k], y_le[k]],
+                    z=[z_le[k], z_te[k]],
+                    color="mediumpurple",
+                    width=1,
+                )
+            )
+            if mirror:
+                traces.append(
+                    dict(
+                        mode="lines",
+                        x=[x_le[k], x_te[k]],
+                        y=[-y_le[k], -y_le[k]],
+                        z=[z_le[k], z_te[k]],
+                        color="mediumpurple",
+                        width=1,
+                    )
+                )
 
-        traces.append(dict(
-            mode="lines", x=list(x_le), y=list(y_le), z=list(z_le),
-            color="steelblue", width=2,
-        ))
-        traces.append(dict(
-            mode="lines", x=list(x_te), y=list(y_le), z=list(z_te),
-            color="steelblue", width=2,
-        ))
+        traces.append(
+            dict(
+                mode="lines",
+                x=list(x_le),
+                y=list(y_le),
+                z=list(z_le),
+                color="steelblue",
+                width=2,
+            )
+        )
+        traces.append(
+            dict(
+                mode="lines",
+                x=list(x_te),
+                y=list(y_le),
+                z=list(z_te),
+                color="steelblue",
+                width=2,
+            )
+        )
         if mirror:
-            traces.append(dict(
-                mode="lines", x=list(x_le), y=list(-y_le), z=list(z_le),
-                color="steelblue", width=2,
-            ))
-            traces.append(dict(
-                mode="lines", x=list(x_te), y=list(-y_le), z=list(z_te),
-                color="steelblue", width=2,
-            ))
+            traces.append(
+                dict(
+                    mode="lines",
+                    x=list(x_le),
+                    y=list(-y_le),
+                    z=list(z_le),
+                    color="steelblue",
+                    width=2,
+                )
+            )
+            traces.append(
+                dict(
+                    mode="lines",
+                    x=list(x_te),
+                    y=list(-y_le),
+                    z=list(z_te),
+                    color="steelblue",
+                    width=2,
+                )
+            )
 
     return traces
 
@@ -153,72 +207,116 @@ def avl_fileplot(geometry: AvlGeometry) -> "go.Figure":
     fig = go.Figure()
     for t in traces:
         if t["mode"] == "lines":
-            fig.add_trace(go.Scatter3d(
-                x=t["x"], y=t["y"], z=t["z"],
-                mode="lines",
-                line=dict(color=t["color"], width=t.get("width", 1)),
-                showlegend=False,
-            ))
+            fig.add_trace(
+                go.Scatter3d(
+                    x=t["x"],
+                    y=t["y"],
+                    z=t["z"],
+                    mode="lines",
+                    line=dict(color=t["color"], width=t.get("width", 1)),
+                    showlegend=False,
+                )
+            )
         else:
-            fig.add_trace(go.Scatter3d(
-                x=t["x"], y=t["y"], z=t["z"],
-                mode="markers",
-                marker=dict(color=t["color"], size=t.get("size", 6)),
-                showlegend=False,
-            ))
+            fig.add_trace(
+                go.Scatter3d(
+                    x=t["x"],
+                    y=t["y"],
+                    z=t["z"],
+                    mode="markers",
+                    marker=dict(color=t["color"], size=t.get("size", 6)),
+                    showlegend=False,
+                )
+            )
 
     hdr = geometry.header
 
     # Legend proxies — one entry per triad
-    fig.add_trace(go.Scatter3d(
-        x=[None], y=[None], z=[None], mode="markers",
-        marker=dict(color="slategray", size=6, symbol="square"),
-        name="AVL frame (origin)", showlegend=True,
-    ))
-    fig.add_trace(go.Scatter3d(
-        x=[None], y=[None], z=[None], mode="markers",
-        marker=dict(color="black", size=6),
-        name="Body frame (CG)", showlegend=True,
-    ))
+    fig.add_trace(
+        go.Scatter3d(
+            x=[None],
+            y=[None],
+            z=[None],
+            mode="markers",
+            marker=dict(color="slategray", size=6, symbol="square"),
+            name="AVL frame (origin)",
+            showlegend=True,
+        )
+    )
+    fig.add_trace(
+        go.Scatter3d(
+            x=[None],
+            y=[None],
+            z=[None],
+            mode="markers",
+            marker=dict(color="black", size=6),
+            name="Body frame (CG)",
+            showlegend=True,
+        )
+    )
 
-    _add_triad(fig, arrow,
-               origin=(0.0, 0.0, 0.0),
-               axes=[
-                   ((1, 0, 0), "slategray", "X"),
-                   ((0, 1, 0), "slategray", "Y"),
-                   ((0, 0, 1), "slategray", "Z"),
-               ])
+    _add_triad(
+        fig,
+        arrow,
+        origin=(0.0, 0.0, 0.0),
+        axes=[
+            ((1, 0, 0), "slategray", "X"),
+            ((0, 1, 0), "slategray", "Y"),
+            ((0, 0, 1), "slategray", "Z"),
+        ],
+    )
 
     # Aircraft body-frame triad at CG: +x nose, +y right wing, +z down
     # AVL convention: X increases aft, Y starboard, Z up → body axes are -X, +Y, -Z
-    _add_triad(fig, arrow,
-               origin=(hdr.Xref, hdr.Yref, hdr.Zref),
-               axes=[
-                   ((-1, 0, 0), "red",   "x<sub>b</sub>"),
-                   (( 0, 1, 0), "green", "y<sub>b</sub>"),
-                   (( 0, 0,-1), "blue",  "z<sub>b</sub>"),
-               ])
+    _add_triad(
+        fig,
+        arrow,
+        origin=(hdr.Xref, hdr.Yref, hdr.Zref),
+        axes=[
+            ((-1, 0, 0), "red", "x<sub>b</sub>"),
+            ((0, 1, 0), "green", "y<sub>b</sub>"),
+            ((0, 0, -1), "blue", "z<sub>b</sub>"),
+        ],
+    )
 
     _up_z = dict(x=0, y=0, z=1)
     _up_x = dict(x=1, y=0, z=0)  # top-view: nose toward bottom (+X aft → nose down)
     _cam = "scene.camera"
     _view_buttons = [
-        dict(label="Iso",   method="relayout",
-             args=[{_cam: {"eye": dict(x=-1.5, y=1.5, z=0.8), "up": _up_z}}]),
-        dict(label="Right", method="relayout",
-             args=[{_cam: {"eye": dict(x=0.0,  y=2.5,  z=0.0), "up": _up_z}}]),
-        dict(label="Front", method="relayout",
-             args=[{_cam: {"eye": dict(x=-2.5, y=0.0,  z=0.0), "up": _up_z}}]),
-        dict(label="Top",   method="relayout",
-             args=[{_cam: {"eye": dict(x=0.0,  y=0.0,  z=2.5), "up": _up_x}}]),
+        dict(
+            label="Iso",
+            method="relayout",
+            args=[{_cam: {"eye": dict(x=-1.5, y=1.5, z=0.8), "up": _up_z}}],
+        ),
+        dict(
+            label="Right",
+            method="relayout",
+            args=[{_cam: {"eye": dict(x=0.0, y=2.5, z=0.0), "up": _up_z}}],
+        ),
+        dict(
+            label="Front",
+            method="relayout",
+            args=[{_cam: {"eye": dict(x=-2.5, y=0.0, z=0.0), "up": _up_z}}],
+        ),
+        dict(
+            label="Top",
+            method="relayout",
+            args=[{_cam: {"eye": dict(x=0.0, y=0.0, z=2.5), "up": _up_x}}],
+        ),
     ]
 
     fig.update_layout(
         title=dict(text=geometry.header.name, x=0.5, xanchor="center"),
         height=700,
         showlegend=True,
-        legend=dict(x=0.01, y=0.09, xanchor="left", yanchor="bottom",
-                    bgcolor="rgba(255,255,255,0.6)", borderwidth=0),
+        legend=dict(
+            x=0.01,
+            y=0.09,
+            xanchor="left",
+            yanchor="bottom",
+            bgcolor="rgba(255,255,255,0.6)",
+            borderwidth=0,
+        ),
         margin=dict(l=0, r=0, t=40, b=10),
         modebar=dict(
             orientation="v",
@@ -235,16 +333,18 @@ def avl_fileplot(geometry: AvlGeometry) -> "go.Figure":
             zaxis=dict(title="Z", range=axis_ranges[2], **AXIS_3D),
             camera=CAMERA_GEOM,
         ),
-        updatemenus=[dict(
-            type="buttons",
-            direction="right",
-            showactive=False,
-            x=0.5,
-            xanchor="center",
-            y=0.06,
-            yanchor="top",
-            buttons=_view_buttons,
-        )],
+        updatemenus=[
+            dict(
+                type="buttons",
+                direction="right",
+                showactive=False,
+                x=0.5,
+                xanchor="center",
+                y=0.06,
+                yanchor="top",
+                buttons=_view_buttons,
+            )
+        ],
     )
 
     return fig
@@ -266,26 +366,40 @@ def _add_triad(
         lx = ox + dx * length * 1.8
         ly = oy + dy * length * 1.8
         lz = oz + dz * length * 1.8
-        fig.add_trace(go.Scatter3d(
-            x=[ox, tx], y=[oy, ty], z=[oz, tz],
-            mode="lines",
-            line=dict(color=color, width=3),
-            showlegend=False,
-        ))
-        fig.add_trace(go.Cone(
-            x=[tx], y=[ty], z=[tz],
-            u=[dx], v=[dy], w=[dz],
-            colorscale=[[0, color], [1, color]],
-            showscale=False,
-            sizemode="absolute",
-            sizeref=length * 0.35,
-            anchor="tail",
-        ))
-        fig.add_trace(go.Scatter3d(
-            x=[lx], y=[ly], z=[lz],
-            mode="text",
-            text=[label],
-            textfont=dict(color=color, size=13),
-            textposition="middle center",
-            showlegend=False,
-        ))
+        fig.add_trace(
+            go.Scatter3d(
+                x=[ox, tx],
+                y=[oy, ty],
+                z=[oz, tz],
+                mode="lines",
+                line=dict(color=color, width=3),
+                showlegend=False,
+            )
+        )
+        fig.add_trace(
+            go.Cone(
+                x=[tx],
+                y=[ty],
+                z=[tz],
+                u=[dx],
+                v=[dy],
+                w=[dz],
+                colorscale=[[0, color], [1, color]],
+                showscale=False,
+                sizemode="absolute",
+                sizeref=length * 0.35,
+                anchor="tail",
+            )
+        )
+        fig.add_trace(
+            go.Scatter3d(
+                x=[lx],
+                y=[ly],
+                z=[lz],
+                mode="text",
+                text=[label],
+                textfont=dict(color=color, size=13),
+                textposition="middle center",
+                showlegend=False,
+            )
+        )

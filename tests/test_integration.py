@@ -102,11 +102,11 @@ def test_cli_plot_aero(bd_tmp):
     assert main(["sweep", str(bd_tmp)]) == 0
 
     runs_dir = bd_tmp.parent.parent / "_runs" / bd_tmp.stem
-    assert main(["plot", "aero", str(runs_dir)]) == 0
+    assert main(["plot", "totals", str(runs_dir)]) == 0
 
     run_dir = next(runs_dir.iterdir())
-    assert (run_dir / "stab.html").exists()
-    assert (run_dir / "ctrl_CLtot.html").exists()
+    assert (run_dir / "total_stability.html").exists()
+    assert (run_dir / "total_control_CL.html").exists()
 
 
 # ---------------------------------------------------------------------------

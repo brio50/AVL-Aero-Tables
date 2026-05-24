@@ -5,7 +5,11 @@ from __future__ import annotations
 import plotly.graph_objects as go
 import pytest
 
-from avl_aero_tables.aero_fileplot import aero_fileplot
+from avl_aero_tables.aero_fileplot import (
+    aero_ctrlderivplot,
+    aero_fileplot,
+    aero_stabderivplot,
+)
 from avl_aero_tables.aero_filewrite import AeroDatabase, aero_filewrite
 from avl_aero_tables.avl_fileread import StResult
 
@@ -37,6 +41,44 @@ def _make_result(
         "Cmtot": -0.05,
         "Cntot": 0.0,
         "elevator": 0.0,
+        # Stability derivatives
+        "CLa": 5.0,
+        "CLb": 0.0,
+        "CYa": 0.0,
+        "CYb": -0.4,
+        "CDa": 0.1,
+        "CDb": 0.0,
+        "Cla": 0.0,
+        "Clb": -0.2,
+        "Cma": -0.9,
+        "Cmb": 0.0,
+        "Cna": 0.0,
+        "Cnb": 0.06,
+        "CLp": 0.0,
+        "CLq": 7.0,
+        "CLr": 0.0,
+        "CYp": -0.4,
+        "CYq": 0.0,
+        "CYr": 0.3,
+        "CDp": 0.0,
+        "CDq": 0.2,
+        "CDr": 0.0,
+        "Clp": -0.6,
+        "Clq": 0.0,
+        "Clr": 0.1,
+        "Cmp": 0.0,
+        "Cmq": -12.0,
+        "Cmr": 0.0,
+        "Cnp": -0.06,
+        "Cnq": 0.0,
+        "Cnr": -0.06,
+        # Control derivatives (AVL notation)
+        "CLd01": 0.008,
+        "CYd01": 0.0,
+        "CDd01": 0.0004,
+        "Cld01": 0.0,
+        "Cmd01": -0.027,
+        "Cnd01": 0.0,
     }
     if deflections:
         r.data.update(deflections)
@@ -93,8 +135,8 @@ def test_stability_figure_first():
 def test_stability_subplot_titles():
     figs = aero_fileplot(_minimal_aero())
     titles = {a.text for a in figs[0].layout.annotations}
-    assert "CLtot" in titles
-    assert "CDtot" in titles
+    assert "CL_total" in titles
+    assert "CD_total" in titles
 
 
 # ---------------------------------------------------------------------------
@@ -107,9 +149,14 @@ def test_no_ctrl_only_stability_figure():
     r = StResult(filename="bare.st")
     r.controls = {}
     r.data = {
-        "Alpha": 0.0, "Beta": 0.0,
-        "CLtot": 0.5, "CYtot": 0.0, "CDtot": 0.02,
-        "Cltot": 0.0, "Cmtot": -0.05, "Cntot": 0.0,
+        "Alpha": 0.0,
+        "Beta": 0.0,
+        "CLtot": 0.5,
+        "CYtot": 0.0,
+        "CDtot": 0.02,
+        "Cltot": 0.0,
+        "Cmtot": -0.05,
+        "Cntot": 0.0,
     }
     figs = aero_fileplot(aero_filewrite([r]))
     assert len(figs) == 1
@@ -138,10 +185,7 @@ def test_ctrl_figure_has_one_surface_per_control():
 def test_ctrl_figure_titles_contain_coef_name():
     figs = aero_fileplot(_ctrl_aero())
     for f in figs[1:]:
-        assert any(
-            c in f.layout.title.text
-            for c in ("CLtot", "CYtot", "CDtot", "Cltot", "Cmtot", "Cntot")
-        )
+        assert "_total" in f.layout.title.text
 
 
 # ---------------------------------------------------------------------------
@@ -154,3 +198,61 @@ def test_beta_ref_nearest_used():
     results = [_make_result(0.0, b) for b in [-5.0, 0.0, 5.0]]
     figs = aero_fileplot(aero_filewrite(results), beta_ref=1.0)
     assert len(figs) >= 1
+
+
+# ---------------------------------------------------------------------------
+# aero_stabderivplot
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.req("req-aeroplot-10")
+def test_aero_stabderivplot_returns_5_figures():
+    db = aero_filewrite([_make_result(a, 0.0) for a in [-5.0, 0.0, 5.0]])
+    figs = aero_stabderivplot(db)
+    assert len(figs) == 5
+    for f in figs:
+        assert isinstance(f, go.Figure)
+
+
+@pytest.mark.req("req-aeroplot-11")
+def test_aero_stabderivplot_titles_contain_pertvar():
+    db = aero_filewrite([_make_result(0.0, 0.0)])
+    figs = aero_stabderivplot(db)
+    titles = [f.layout.title.text for f in figs]
+    assert any("α" in t for t in titles)
+    assert any("β" in t for t in titles)
+
+
+@pytest.mark.req("req-aeroplot-12")
+def test_aero_stabderivplot_empty_stab_deriv_returns_empty():
+    db = AeroDatabase(date="2026-01-01")
+    figs = aero_stabderivplot(db)
+    assert figs == []
+
+
+# ---------------------------------------------------------------------------
+# aero_ctrlderivplot
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.req("req-aeroplot-13")
+def test_aero_ctrlderivplot_returns_one_figure_per_surface():
+    db = aero_filewrite([_make_result(a, 0.0) for a in [-5.0, 0.0, 5.0]])
+    figs = aero_ctrlderivplot(db)
+    assert len(figs) == 1  # one surface: elevator (d01)
+    assert isinstance(figs[0], go.Figure)
+
+
+@pytest.mark.req("req-aeroplot-14")
+def test_aero_ctrlderivplot_titles_contain_surface():
+    db = aero_filewrite([_make_result(0.0, 0.0)])
+    figs = aero_ctrlderivplot(db)
+    assert len(figs) == 1
+    assert "elevator" in figs[0].layout.title.text
+
+
+@pytest.mark.req("req-aeroplot-15")
+def test_aero_ctrlderivplot_empty_ctrl_deriv_returns_empty():
+    db = AeroDatabase(date="2026-01-01")
+    figs = aero_ctrlderivplot(db)
+    assert figs == []
