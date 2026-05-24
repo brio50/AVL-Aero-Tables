@@ -83,8 +83,6 @@ When $\beta \neq 0$, stability-axis `CD` and `CY` are not the true wind-axis dra
 
 Since the stability→wind rotation is about $z_s$, the z-component is unchanged — $C_L$ and $C_n$ are unaffected. The AVL documentation notes that $C_D$, $C_Y$, $C_l$, and $C_m$ are all affected when $\beta \neq 0$. The force corrections are:
 
-
-
 ```{math}
 :label: eq-wind-coeffs
 \begin{aligned}
@@ -114,9 +112,76 @@ The stability-axis $C_D = 0.025$ **underestimates** the true wind-axis drag ($0.
 The aero tables store stability-axis coefficients exactly as AVL computed them — **do not pre-apply the β correction when building the table**. Apply it at force-computation time in the simulation, where $\beta$ is known.
 ```
 
+## Sweep Types
+
+### Aero Sweep
+
+An alpha/beta sweep with no `ctrl_sweeps` is the computational equivalent of a wind tunnel run — the aircraft is held at a fixed configuration and the flow angles are varied. Each `(alpha, beta)` point is one tunnel condition.
+
+```python
+results = avl_sweep(
+    avl_file="examples/bd/bd.avl",
+    alpha=list(range(-5, 16, 5)),
+    beta=list(range(-5, 6, 5)),
+)
+```
+
+The result is the baseline aerodynamic map — CL, CD, Cm, CY, Cl, Cn across the flight envelope — stored in `aero.total_stab` after passing through `aero_filewrite`. Every other sweep type is referenced against this baseline.
+
+### Control Sweeps
+
+When `ctrl_sweeps` is provided, each surface's deflection list is swept **independently** across every `(alpha, beta)` point — **not** as a full factorial combination of all surfaces simultaneously.
+
+Each run deflects exactly one surface; all others remain at zero (neutral). This is equivalent to computing a finite-difference control derivative: $\Delta C_L / \Delta \delta_\text{elev}$ while holding rudder and aileron fixed.
+
+The total case count is:
+
+```
+n_cases = n_alpha × n_beta × sum(len(deflections) for each surface)
+```
+
+Two surfaces with five deflection points each produces **10 runs per (alpha, beta) point**, not 25:
+
+```python
+ctrl_sweeps = {
+    "elevator": [-10.0, -5.0, 0.0, 5.0, 10.0],   # 5 points
+    "rudder":   [-10.0, -5.0, 0.0, 5.0, 10.0],   # 5 points
+}
+# → 10 ctrl points total, not 5×5=25
+```
+
+```{note}
+If you need a full combinatorial sweep (every elevator × every rudder deflection), run `avl_sweep` multiple times or build the `ctrl_sweeps` product yourself before calling it.
+```
+
+### Neutral Runs
+
+A **neutral-control run** is a case where every control surface deflection is zero — the aircraft in its clean, undeflected configuration. These runs define the baseline aerodynamic map.
+
+`aero_filewrite` populates four separate table stores:
+
+- **`aero.total_stab`** — total coefficients (CLtot, CDtot, Cmtot, …) vs. α and β; filled **only** from neutral-control runs
+- **`aero.total_ctrl`** — total coefficients indexed by α, β, and deflection angle; filled from all control-surface runs
+- **`aero.stab_deriv`** — stability derivatives (CLa, CLb, CLp, …, Cnr) vs. α and β; filled **only** from neutral-control runs
+- **`aero.ctrl_deriv`** — control derivatives (∂CL/∂δ, ∂Cm/∂δ, …) vs. α and β; filled **only** from neutral-control runs
+
+This ensures that off-neutral sweeps (e.g. elevator at ±20°) do not corrupt the baseline maps.
+
+````{important}
+Include `0.0` in every `ctrl_sweeps` deflection list, or `aero.total_stab` will be empty.
+
+```python
+ctrl_sweeps = {
+    "elevator": [-20.0, 0.0, 20.0],  # ✓ 0.0 present → stab tables populated
+}
+```
+````
+
+(concepts:output)=
+## Output
 
 (concepts:output-types)=
-## AVL Output Types
+### Data Categories
 
 Each AVL `.st` file contains three categories of data for its flight condition. `aero_filewrite` preserves all three in the `AeroDatabase`:
 
@@ -146,71 +211,8 @@ avl-aero-tables plot ctrl-deriv _runs/bd/   # control derivatives
 avl-aero-tables plot all        _runs/bd/   # all three in one shot
 ```
 
-## Neutral Runs
-
-A **neutral-control run** is a case where every control surface deflection is zero — the aircraft in its clean, undeflected configuration. These runs define the baseline aerodynamic map.
-
-`aero_filewrite` populates four separate table stores:
-
-- **`aero.total_stab`** — total coefficients (CLtot, CDtot, Cmtot, …) vs. α and β; filled **only** from neutral-control runs
-- **`aero.total_ctrl`** — total coefficients indexed by α, β, and deflection angle; filled from all control-surface runs
-- **`aero.stab_deriv`** — stability derivatives (CLa, CLb, CLp, …, Cnr) vs. α and β; filled **only** from neutral-control runs
-- **`aero.ctrl_deriv`** — control derivatives (∂CL/∂δ, ∂Cm/∂δ, …) vs. α and β; filled **only** from neutral-control runs
-
-This ensures that off-neutral sweeps (e.g. elevator at ±20°) do not corrupt the baseline maps.
-
-````{important}
-Include `0.0` in every `ctrl_sweeps` deflection list, or `aero.total_stab` will be empty.
-
-```python
-ctrl_sweeps = {
-    "elevator": [-20.0, 0.0, 20.0],  # ✓ 0.0 present → stab tables populated
-}
-```
-````
-
-## Aero Sweep
-
-An alpha/beta sweep with no `ctrl_sweeps` is the computational equivalent of a wind tunnel run — the aircraft is held at a fixed configuration and the flow angles are varied. Each `(alpha, beta)` point is one tunnel condition.
-
-```python
-results = avl_sweep(
-    avl_file="examples/bd/bd.avl",
-    alpha=list(range(-5, 16, 5)),
-    beta=list(range(-5, 6, 5)),
-)
-```
-
-The result is the baseline aerodynamic map — CL, CD, Cm, CY, Cl, Cn across the flight envelope — stored in `aero.total_stab` after passing through `aero_filewrite`. Every other sweep type is referenced against this baseline.
-
-## Control Sweeps
-
-When `ctrl_sweeps` is provided, each surface's deflection list is swept **independently** across every `(alpha, beta)` point — **not** as a full factorial combination of all surfaces simultaneously.
-
-Each run deflects exactly one surface; all others remain at zero (neutral). This is equivalent to computing a finite-difference control derivative: $\Delta C_L / \Delta \delta_\text{elev}$ while holding rudder and aileron fixed.
-
-The total case count is:
-
-```
-n_cases = n_alpha × n_beta × sum(len(deflections) for each surface)
-```
-
-Two surfaces with five deflection points each produces **10 runs per (alpha, beta) point**, not 25:
-
-```python
-ctrl_sweeps = {
-    "elevator": [-10.0, -5.0, 0.0, 5.0, 10.0],   # 5 points
-    "rudder":   [-10.0, -5.0, 0.0, 5.0, 10.0],   # 5 points
-}
-# → 10 ctrl points total, not 5×5=25
-```
-
-```{note}
-If you need a full combinatorial sweep (every elevator × every rudder deflection), run `avl_sweep` multiple times or build the `ctrl_sweeps` product yourself before calling it.
-```
-
 (output-layout)=
-## Output Layout
+### Directory Layout
 
 Every sweep creates a timestamped subdirectory inside the `out_dir` you pass:
 
@@ -239,7 +241,7 @@ results = avl_sweep("examples/bd/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="_
 
 Previous runs are never overwritten — each call to `avl_sweep` creates a fresh `{avl_stem}_{timestamp}/` directory inside `out_dir`.
 
-### `results.*`
+#### `results.*`
 
 Every sweep writes three tabular output files (or JSON equivalents) controlled by the `out_format` parameter:
 
@@ -251,7 +253,7 @@ Every sweep writes three tabular output files (or JSON equivalents) controlled b
 
 `out_format = "df"` skips all file writes and returns results in memory only.
 
-### `provenance.json`
+#### `provenance.json`
 
 Records the git state at run time so you can always trace which version of your geometry produced a given set of results. This is most valuable months after a run — when you need to know whether a coefficient change was due to a geometry edit or a code change, or when reproducing a result for a report after the source files have moved on:
 
@@ -272,17 +274,17 @@ Records the git state at run time so you can always trace which version of your 
 
 `snapshot` is always a relative path from the run directory to the frozen copy of those input files. When `git_dirty: true`, `snapshot` is the authoritative record of exactly what was used — `source` may have changed since the run.
 
-### `.in/`
+#### `.in/`
 
 AVL inputs generated by the package. `reset.run` is the AVL run-case file that initialises all flight conditions to zero before the sweep begins. `sweep.inp` is the exact stdin script piped to the AVL subprocess to produce the `.st` files in `.raw/`.
 
 The `<stem>/` subfolder is a snapshot of all user-provided input files copied at run time: the `.avl` geometry file, the `.yml` project file (CLI only), and any airfoil or body coordinate `.dat` files referenced by `AFIL`/`BFIL` entries in the geometry. Together with `provenance.json`, this makes every run directory self-contained and reproducible even if the source files are later modified.
 
-### `.raw/`
+#### `.raw/`
 
 Raw AVL output files written per flight condition (`case_0001.st`, `case_0002.st`, …). Each file contains all three output categories: total aerodynamic coefficients (CLtot, CDtot, …), stability derivatives (CLa, Clb, …), and control derivatives (CLd01, …). `st_fileread` parses these into `list[StResult]`; `aero_filewrite` pivots all three categories into structured `AeroDatabase` tables.
 
-## Filename Limit
+### Filename Limit
 
 AVL is written in Fortran and has an internal string limit of approximately 80 characters for filenames. Paths that exceed this limit are silently truncated, producing wrong or missing output files.
 

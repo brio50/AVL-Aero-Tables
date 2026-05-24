@@ -425,7 +425,9 @@ AeroDatabase: 5α × 3β  |  δ_slat = 3, δ_flap = 3, δ_aileron = 3, δ_elevat
 ```
 `````
 
-### Plot Total Coefficients
+### Plot Aero Database
+
+#### Total Coefficients
 
 ```{admonition} Nonlinear 6-DOF table-lookup
 :class: note
@@ -486,7 +488,7 @@ for name, fig in figs.items():
 The control-surface figures show a **$\beta = 0°$ slice** of the full 3-D table ($\alpha \times \beta \times \delta$). To inspect off-zero sideslip, pass `beta_ref` — e.g. `plot_totals(aero, beta_ref=5.0)`.
 ```
 
-### Plot Stability Derivatives
+#### Stability Derivatives
 
 ```{admonition} Linear analysis — stability derivatives, trim sensitivity, control law design
 :class: note
@@ -534,7 +536,7 @@ for name, fig in plot_stab_derivs(aero).items():
 `````
 ```````
 
-### Plot Control Derivatives
+#### Control Derivatives
 
 ```{admonition} Control effectiveness — surface sizing, linear autopilot design
 :class: note
