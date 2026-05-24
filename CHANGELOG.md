@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-05-23
+
+### Added
+- `AeroDatabase.stab_deriv` (30 stability derivatives) and `ctrl_deriv` (6 × n_surfaces control derivatives), populated from neutral-control runs
+- `plot_stab_derivs(aero)` and `plot_ctrl_derivs(aero)` plot functions
+- CLI `plot stab-deriv`, `plot ctrl-deriv`, and `plot all` subcommands
+- `stab_deriv_to_dataframe` and `ctrl_deriv_to_dataframe` helpers
+
+### Changed
+- `AeroDatabase.stab` → `total_stab`; `AeroDatabase.ctrl` → `total_ctrl` (breaking)
+- `aero_fileplot` → `plot_totals`; `aero_stabderivplot` → `plot_stab_derivs`; `aero_ctrlderivplot` → `plot_ctrl_derivs` (breaking)
+- All plot functions return `dict[str, Figure]` instead of `list[Figure]` (breaking)
+- `plot aero` CLI subcommand renamed to `plot totals`; `--beta-ref DEG` added (breaking)
+- Output filenames: `results.csv` → `results_total.csv`, `results_stab_deriv.csv` → `results_deriv_stab.csv`, `results_ctrl_deriv.csv` → `results_deriv_ctrl.csv` (breaking)
+- Axis labels use Unicode (α β p′ q′ r′) instead of LaTeX strings
+
+### Fixed
+- Plot titles no longer mislabel total-coefficient plots as derivatives
+- Plotly WebGL context exhaustion in sphinx-design tabs; fixed with an `IntersectionObserver` in `docs/_static/custom.js`
+
 ## [1.8.0] - 2026-05-20
 
 ### Added

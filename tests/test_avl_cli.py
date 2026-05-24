@@ -85,9 +85,7 @@ def test_load_config_invalid_format_exits(tmp_path):
 def test_load_config_empty_beta_exits(tmp_path):
     yml = tmp_path / "bad.yml"
     _write_yml(yml, alpha="[0]")
-    yml.write_text(
-        "input:\n  geometry: x.avl\nsweep:\n  alpha: [0]\n  beta: []\n"
-    )
+    yml.write_text("input:\n  geometry: x.avl\nsweep:\n  alpha: [0]\n  beta: []\n")
     with pytest.raises(SystemExit):
         _load_config(yml)
 
@@ -111,6 +109,7 @@ def test_load_config_ctrl_sweeps_empty_list_exits(tmp_path):
 
 def test_sweep_spec_warns_when_ctrl_sweeps_missing_zero(tmp_path):
     from avl_aero_tables.avl_config import SweepSpec
+
     with pytest.warns(UserWarning, match="no 0.0 deflection"):
         SweepSpec.model_validate(
             {"alpha": [0.0], "beta": [0.0], "ctrl_sweeps": {"elevator": [-10.0, 10.0]}}
@@ -121,6 +120,7 @@ def test_sweep_spec_inserts_zero_into_ctrl_sweeps():
     import warnings
 
     from avl_aero_tables.avl_config import SweepSpec
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
         spec = SweepSpec.model_validate(
@@ -132,9 +132,7 @@ def test_sweep_spec_inserts_zero_into_ctrl_sweeps():
 
 def test_load_config_non_numeric_alpha_exits(tmp_path):
     yml = tmp_path / "bad.yml"
-    yml.write_text(
-        "input:\n  geometry: x.avl\nsweep:\n  alpha: [foo]\n  beta: [0]\n"
-    )
+    yml.write_text("input:\n  geometry: x.avl\nsweep:\n  alpha: [foo]\n  beta: [0]\n")
     with pytest.raises(SystemExit):
         _load_config(yml)
 
@@ -355,11 +353,11 @@ def test_plot_geometry_writes_html(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# plot aero — latest-dir discovery
+# plot totals — latest-dir discovery
 # ---------------------------------------------------------------------------
 
 
-def test_plot_aero_picks_latest_dir(tmp_path):
+def test_plot_totals_picks_latest_dir(tmp_path):
     runs_base = tmp_path / "_runs" / "bd"
     runs_base.mkdir(parents=True)
     old_dir = runs_base / "2026-01-01-120000"
@@ -377,17 +375,17 @@ def test_plot_aero_picks_latest_dir(tmp_path):
     with (
         patch("avl_aero_tables.avl_fileread.st_fileread", side_effect=fake_st_fileread),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
-        patch("avl_aero_tables.aero_fileplot.aero_fileplot"),
+        patch("avl_aero_tables.aero_fileplot.plot_totals"),
         patch("webbrowser.open"),
     ):
-        result = main(["plot", "aero", str(runs_base)])
+        result = main(["plot", "totals", str(runs_base)])
 
     assert result == 0
     assert len(captured) == 1
     assert captured[0] == new_dir / ".raw"
 
 
-def test_plot_aero_specific_dir(tmp_path):
+def test_plot_totals_specific_dir(tmp_path):
     runs_base = tmp_path / "_runs" / "bd"
     specific_dir = runs_base / "2026-01-01-120000"
     specific_dir.mkdir(parents=True)
@@ -402,35 +400,35 @@ def test_plot_aero_specific_dir(tmp_path):
     with (
         patch("avl_aero_tables.avl_fileread.st_fileread", side_effect=fake_st_fileread),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
-        patch("avl_aero_tables.aero_fileplot.aero_fileplot"),
+        patch("avl_aero_tables.aero_fileplot.plot_totals"),
         patch("webbrowser.open"),
     ):
-        result = main(["plot", "aero", str(specific_dir)])
+        result = main(["plot", "totals", str(specific_dir)])
 
     assert result == 0
     assert captured[0] == specific_dir / ".raw"
 
 
 # ---------------------------------------------------------------------------
-# plot aero — no results error
+# plot totals — no results error
 # ---------------------------------------------------------------------------
 
 
-def test_plot_aero_no_results_exits(tmp_path):
+def test_plot_totals_no_results_exits(tmp_path):
     empty_dir = tmp_path / "_runs" / "bd"
     empty_dir.mkdir(parents=True)
 
-    result = main(["plot", "aero", str(empty_dir)])
+    result = main(["plot", "totals", str(empty_dir)])
     assert result == 1
 
 
-def test_plot_aero_nonexistent_dir_exits(tmp_path):
+def test_plot_totals_nonexistent_dir_exits(tmp_path):
     missing = tmp_path / "does_not_exist"
-    result = main(["plot", "aero", str(missing)])
+    result = main(["plot", "totals", str(missing)])
     assert result == 1
 
 
-def test_plot_aero_prefixed_timestamp_dir(tmp_path):
+def test_plot_totals_prefixed_timestamp_dir(tmp_path):
     """Regression: bd_2026-05-16-215002 style dir passed directly must work."""
     run_dir = tmp_path / "bd_2026-05-16-215002"
     run_dir.mkdir()
@@ -445,16 +443,16 @@ def test_plot_aero_prefixed_timestamp_dir(tmp_path):
     with (
         patch("avl_aero_tables.avl_fileread.st_fileread", side_effect=fake_st_fileread),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
-        patch("avl_aero_tables.aero_fileplot.aero_fileplot"),
+        patch("avl_aero_tables.aero_fileplot.plot_totals"),
         patch("webbrowser.open"),
     ):
-        result = main(["plot", "aero", str(run_dir)])
+        result = main(["plot", "totals", str(run_dir)])
 
     assert result == 0
     assert captured[0] == run_dir / ".raw"
 
 
-def test_plot_aero_raw_dir_fallback(tmp_path):
+def test_plot_totals_raw_dir_fallback(tmp_path):
     """Dir with .raw subdir (non-timestamp name) is recognized as a run dir."""
     run_dir = tmp_path / "my_custom_run"
     (run_dir / ".raw").mkdir(parents=True)
@@ -469,39 +467,229 @@ def test_plot_aero_raw_dir_fallback(tmp_path):
     with (
         patch("avl_aero_tables.avl_fileread.st_fileread", side_effect=fake_st_fileread),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
-        patch("avl_aero_tables.aero_fileplot.aero_fileplot"),
+        patch("avl_aero_tables.aero_fileplot.plot_totals"),
         patch("webbrowser.open"),
     ):
-        result = main(["plot", "aero", str(run_dir)])
+        result = main(["plot", "totals", str(run_dir)])
 
     assert result == 0
     assert captured[0] == run_dir / ".raw"
 
 
-def test_plot_aero_writes_html_files(tmp_path):
+def test_plot_totals_writes_html_files(tmp_path):
     run_dir = tmp_path / "2026-01-01-120000"
     run_dir.mkdir()
 
-    fake_figs = [MagicMock() for _ in range(7)]
+    fake_figs = {
+        "stab": MagicMock(),
+        "ctrl_lift": MagicMock(),
+        "ctrl_side": MagicMock(),
+        "ctrl_drag": MagicMock(),
+        "ctrl_roll": MagicMock(),
+        "ctrl_pitch": MagicMock(),
+        "ctrl_yaw": MagicMock(),
+    }
     fake_aero = MagicMock()
     with (
         patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
-        patch("avl_aero_tables.aero_fileplot.aero_fileplot", return_value=fake_figs),
+        patch("avl_aero_tables.aero_fileplot.plot_totals", return_value=fake_figs),
         patch("webbrowser.open") as mock_browser,
     ):
-        result = main(["plot", "aero", str(run_dir)])
+        result = main(["plot", "totals", str(run_dir)])
 
     assert result == 0
-    expected_names = [
-        "stab", "ctrl_CLtot", "ctrl_CYtot", "ctrl_CDtot",
-        "ctrl_Cltot", "ctrl_Cmtot", "ctrl_Cntot",
-    ]
-    for fig, name in zip(fake_figs, expected_names):
+    for key, fig in fake_figs.items():
         written = Path(fig.write_html.call_args[0][0])
-        assert written == run_dir / f"{name}.html"
+        assert written == run_dir / f"total_{key}.html"
     opened_uri = mock_browser.call_args[0][0]
     assert opened_uri.endswith("index.html")
+
+
+def test_plot_totals_beta_ref_flag(tmp_path):
+    """--beta-ref is forwarded to plot_totals."""
+    run_dir = tmp_path / "2026-01-01-120000"
+    run_dir.mkdir()
+
+    fake_aero = MagicMock()
+    with (
+        patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
+        patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
+        patch(
+            "avl_aero_tables.aero_fileplot.plot_totals", return_value={}
+        ) as mock_plot,
+        patch("webbrowser.open"),
+    ):
+        main(["plot", "totals", "--beta-ref", "5.0", str(run_dir)])
+
+    _, kwargs = mock_plot.call_args
+    assert kwargs.get("beta_ref") == pytest.approx(5.0)
+
+
+# ---------------------------------------------------------------------------
+# plot stab-deriv
+# ---------------------------------------------------------------------------
+
+
+def test_plot_stab_deriv_picks_latest_dir(tmp_path):
+    runs_base = tmp_path / "_runs" / "bd"
+    old_dir = runs_base / "2026-01-01-120000"
+    new_dir = runs_base / "2026-05-15-093000"
+    old_dir.mkdir(parents=True)
+    new_dir.mkdir()
+
+    captured: list[Path] = []
+
+    def fake_st_fileread(path: Path) -> list[object]:
+        captured.append(path)
+        return []
+
+    fake_aero = MagicMock()
+    with (
+        patch("avl_aero_tables.avl_fileread.st_fileread", side_effect=fake_st_fileread),
+        patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
+        patch("avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value={}),
+        patch("webbrowser.open"),
+    ):
+        result = main(["plot", "stab-deriv", str(runs_base)])
+
+    assert result == 0
+    assert captured[0] == new_dir / ".raw"
+
+
+def test_plot_stab_deriv_writes_html_files(tmp_path):
+    run_dir = tmp_path / "2026-01-01-120000"
+    run_dir.mkdir()
+
+    fake_figs = {name: MagicMock() for name in ["alpha", "beta", "p", "q", "r"]}
+    fake_aero = MagicMock()
+    with (
+        patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
+        patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
+        patch("avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value=fake_figs),
+        patch("webbrowser.open") as mock_browser,
+    ):
+        result = main(["plot", "stab-deriv", str(run_dir)])
+
+    assert result == 0
+    for key, fig in fake_figs.items():
+        written = Path(fig.write_html.call_args[0][0])
+        assert written == run_dir / f"deriv_stab_{key}.html"
+    assert mock_browser.call_args[0][0].endswith("index.html")
+
+
+# ---------------------------------------------------------------------------
+# plot ctrl-deriv
+# ---------------------------------------------------------------------------
+
+
+def test_plot_ctrl_deriv_picks_latest_dir(tmp_path):
+    runs_base = tmp_path / "_runs" / "bd"
+    old_dir = runs_base / "2026-01-01-120000"
+    new_dir = runs_base / "2026-05-15-093000"
+    old_dir.mkdir(parents=True)
+    new_dir.mkdir()
+
+    captured: list[Path] = []
+
+    def fake_st_fileread(path: Path) -> list[object]:
+        captured.append(path)
+        return []
+
+    fake_aero = MagicMock()
+    with (
+        patch("avl_aero_tables.avl_fileread.st_fileread", side_effect=fake_st_fileread),
+        patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
+        patch("avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value={}),
+        patch("webbrowser.open"),
+    ):
+        result = main(["plot", "ctrl-deriv", str(runs_base)])
+
+    assert result == 0
+    assert captured[0] == new_dir / ".raw"
+
+
+def test_plot_ctrl_deriv_writes_html_files(tmp_path):
+    run_dir = tmp_path / "2026-01-01-120000"
+    run_dir.mkdir()
+
+    fake_aero = MagicMock()
+    fake_figs = {"flap": MagicMock(), "elevator": MagicMock()}
+    with (
+        patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
+        patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
+        patch("avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value=fake_figs),
+        patch("webbrowser.open") as mock_browser,
+    ):
+        result = main(["plot", "ctrl-deriv", str(run_dir)])
+
+    assert result == 0
+    written_names = [
+        Path(fig.write_html.call_args[0][0]).name for fig in fake_figs.values()
+    ]
+    assert written_names == ["deriv_ctrl_flap.html", "deriv_ctrl_elevator.html"]
+    assert mock_browser.call_args[0][0].endswith("index.html")
+
+
+# ---------------------------------------------------------------------------
+# plot all
+# ---------------------------------------------------------------------------
+
+
+def test_plot_all_calls_all_three_plotters(tmp_path):
+    run_dir = tmp_path / "2026-01-01-120000"
+    run_dir.mkdir()
+
+    fake_aero = MagicMock()
+    fake_totals = {"stab": MagicMock(), "ctrl_lift": MagicMock()}
+    fake_stab = {"alpha": MagicMock(), "beta": MagicMock()}
+    fake_ctrl = {"flap": MagicMock()}
+
+    with (
+        patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
+        patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
+        patch("avl_aero_tables.aero_fileplot.plot_totals", return_value=fake_totals) as mock_totals,
+        patch("avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value=fake_stab) as mock_stab,
+        patch("avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value=fake_ctrl) as mock_ctrl,
+        patch("webbrowser.open") as mock_browser,
+    ):
+        result = main(["plot", "all", str(run_dir)])
+
+    assert result == 0
+    mock_totals.assert_called_once()
+    mock_stab.assert_called_once()
+    mock_ctrl.assert_called_once()
+    assert mock_browser.call_args[0][0].endswith("index.html")
+
+    written = {
+        Path(fig.write_html.call_args[0][0]).name
+        for figs in (fake_totals, fake_stab, fake_ctrl)
+        for fig in figs.values()
+    }
+    assert "total_stab.html" in written
+    assert "total_ctrl_lift.html" in written
+    assert "deriv_stab_alpha.html" in written
+    assert "deriv_stab_beta.html" in written
+    assert "deriv_ctrl_flap.html" in written
+
+
+def test_plot_all_beta_ref_forwarded(tmp_path):
+    run_dir = tmp_path / "2026-01-01-120000"
+    run_dir.mkdir()
+
+    fake_aero = MagicMock()
+    with (
+        patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
+        patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
+        patch("avl_aero_tables.aero_fileplot.plot_totals", return_value={}) as mock_totals,
+        patch("avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value={}),
+        patch("avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value={}),
+        patch("webbrowser.open"),
+    ):
+        main(["plot", "all", "--beta-ref", "3.0", str(run_dir)])
+
+    _, kwargs = mock_totals.call_args
+    assert kwargs.get("beta_ref") == pytest.approx(3.0)
 
 
 def test_write_index_html(tmp_path):

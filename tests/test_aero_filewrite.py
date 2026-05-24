@@ -7,6 +7,8 @@ import pytest
 
 from avl_aero_tables.aero_filewrite import (
     COEF_NAMES,
+    CTRL_DERIV_COEFS,
+    STAB_DERIV_NAMES,
     AeroDatabase,
     CtrlTable,
     StabTable,
@@ -46,6 +48,50 @@ def _make_result(
         "Cntot": 0.0,
         "flap": 0.0,
         "aileron": 0.0,
+        # Stability derivatives (AVL notation)
+        "CLa": 5.0,
+        "CLb": 0.0,
+        "CYa": 0.0,
+        "CYb": -0.4,
+        "CDa": 0.1,
+        "CDb": 0.0,
+        "Cla": 0.0,
+        "Clb": -0.2,
+        "Cma": -0.9,
+        "Cmb": 0.0,
+        "Cna": 0.0,
+        "Cnb": 0.06,
+        "CLp": 0.0,
+        "CLq": 7.0,
+        "CLr": 0.0,
+        "CYp": -0.4,
+        "CYq": 0.0,
+        "CYr": 0.3,
+        "CDp": 0.0,
+        "CDq": 0.2,
+        "CDr": 0.0,
+        "Clp": -0.6,
+        "Clq": 0.0,
+        "Clr": 0.1,
+        "Cmp": 0.0,
+        "Cmq": -12.0,
+        "Cmr": 0.0,
+        "Cnp": -0.06,
+        "Cnq": 0.0,
+        "Cnr": -0.06,
+        # Control derivatives (AVL notation: CLd01 = ∂CL/∂δ_flap)
+        "CLd01": 0.02,
+        "CYd01": 0.0,
+        "CDd01": 0.001,
+        "Cld01": 0.0,
+        "Cmd01": 0.005,
+        "Cnd01": 0.0,
+        "CLd02": 0.0,
+        "CYd02": 0.0,
+        "CDd02": 0.0,
+        "Cld02": 0.05,
+        "Cmd02": 0.0,
+        "Cnd02": -0.002,
     }
     if coef_vals:
         r.data.update(coef_vals)
@@ -83,8 +129,8 @@ def test_ref_fields_populated():
 def test_stab_tables_created_for_all_coefs():
     db = aero_filewrite([_make_result(5.0, 0.0)])
     for coef in COEF_NAMES:
-        assert coef in db.stab
-        assert isinstance(db.stab[coef], StabTable)
+        assert coef in db.total_stab
+        assert isinstance(db.total_stab[coef], StabTable)
 
 
 @pytest.mark.req("req-write-6")
@@ -93,8 +139,8 @@ def test_ctrl_tables_created_for_each_coef_surface():
     for coef in COEF_NAMES:
         for d_idx, ctrl_name in CTRL_MAP.items():
             key = f"{coef}_{d_idx}_{ctrl_name}"
-            assert key in db.ctrl
-            assert isinstance(db.ctrl[key], CtrlTable)
+            assert key in db.total_ctrl
+            assert isinstance(db.total_ctrl[key], CtrlTable)
 
 
 # ---------------------------------------------------------------------------
@@ -106,21 +152,21 @@ def test_ctrl_tables_created_for_each_coef_surface():
 def test_alpha_breakpoints_sorted():
     results = [_make_result(a, 0.0) for a in [5.0, -5.0, 0.0]]
     db = aero_filewrite(results)
-    np.testing.assert_array_equal(db.stab["CLtot"].alpha, [-5.0, 0.0, 5.0])
+    np.testing.assert_array_equal(db.total_stab["CLtot"].alpha, [-5.0, 0.0, 5.0])
 
 
 @pytest.mark.req("req-write-8")
 def test_beta_breakpoints_sorted():
     results = [_make_result(0.0, b) for b in [3.0, -3.0, 0.0]]
     db = aero_filewrite(results)
-    np.testing.assert_array_equal(db.stab["CLtot"].beta, [-3.0, 0.0, 3.0])
+    np.testing.assert_array_equal(db.total_stab["CLtot"].beta, [-3.0, 0.0, 3.0])
 
 
 @pytest.mark.req("req-write-9")
 def test_stab_table_shape():
     results = [_make_result(a, b) for a in [-5.0, 0.0, 5.0] for b in [-3.0, 0.0, 3.0]]
     db = aero_filewrite(results)
-    assert db.stab["CLtot"].data.shape == (3, 3)
+    assert db.total_stab["CLtot"].data.shape == (3, 3)
 
 
 # ---------------------------------------------------------------------------
@@ -132,14 +178,14 @@ def test_stab_table_shape():
 def test_neutral_case_fills_stab_table():
     r = _make_result(5.0, 0.0, coef_vals={"CLtot": 0.58})
     db = aero_filewrite([r])
-    assert db.stab["CLtot"].data[0, 0] == pytest.approx(0.58)
+    assert db.total_stab["CLtot"].data[0, 0] == pytest.approx(0.58)
 
 
 @pytest.mark.req("req-write-11")
 def test_non_neutral_does_not_fill_stab_table():
     r = _make_result(5.0, 0.0, deflections={"flap": 10.0})
     db = aero_filewrite([r])
-    assert np.isnan(db.stab["CLtot"].data[0, 0])
+    assert np.isnan(db.total_stab["CLtot"].data[0, 0])
 
 
 @pytest.mark.req("req-write-9", "req-write-10")
@@ -148,8 +194,8 @@ def test_multiple_alphas_stab_shape_and_values():
         _make_result(a, 0.0, coef_vals={"CLtot": a * 0.1}) for a in [-5.0, 0.0, 5.0]
     ]
     db = aero_filewrite(results)
-    assert db.stab["CLtot"].data.shape == (3, 1)
-    np.testing.assert_allclose(db.stab["CLtot"].data[:, 0], [-0.5, 0.0, 0.5], atol=1e-9)
+    assert db.total_stab["CLtot"].data.shape == (3, 1)
+    np.testing.assert_allclose(db.total_stab["CLtot"].data[:, 0], [-0.5, 0.0, 0.5], atol=1e-9)
 
 
 # ---------------------------------------------------------------------------
@@ -164,7 +210,7 @@ def test_ctrl_table_defl_breakpoints():
     ]
     db = aero_filewrite(results)
     key = "CLtot_d01_flap"
-    np.testing.assert_array_equal(db.ctrl[key].defl, [-5.0, 0.0, 5.0])
+    np.testing.assert_array_equal(db.total_ctrl[key].defl, [-5.0, 0.0, 5.0])
 
 
 @pytest.mark.req("req-write-12")
@@ -175,7 +221,7 @@ def test_ctrl_table_shape():
         for d in [-5.0, 0.0, 5.0]
     ]
     db = aero_filewrite(results)
-    assert db.ctrl["CLtot_d01_flap"].data.shape == (2, 1, 3)
+    assert db.total_ctrl["CLtot_d01_flap"].data.shape == (2, 1, 3)
 
 
 @pytest.mark.req("req-write-14")
@@ -186,14 +232,14 @@ def test_ctrl_table_values_filled():
     ]
     db = aero_filewrite(results)
     np.testing.assert_allclose(
-        db.ctrl["CLtot_d01_flap"].data[0, 0, :], [0.4, 0.5, 0.6], atol=1e-9
+        db.total_ctrl["CLtot_d01_flap"].data[0, 0, :], [0.4, 0.5, 0.6], atol=1e-9
     )
 
 
 @pytest.mark.req("req-write-15")
 def test_ctrl_table_surface_and_ctrl_name():
     db = aero_filewrite([_make_result(0.0, 0.0)])
-    t = db.ctrl["CLtot_d01_flap"]
+    t = db.total_ctrl["CLtot_d01_flap"]
     assert t.surface == "d01_flap"
     assert t.ctrl_name == "flap"
 
@@ -218,7 +264,7 @@ def test_no_controls_empty_ctrl_dict():
         "Cntot": 0.0,
     }
     db = aero_filewrite([r])
-    assert db.ctrl == {}
+    assert db.total_ctrl == {}
 
 
 @pytest.mark.req("req-write-17")
@@ -236,7 +282,7 @@ def test_no_controls_stab_table_filled():
         "Cntot": 0.0,
     }
     db = aero_filewrite([r])
-    assert db.stab["CLtot"].data[0, 0] == pytest.approx(0.42)
+    assert db.total_stab["CLtot"].data[0, 0] == pytest.approx(0.42)
 
 
 # ---------------------------------------------------------------------------
@@ -255,4 +301,62 @@ def test_missing_coef_produces_nan():
     r = _make_result(0.0, 0.0)
     del r.data["CDtot"]
     db = aero_filewrite([r])
-    assert np.isnan(db.stab["CDtot"].data[0, 0])
+    assert np.isnan(db.total_stab["CDtot"].data[0, 0])
+
+
+# ---------------------------------------------------------------------------
+# stab_deriv tables
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.req("req-write-20")
+def test_stab_deriv_tables_exist():
+    db = aero_filewrite([_make_result(5.0, 0.0)])
+    assert set(db.stab_deriv.keys()) == set(STAB_DERIV_NAMES)
+    for key in STAB_DERIV_NAMES:
+        assert isinstance(db.stab_deriv[key], StabTable)
+
+
+@pytest.mark.req("req-write-21")
+def test_stab_deriv_alpha_value():
+    db = aero_filewrite([_make_result(5.0, 0.0)])
+    assert db.stab_deriv["CLa"].data[0, 0] == pytest.approx(5.0)
+    assert db.stab_deriv["Cmq"].data[0, 0] == pytest.approx(-12.0)
+
+
+@pytest.mark.req("req-write-22")
+def test_stab_deriv_only_neutral():
+    r = _make_result(5.0, 0.0, deflections={"flap": 10.0})
+    db = aero_filewrite([r])
+    assert np.isnan(db.stab_deriv["CLa"].data[0, 0])
+
+
+# ---------------------------------------------------------------------------
+# ctrl_deriv tables
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.req("req-write-23")
+def test_ctrl_deriv_tables_exist():
+    db = aero_filewrite([_make_result(5.0, 0.0)])
+    for coef in CTRL_DERIV_COEFS:
+        for d_idx, ctrl_name in CTRL_MAP.items():
+            key = f"{coef}_{d_idx}_{ctrl_name}"
+            assert key in db.ctrl_deriv, f"Missing key: {key}"
+            assert isinstance(db.ctrl_deriv[key], StabTable)
+
+
+@pytest.mark.req("req-write-24")
+def test_ctrl_deriv_value():
+    db = aero_filewrite([_make_result(5.0, 0.0)])
+    # "CL_d01_flap" maps to AVL key "CLd01" = 0.02
+    assert db.ctrl_deriv["CL_d01_flap"].data[0, 0] == pytest.approx(0.02)
+    # "Cl_d02_aileron" maps to AVL key "Cld02" = 0.05
+    assert db.ctrl_deriv["Cl_d02_aileron"].data[0, 0] == pytest.approx(0.05)
+
+
+@pytest.mark.req("req-write-25")
+def test_ctrl_deriv_only_neutral():
+    r = _make_result(5.0, 0.0, deflections={"flap": 10.0})
+    db = aero_filewrite([r])
+    assert np.isnan(db.ctrl_deriv["CL_d01_flap"].data[0, 0])

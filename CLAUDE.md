@@ -17,9 +17,9 @@ avl_aero_tables/          # Python package
   avl_cli.py          # CLI entry point (avl_aero_tables.avl_cli:main)
   avl_config.py       # YAML project-file schema and loader (InputSpec, SweepSpec)
   avl_sweep.py        # top-level sweep orchestration → list[StResult]
-  avl_fileplot.py     # four-view geometry plot → Figure
+  avl_fileplot.py     # four-view geometry plot → Figure (avl_fileplot)
   aero_filewrite.py   # pivot list[StResult] → AeroDatabase (numpy tables)
-  aero_fileplot.py    # 3-D surface plots of AeroDatabase tables
+  aero_fileplot.py    # 3-D surface plots of AeroDatabase tables (plot_totals, plot_stab_derivs, plot_ctrl_derivs)
   _plot_config.py     # shared Plotly defaults and utilities
 
 docs/                 # AVL user documentation
@@ -72,8 +72,10 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir, binary, out_format, y
     ├─ st_fileread(run_dir/.raw)            → list[StResult]
     │   └─ each StResult has .filename, .controls, .data (dict of floats)
     │
-    └─ results_to_dataframe(results)       → DataFrame → results.csv / results.json
-        └─ skipped when out_format == "df"
+    ├─ results_to_dataframe(results)       → DataFrame → results_total.csv / .json
+    ├─ stab_deriv_to_dataframe(results)    → DataFrame → results_deriv_stab.csv / .json
+    └─ ctrl_deriv_to_dataframe(results)    → DataFrame → results_deriv_ctrl.csv / .json
+        └─ all three skipped when out_format == "df"
 ```
 
 ---
@@ -119,7 +121,7 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir, binary, out_format, y
 
 - **Stability tables only filled for neutral-control runs**: `aero_filewrite` checks `all_neutral = all(abs(r.data.get(name, 0.0)) < 1e-6 for name in ctrl_map.values())` before populating `stab` tables, so off-neutral sweeps don't corrupt the neutral aero map.
 
-- **0.0 auto-injected into `ctrl_sweeps`**: if any surface's deflection list omits 0.0, `avl_sweep.run()` (and the YAML `SweepSpec` validator in `avl_config.py`) emits a `UserWarning` and inserts 0.0 — sorted into the list — so `db.stab` is always populated.  The original user-supplied list is never modified in place; a new dict is returned.
+- **0.0 auto-injected into `ctrl_sweeps`**: if any surface's deflection list omits 0.0, `avl_sweep.run()` (and the YAML `SweepSpec` validator in `avl_config.py`) emits a `UserWarning` and inserts 0.0 — sorted into the list — so `db.total_stab` is always populated.  The original user-supplied list is never modified in place; a new dict is returned.
 
 ---
 

@@ -46,10 +46,40 @@ COLORSCALE_CTRL = "Plasma"
 OPACITY_SURFACE = 0.9
 
 # Axis labels for aero surface plots.
-LABEL_ALPHA = "α (deg)"
-LABEL_BETA = "β (deg)"
+LABEL_ALPHA = "α (°)"
+LABEL_BETA = "β (°)"
 
 
 def label_delta(surface: str) -> str:
     """Return the y-axis label for a control surface deflection axis."""
-    return f"δ_{surface} (deg)"
+    return f"δ_{surface} (°)"
+
+
+# Post-script injected into every write_html call.
+# Runs inside the iframe after Plotly's newPlot() call, so `Plotly` is defined.
+#
+# Two behaviours:
+#   1. MathJax retypeset — re-renders LaTeX axis labels after each Plotly draw.
+#   2. Tab-visibility redraw — the parent page (custom.js) sends a postMessage
+#      when a sphinx-design tab panel becomes visible.  The iframe responds with
+#      Plotly.Plots.resize() + Plotly.react() to rebuild the WebGL scene from
+#      the stored data.  react() is used instead of redraw() because it fully
+#      reconstructs the scene, recovering from WebGL context loss.
+#      A `ready` flag prevents these calls racing with the initial render.
+MATHJAX_RETYPESET = (
+    "(function(){"
+    "var gd=document.getElementById('{plot_id}');"
+    "var ready=false;"
+    "gd.on('plotly_afterplot',function(){"
+    "ready=true;"
+    "if(window.MathJax&&window.MathJax.Hub)"
+    "{MathJax.Hub.Queue(['Typeset',MathJax.Hub,gd]);}"
+    "});"
+    "window.addEventListener('message',function(e){"
+    "if(e.data==='plotly-tab-visible'&&ready){"
+    "Plotly.Plots.resize(gd);"
+    "Plotly.react(gd,gd.data,gd.layout);"
+    "}"
+    "});"
+    "})();"
+)

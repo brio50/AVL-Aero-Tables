@@ -123,58 +123,168 @@ Results land in `_runs/<yml-stem>/<avl-stem>_<timestamp>/` relative to the **pro
 
 ### Plot Results
 
-Pass a parent directory to plot the latest sweep, or a specific timestamped directory to plot a particular run.
+AVL produces three categories of output per flight condition — each has its own `plot` subcommand. Pass a parent directory to use the latest sweep, or a specific timestamped directory to target a particular run.
+
+See {ref}`concepts:output-types` for a full description of each category and its simulation use.
+
+#### Total Coefficients
+
+```{admonition} Nonlinear 6-DOF table-lookup
+:class: note
+Total force and moment coefficients ($C_{L_\mathrm{total}}$, $C_{D_\mathrm{total}}$, $C_{m_\mathrm{total}}$, …) integrated at each flight condition. These are the tables a nonlinear 6-DOF simulation queries at each timestep — the primary output for flight dynamics work.
+```
 
 ```````{card}
 :class-card: cli-card full-width
 
 ```{code-block} console
 :caption: Input
-$ avl-aero-tables plot aero _runs/bd/
+$ avl-aero-tables plot totals _runs/bd/
 ```
 ^^^
 ```{code-block} text
 :caption: Output
-:class: no-copybutton hide-empty-codeblock
+:class: no-copybutton
+  → total_stability.html
+  → total_control_CL.html
+  → total_control_CY.html
+  → total_control_CD.html
+  → total_control_Cl.html
+  → total_control_Cm.html
+  → total_control_Cn.html
 ```
 
 `````{tab-set}
 :class: aero-plots
 ````{tab-item} Stability
-```{plotly-figure} _static/html/bd_stab.html
+```{plotly-figure} _static/html/bd_total_stab.html
 ```
 ````
 ````{tab-item} CL
-```{plotly-figure} _static/html/bd_ctrl_force_lift.html
+```{plotly-figure} _static/html/bd_total_ctrl_lift.html
 ```
 ````
 ````{tab-item} CY
-```{plotly-figure} _static/html/bd_ctrl_force_side.html
+```{plotly-figure} _static/html/bd_total_ctrl_side.html
 ```
 ````
 ````{tab-item} CD
-```{plotly-figure} _static/html/bd_ctrl_force_drag.html
+```{plotly-figure} _static/html/bd_total_ctrl_drag.html
 ```
 ````
 ````{tab-item} Cl
-```{plotly-figure} _static/html/bd_ctrl_moment_roll.html
+```{plotly-figure} _static/html/bd_total_ctrl_roll.html
 ```
 ````
 ````{tab-item} Cm
-```{plotly-figure} _static/html/bd_ctrl_moment_pitch.html
+```{plotly-figure} _static/html/bd_total_ctrl_pitch.html
 ```
 ````
 ````{tab-item} Cn
-```{plotly-figure} _static/html/bd_ctrl_moment_yaw.html
+```{plotly-figure} _static/html/bd_total_ctrl_yaw.html
 ```
 ````
 `````
 ```````
 
 ```{tip}
-Each control plot shows a **β = 0° slice** of the full 3-D table (α × β × δ). To inspect
-off-zero sideslip, pass a different `beta_ref` to `aero_fileplot()` — e.g. `aero_fileplot(aero, beta_ref=5.0)`.
+The "Stability" tab shows coefficients vs. $\alpha$ and $\beta$ at neutral controls. The $C_L$/$C_Y$/… tabs each show coefficient vs. $\alpha$ and $\delta$ for every control surface, sliced at **$\beta = 0°$** by default. To inspect a different sideslip, pass `--beta-ref <deg>` — e.g. `avl-aero-tables plot totals --beta-ref 5 _runs/bd/`.
 ```
+
+#### Stability Derivatives
+
+```{admonition} Linear analysis — stability derivatives, trim sensitivity, control law design
+:class: note
+Linearised $\partial C / \partial(\alpha, \beta, p', q', r')$ at neutral controls. One figure per perturbation variable, six subplots per figure ($C_L$, $C_Y$, $C_D$, $C_l$, $C_m$, $C_n$). Use these for stability analysis (phugoid, dutch roll), trim sensitivity, and linear control law derivation — not as table-lookup coefficients in a nonlinear sim.
+```
+
+```````{card}
+:class-card: cli-card full-width
+
+```{code-block} console
+:caption: Input
+$ avl-aero-tables plot stab-deriv _runs/bd/
+```
+^^^
+```{code-block} text
+:caption: Output
+:class: no-copybutton
+  → deriv_stability_alpha.html
+  → deriv_stability_beta.html
+  → deriv_stability_p.html
+  → deriv_stability_q.html
+  → deriv_stability_r.html
+```
+
+`````{tab-set}
+:class: aero-plots
+````{tab-item} ∂C*/∂α
+```{plotly-figure} _static/html/bd_deriv_stab_alpha.html
+```
+````
+````{tab-item} ∂C*/∂β
+```{plotly-figure} _static/html/bd_deriv_stab_beta.html
+```
+````
+````{tab-item} ∂C*/∂p'
+```{plotly-figure} _static/html/bd_deriv_stab_p.html
+```
+````
+````{tab-item} ∂C*/∂q'
+```{plotly-figure} _static/html/bd_deriv_stab_q.html
+```
+````
+````{tab-item} ∂C*/∂r'
+```{plotly-figure} _static/html/bd_deriv_stab_r.html
+```
+````
+`````
+```````
+
+#### Control Derivatives
+
+```{admonition} Control effectiveness — surface sizing, linear autopilot design
+:class: note
+Linearised $\partial C / \partial\delta_\text{surface}$ at neutral controls. One figure per control surface, six subplots per figure ($C_L$, $C_Y$, $C_D$, $C_l$, $C_m$, $C_n$ vs. $\alpha$ and $\beta$). Use these for control allocation, handling qualities assessment, and linear autopilot gain derivation.
+```
+
+```````{card}
+:class-card: cli-card full-width
+
+```{code-block} console
+:caption: Input
+$ avl-aero-tables plot ctrl-deriv _runs/bd/
+```
+^^^
+```{code-block} text
+:caption: Output
+:class: no-copybutton
+  → deriv_control_flap.html
+  → deriv_control_aileron.html
+  → deriv_control_elevator.html
+  → deriv_control_rudder.html
+```
+
+`````{tab-set}
+:class: aero-plots
+````{tab-item} flap
+```{plotly-figure} _static/html/bd_deriv_ctrl_flap.html
+```
+````
+````{tab-item} aileron
+```{plotly-figure} _static/html/bd_deriv_ctrl_aileron.html
+```
+````
+````{tab-item} elevator
+```{plotly-figure} _static/html/bd_deriv_ctrl_elevator.html
+```
+````
+````{tab-item} rudder
+```{plotly-figure} _static/html/bd_deriv_ctrl_rudder.html
+```
+````
+`````
+```````
 
 ```{seealso}
 See {ref}`concepts:aero-coefficients` for coefficient definitions, axis conventions, and how to recover dimensional forces and moments.
@@ -315,21 +425,23 @@ AeroDatabase: 5α × 3β  |  δ_slat = 3, δ_flap = 3, δ_aileron = 3, δ_elevat
 ```
 `````
 
-### Plot Aero Coefficients
+### Plot Total Coefficients
+
+```{admonition} Nonlinear 6-DOF table-lookup
+:class: note
+Total force and moment coefficients ($C_{L_\mathrm{total}}$, $C_{D_\mathrm{total}}$, $C_{m_\mathrm{total}}$, …) — the primary output for flight dynamics work. The "Stability" figure shows coefficients vs. $\alpha$ and $\beta$ at neutral controls; each subsequent figure shows one coefficient vs. $\alpha$ and $\delta$ for every control surface.
+```
 
 ```````{card}
 :class-card: cli-card full-width
 
 ```{code-block} python
 :caption: Input
-from avl_aero_tables import aero_fileplot
+from avl_aero_tables import plot_totals
 
-figs = aero_fileplot(aero, beta_ref=0.0)
-names = ["b737_stab", "b737_ctrl_force_lift", "b737_ctrl_force_side",
-         "b737_ctrl_force_drag", "b737_ctrl_moment_roll", "b737_ctrl_moment_pitch",
-         "b737_ctrl_moment_yaw"]
-for fig, name in zip(figs, names):
-    fig.write_html(f"{name}.html", include_plotlyjs="cdn")
+figs = plot_totals(aero, beta_ref=0.0)
+for name, fig in figs.items():
+    fig.write_html(f"b737_total_{name}.html", include_plotlyjs="cdn")
 ```
 ^^^
 ```{code-block} text
@@ -340,41 +452,136 @@ for fig, name in zip(figs, names):
 `````{tab-set}
 :class: aero-plots
 ````{tab-item} Stability
-```{plotly-figure} _static/html/b737_stab.html
+```{plotly-figure} _static/html/b737_total_stab.html
 ```
 ````
 ````{tab-item} CL
-```{plotly-figure} _static/html/b737_ctrl_force_lift.html
+```{plotly-figure} _static/html/b737_total_ctrl_lift.html
 ```
 ````
 ````{tab-item} CY
-```{plotly-figure} _static/html/b737_ctrl_force_side.html
+```{plotly-figure} _static/html/b737_total_ctrl_side.html
 ```
 ````
 ````{tab-item} CD
-```{plotly-figure} _static/html/b737_ctrl_force_drag.html
+```{plotly-figure} _static/html/b737_total_ctrl_drag.html
 ```
 ````
 ````{tab-item} Cl
-```{plotly-figure} _static/html/b737_ctrl_moment_roll.html
+```{plotly-figure} _static/html/b737_total_ctrl_roll.html
 ```
 ````
 ````{tab-item} Cm
-```{plotly-figure} _static/html/b737_ctrl_moment_pitch.html
+```{plotly-figure} _static/html/b737_total_ctrl_pitch.html
 ```
 ````
 ````{tab-item} Cn
-```{plotly-figure} _static/html/b737_ctrl_moment_yaw.html
+```{plotly-figure} _static/html/b737_total_ctrl_yaw.html
 ```
 ````
 `````
 ```````
 
 ```{tip}
-Each control plot shows a **β = 0° slice** of the full 3-D table (α × β × δ). To inspect
-off-zero sideslip, pass a different `beta_ref` to `aero_fileplot()` — e.g. `aero_fileplot(aero, beta_ref=5.0)`.
+The control-surface figures show a **$\beta = 0°$ slice** of the full 3-D table ($\alpha \times \beta \times \delta$). To inspect off-zero sideslip, pass `beta_ref` — e.g. `plot_totals(aero, beta_ref=5.0)`.
 ```
 
+### Plot Stability Derivatives
+
+```{admonition} Linear analysis — stability derivatives, trim sensitivity, control law design
+:class: note
+Linearised $\partial C / \partial(\alpha, \beta, p', q', r')$ at neutral controls. One figure per perturbation variable, six subplots per figure ($C_L$, $C_Y$, $C_D$, $C_l$, $C_m$, $C_n$). Use for stability analysis and linear control law derivation — not as look-up coefficients in a nonlinear sim.
+```
+
+```````{card}
+:class-card: cli-card full-width
+
+```{code-block} python
+:caption: Input
+from avl_aero_tables import plot_stab_derivs
+
+for name, fig in plot_stab_derivs(aero).items():
+    fig.write_html(f"b737_deriv_stab_{name}.html", include_plotlyjs="cdn")
+```
+^^^
+```{code-block} text
+:caption: Output
+:class: no-copybutton hide-empty-codeblock
+```
+
+`````{tab-set}
+:class: aero-plots
+````{tab-item} ∂C*/∂α
+```{plotly-figure} _static/html/b737_deriv_stab_alpha.html
+```
+````
+````{tab-item} ∂C*/∂β
+```{plotly-figure} _static/html/b737_deriv_stab_beta.html
+```
+````
+````{tab-item} ∂C*/∂p'
+```{plotly-figure} _static/html/b737_deriv_stab_p.html
+```
+````
+````{tab-item} ∂C*/∂q'
+```{plotly-figure} _static/html/b737_deriv_stab_q.html
+```
+````
+````{tab-item} ∂C*/∂r'
+```{plotly-figure} _static/html/b737_deriv_stab_r.html
+```
+````
+`````
+```````
+
+### Plot Control Derivatives
+
+```{admonition} Control effectiveness — surface sizing, linear autopilot design
+:class: note
+Linearised $\partial C / \partial\delta_\text{surface}$ at neutral controls. One figure per control surface, six subplots per figure ($C_L$, $C_Y$, $C_D$, $C_l$, $C_m$, $C_n$ vs. $\alpha$ and $\beta$). Use for control allocation, handling qualities assessment, and linear autopilot gain derivation.
+```
+
+```````{card}
+:class-card: cli-card full-width
+
+```{code-block} python
+:caption: Input
+from avl_aero_tables import plot_ctrl_derivs
+
+for surface, fig in plot_ctrl_derivs(aero).items():
+    fig.write_html(f"b737_deriv_ctrl_{surface}.html", include_plotlyjs="cdn")
+```
+^^^
+```{code-block} text
+:caption: Output
+:class: no-copybutton hide-empty-codeblock
+```
+
+`````{tab-set}
+:class: aero-plots
+````{tab-item} slat
+```{plotly-figure} _static/html/b737_deriv_ctrl_slat.html
+```
+````
+````{tab-item} flap
+```{plotly-figure} _static/html/b737_deriv_ctrl_flap.html
+```
+````
+````{tab-item} aileron
+```{plotly-figure} _static/html/b737_deriv_ctrl_aileron.html
+```
+````
+````{tab-item} elevator
+```{plotly-figure} _static/html/b737_deriv_ctrl_elevator.html
+```
+````
+````{tab-item} rudder
+```{plotly-figure} _static/html/b737_deriv_ctrl_rudder.html
+```
+````
+`````
+```````
+
 ```{seealso}
-See {ref}`concepts:aero-coefficients` for coefficient definitions, axis conventions, and how to recover dimensional forces and moments.
+See {ref}`concepts:aero-coefficients` for coefficient definitions, axis conventions, and how to recover dimensional forces and moments. See {ref}`concepts:output-types` for when to use totals vs. derivatives in simulation.
 ```

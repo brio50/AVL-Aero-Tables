@@ -14,7 +14,11 @@ from pathlib import Path
 from typing import Literal
 
 from avl_aero_tables import avl_bin as avl_runner
-from avl_aero_tables.aero_filewrite import results_to_dataframe
+from avl_aero_tables.aero_filewrite import (
+    ctrl_deriv_to_dataframe,
+    results_to_dataframe,
+    stab_deriv_to_dataframe,
+)
 from avl_aero_tables.avl_fileread import (
     AvlGeometry,
     StResult,
@@ -46,6 +50,7 @@ def _ensure_neutral_in_sweeps(
         }
     return ctrl_sweeps
 
+
 _PYPROJECT = Path(__file__).resolve().parent.parent / "pyproject.toml"
 
 
@@ -64,9 +69,7 @@ def _git_info(cwd: Path) -> dict[str, object]:
 
     def _run(*args: str) -> str:
         try:
-            r = subprocess.run(
-                args, capture_output=True, text=True, cwd=cwd, timeout=5
-            )
+            r = subprocess.run(args, capture_output=True, text=True, cwd=cwd, timeout=5)
             return r.stdout.strip() if r.returncode == 0 else ""
         except Exception:
             return ""
@@ -286,10 +289,20 @@ def run(
 
         if out_format != "df":
             df = results_to_dataframe(results)
+            df_stab = stab_deriv_to_dataframe(results)
+            df_ctrl = ctrl_deriv_to_dataframe(results)
             if out_format == "csv":
-                df.to_csv(run_dir / "results.csv", index=False)
+                df.to_csv(run_dir / "results_total.csv", index=False)
+                df_stab.to_csv(run_dir / "results_deriv_stab.csv", index=False)
+                df_ctrl.to_csv(run_dir / "results_deriv_ctrl.csv", index=False)
             elif out_format == "json":
-                df.to_json(run_dir / "results.json", orient="records", indent=2)
+                df.to_json(run_dir / "results_total.json", orient="records", indent=2)
+                df_stab.to_json(
+                    run_dir / "results_deriv_stab.json", orient="records", indent=2
+                )
+                df_ctrl.to_json(
+                    run_dir / "results_deriv_ctrl.json", orient="records", indent=2
+                )
 
         _log.info("AVL sweep complete → %s  (%d cases)", run_dir, len(results))
         return results

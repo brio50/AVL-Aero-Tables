@@ -17,7 +17,7 @@ A Python package that drives AVL programmatically and returns structured aerodyn
 
 **The key idea:** AVL is normally operated interactively — you type commands into its terminal menu, load a hand-written `.run` file, and step through each flight condition manually. `avl-aero-tables` bypasses this entirely. It invokes the AVL binary with no arguments and pipes a complete stdin script — loading geometry (`LOAD`), run-case (`CASE`), and all sweep commands (OPER, alpha/beta/deflection settings, `st` saves) — running hundreds of flight conditions in a single Python call.
 
-Each sweep creates a timestamped subdirectory containing `results.csv`, a `provenance.json` record (git commit, dirty flag, source directory, snapshot path), AVL input snapshots in `.in/`, and raw `.st` output files in `.raw/` — so previous runs are never overwritten and every result is fully traceable. See {ref}`output-layout` for the full directory structure.
+Each sweep creates a timestamped subdirectory containing `results_total.csv`, a `provenance.json` record (git commit, dirty flag, source directory, snapshot path), AVL input snapshots in `.in/`, and raw `.st` output files in `.raw/` — so previous runs are never overwritten and every result is fully traceable. See {ref}`output-layout` for the full directory structure.
 
 Five functions cover the full workflow — from reading a geometry file through plotting a finished aero database. Use the CLI for one-command runs, or call the Python API directly:
 
@@ -28,7 +28,7 @@ Define a sweep in a YAML project file and run it in one command:
 ```bash
 avl-aero-tables sweep examples/bd/bd.yml        # run sweep → _runs/bd/<timestamp>/
 avl-aero-tables plot geometry examples/bd/bd.yml # four-view geometry plot
-avl-aero-tables plot aero _runs/bd/              # plot latest sweep results
+avl-aero-tables plot all _runs/bd/               # plot latest sweep results
 ```
 
 ### Python API
@@ -36,13 +36,15 @@ avl-aero-tables plot aero _runs/bd/              # plot latest sweep results
 Call the same steps programmatically:
 
 ```python
-from avl_aero_tables import avl_fileread, avl_fileplot, avl_sweep, aero_filewrite, aero_fileplot
+from avl_aero_tables import avl_fileread, avl_fileplot, avl_sweep, aero_filewrite, plot_totals, plot_stab_derivs, plot_ctrl_derivs
 
 geom    = avl_fileread("examples/bd/bd.avl")           # parse geometry
 fig     = avl_fileplot(geom)                        # four view of geometry
 results = avl_sweep("examples/bd/bd.avl", alpha, beta, out_dir="_runs") # run AVL sweep
 aero    = aero_filewrite(results)                   # build aero lookup tables
-figs    = aero_fileplot(aero)                       # plot aero tables
+figs_total = plot_totals(aero)                      # plot total aero tables
+figs_stab  = plot_stab_derivs(aero)                # plot stability derivatives
+figs_ctrl  = plot_ctrl_derivs(aero)                # plot control derivatives
 ```
 
 ```{seealso}

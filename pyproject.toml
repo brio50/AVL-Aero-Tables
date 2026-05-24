@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "avl-aero-tables"
-version = "1.8.0"
+version = "2.0.0"
 description = "Generate aerodynamic lookup tables using AVL (Athena Vortex Lattice)"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -67,6 +67,14 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "plotly.*"
 ignore_missing_imports = true
+
+[tool.sphinx-autobuild]
+watch = ["CHANGELOG.md", "CONTRIBUTING.md", "LICENSE.md"]
+
+[tool.sphinx-build.include_deps]
+"dev/changelog" = "CHANGELOG.md"
+"dev/contributing" = "CONTRIBUTING.md"
+"dev/license" = "LICENSE.md"
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
