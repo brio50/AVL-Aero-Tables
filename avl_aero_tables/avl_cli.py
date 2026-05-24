@@ -203,24 +203,15 @@ def _load_aero(runs_dir: Path):  # type: ignore[return]
 def _cmd_plot_totals(args: argparse.Namespace) -> int:
     import webbrowser
 
-    from avl_aero_tables.aero_fileplot import aero_fileplot
+    from avl_aero_tables.aero_fileplot import plot_totals
 
     result_dir, aero = _load_aero(args.runs_dir.resolve())
     if aero is None:
         return 1
 
-    figs = aero_fileplot(aero, beta_ref=args.beta_ref)
-    names = [
-        "total_stability",
-        "total_control_CL",
-        "total_control_CY",
-        "total_control_CD",
-        "total_control_Cl",
-        "total_control_Cm",
-        "total_control_Cn",
-    ]
-    for fig, name in zip(figs, names):
-        out = result_dir / f"{name}.html"
+    figs = plot_totals(aero, beta_ref=args.beta_ref)
+    for key, fig in figs.items():
+        out = result_dir / f"total_{key}.html"
         fig.write_html(
             str(out), include_plotlyjs="cdn", include_mathjax="cdn", post_script=MATHJAX_RETYPESET, config={"displayModeBar": True}
         )
@@ -233,16 +224,15 @@ def _cmd_plot_totals(args: argparse.Namespace) -> int:
 def _cmd_plot_stab_deriv(args: argparse.Namespace) -> int:
     import webbrowser
 
-    from avl_aero_tables.aero_fileplot import aero_stabderivplot
+    from avl_aero_tables.aero_fileplot import plot_stab_derivs
 
     result_dir, aero = _load_aero(args.runs_dir.resolve())
     if aero is None:
         return 1
 
-    perturb_names = ["alpha", "beta", "p", "q", "r"]
-    figs = aero_stabderivplot(aero)
-    for fig, name in zip(figs, perturb_names):
-        out = result_dir / f"deriv_stability_{name}.html"
+    figs = plot_stab_derivs(aero)
+    for key, fig in figs.items():
+        out = result_dir / f"stab_deriv_{key}.html"
         fig.write_html(
             str(out), include_plotlyjs="cdn", include_mathjax="cdn", post_script=MATHJAX_RETYPESET, config={"displayModeBar": True}
         )
@@ -255,26 +245,15 @@ def _cmd_plot_stab_deriv(args: argparse.Namespace) -> int:
 def _cmd_plot_ctrl_deriv(args: argparse.Namespace) -> int:
     import webbrowser
 
-    from avl_aero_tables.aero_fileplot import aero_ctrlderivplot
+    from avl_aero_tables.aero_fileplot import plot_ctrl_derivs
 
     result_dir, aero = _load_aero(args.runs_dir.resolve())
     if aero is None:
         return 1
 
-    # Derive surface names from ctrl_deriv keys (preserve insertion order)
-    surfaces: list[str] = []
-    seen: set[str] = set()
-    for key in aero.ctrl_deriv:
-        parts = key.split("_", 1)
-        surf = parts[1] if len(parts) == 2 else key
-        ctrl_name = "_".join(surf.split("_")[1:])
-        if ctrl_name not in seen:
-            seen.add(ctrl_name)
-            surfaces.append(ctrl_name)
-
-    figs = aero_ctrlderivplot(aero)
-    for fig, name in zip(figs, surfaces):
-        out = result_dir / f"deriv_control_{name}.html"
+    figs = plot_ctrl_derivs(aero)
+    for key, fig in figs.items():
+        out = result_dir / f"ctrl_deriv_{key}.html"
         fig.write_html(
             str(out), include_plotlyjs="cdn", include_mathjax="cdn", post_script=MATHJAX_RETYPESET, config={"displayModeBar": True}
         )

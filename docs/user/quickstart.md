@@ -437,14 +437,11 @@ Total force and moment coefficients ($C_{L_\mathrm{total}}$, $C_{D_\mathrm{total
 
 ```{code-block} python
 :caption: Input
-from avl_aero_tables import aero_fileplot
+from avl_aero_tables import plot_totals
 
-figs = aero_fileplot(aero, beta_ref=0.0)
-names = ["b737_total_stab", "b737_total_ctrl_lift", "b737_total_ctrl_side",
-         "b737_total_ctrl_drag", "b737_total_ctrl_roll", "b737_total_ctrl_pitch",
-         "b737_total_ctrl_yaw"]
-for fig, name in zip(figs, names):
-    fig.write_html(f"{name}.html", include_plotlyjs="cdn")
+figs = plot_totals(aero, beta_ref=0.0)
+for name, fig in figs.items():
+    fig.write_html(f"b737_total_{name}.html", include_plotlyjs="cdn")
 ```
 ^^^
 ```{code-block} text
@@ -486,7 +483,7 @@ for fig, name in zip(figs, names):
 ```````
 
 ```{tip}
-The control-surface figures show a **$\beta = 0°$ slice** of the full 3-D table ($\alpha \times \beta \times \delta$). To inspect off-zero sideslip, pass `beta_ref` — e.g. `aero_fileplot(aero, beta_ref=5.0)`.
+The control-surface figures show a **$\beta = 0°$ slice** of the full 3-D table ($\alpha \times \beta \times \delta$). To inspect off-zero sideslip, pass `beta_ref` — e.g. `plot_totals(aero, beta_ref=5.0)`.
 ```
 
 ### Plot Stability Derivatives
@@ -501,13 +498,10 @@ Linearised $\partial C / \partial(\alpha, \beta, p', q', r')$ at neutral control
 
 ```{code-block} python
 :caption: Input
-from avl_aero_tables import aero_stabderivplot
+from avl_aero_tables import plot_stab_derivs
 
-stab_figs = aero_stabderivplot(aero)
-names = ["b737_deriv_stab_alpha", "b737_deriv_stab_beta",
-         "b737_deriv_stab_p", "b737_deriv_stab_q", "b737_deriv_stab_r"]
-for fig, name in zip(stab_figs, names):
-    fig.write_html(f"{name}.html", include_plotlyjs="cdn")
+for name, fig in plot_stab_derivs(aero).items():
+    fig.write_html(f"b737_deriv_stab_{name}.html", include_plotlyjs="cdn")
 ```
 ^^^
 ```{code-block} text
@@ -552,11 +546,9 @@ Linearised $\partial C / \partial\delta_\text{surface}$ at neutral controls. One
 
 ```{code-block} python
 :caption: Input
-from avl_aero_tables import aero_ctrlderivplot
+from avl_aero_tables import plot_ctrl_derivs
 
-ctrl_figs = aero_ctrlderivplot(aero)
-surfaces = ["slat", "flap", "aileron", "elevator", "rudder"]
-for fig, surface in zip(ctrl_figs, surfaces):
+for surface, fig in plot_ctrl_derivs(aero).items():
     fig.write_html(f"b737_deriv_ctrl_{surface}.html", include_plotlyjs="cdn")
 ```
 ^^^

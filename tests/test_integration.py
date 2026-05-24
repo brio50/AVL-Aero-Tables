@@ -12,11 +12,11 @@ from unittest.mock import patch
 import pytest
 
 from avl_aero_tables import (
-    aero_fileplot,
     aero_filewrite,
     avl_fileplot,
     avl_fileread,
     avl_sweep,
+    plot_totals,
 )
 from avl_aero_tables.avl_bin import find_avl
 from avl_aero_tables.avl_cli import main
@@ -105,8 +105,8 @@ def test_cli_plot_aero(bd_tmp):
     assert main(["plot", "totals", str(runs_dir)]) == 0
 
     run_dir = next(runs_dir.iterdir())
-    assert (run_dir / "total_stability.html").exists()
-    assert (run_dir / "total_control_CL.html").exists()
+    assert (run_dir / "total_stab.html").exists()
+    assert (run_dir / "total_ctrl_CL.html").exists()
 
 
 # ---------------------------------------------------------------------------
@@ -116,7 +116,7 @@ def test_cli_plot_aero(bd_tmp):
 
 @avl_required
 def test_python_api_chain(tmp_path):
-    """avl_fileread → avl_fileplot → avl_sweep → aero_filewrite → aero_fileplot."""
+    """avl_fileread → avl_fileplot → avl_sweep → aero_filewrite → plot_totals."""
     geom = avl_fileread(BD_AVL)
     assert geom.header.name
     assert geom.ctrl_names == ["flap", "aileron", "elevator", "rudder"]
@@ -138,5 +138,5 @@ def test_python_api_chain(tmp_path):
     aero = aero_filewrite(results)
     assert aero is not None
 
-    figs = aero_fileplot(aero)
+    figs = plot_totals(aero)
     assert len(figs) > 0

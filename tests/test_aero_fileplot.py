@@ -6,9 +6,9 @@ import plotly.graph_objects as go
 import pytest
 
 from avl_aero_tables.aero_fileplot import (
-    aero_ctrlderivplot,
-    aero_fileplot,
-    aero_stabderivplot,
+    plot_ctrl_derivs,
+    plot_stab_derivs,
+    plot_totals,
 )
 from avl_aero_tables.aero_filewrite import AeroDatabase, aero_filewrite
 from avl_aero_tables.avl_fileread import StResult
@@ -105,15 +105,15 @@ def _ctrl_aero() -> AeroDatabase:
 
 
 @pytest.mark.req("req-aeroplot-1")
-def test_returns_list():
-    figs = aero_fileplot(_minimal_aero())
-    assert isinstance(figs, list)
+def test_returns_dict():
+    figs = plot_totals(_minimal_aero())
+    assert isinstance(figs, dict)
 
 
 @pytest.mark.req("req-aeroplot-2")
 def test_returns_plotly_figures():
-    figs = aero_fileplot(_minimal_aero())
-    for f in figs:
+    figs = plot_totals(_minimal_aero())
+    for f in figs.values():
         assert isinstance(f, go.Figure)
 
 
@@ -124,17 +124,17 @@ def test_returns_plotly_figures():
 
 @pytest.mark.req("req-aeroplot-3")
 def test_stability_figure_first():
-    figs = aero_fileplot(_minimal_aero())
-    assert len(figs) >= 1
+    figs = plot_totals(_minimal_aero())
+    assert "stab" in figs
     # Stability figure has 6 Surface traces (one per coef)
-    surfaces = [t for t in figs[0].data if isinstance(t, go.Surface)]
+    surfaces = [t for t in figs["stab"].data if isinstance(t, go.Surface)]
     assert len(surfaces) == 6
 
 
 @pytest.mark.req("req-aeroplot-4")
 def test_stability_subplot_titles():
-    figs = aero_fileplot(_minimal_aero())
-    titles = {a.text for a in figs[0].layout.annotations}
+    figs = plot_totals(_minimal_aero())
+    titles = {a.text for a in figs["stab"].layout.annotations}
     assert "CL_total" in titles
     assert "CD_total" in titles
 
@@ -158,8 +158,8 @@ def test_no_ctrl_only_stability_figure():
         "Cmtot": -0.05,
         "Cntot": 0.0,
     }
-    figs = aero_fileplot(aero_filewrite([r]))
-    assert len(figs) == 1
+    figs = plot_totals(aero_filewrite([r]))
+    assert list(figs.keys()) == ["stab"]
 
 
 # ---------------------------------------------------------------------------
@@ -169,23 +169,24 @@ def test_no_ctrl_only_stability_figure():
 
 @pytest.mark.req("req-aeroplot-6")
 def test_ctrl_figures_produced():
-    figs = aero_fileplot(_ctrl_aero())
-    assert len(figs) == 7  # stability + 6 coef ctrl figures
+    figs = plot_totals(_ctrl_aero())
+    assert len(figs) == 7  # stab + 6 coef ctrl figures
 
 
 @pytest.mark.req("req-aeroplot-7")
 def test_ctrl_figure_has_one_surface_per_control():
-    figs = aero_fileplot(_ctrl_aero())
-    ctrl_fig = figs[1]
+    figs = plot_totals(_ctrl_aero())
+    ctrl_fig = figs["ctrl_CL"]
     surfaces = [t for t in ctrl_fig.data if isinstance(t, go.Surface)]
     assert len(surfaces) == 1  # one surface (elevator only)
 
 
 @pytest.mark.req("req-aeroplot-8")
 def test_ctrl_figure_titles_contain_coef_name():
-    figs = aero_fileplot(_ctrl_aero())
-    for f in figs[1:]:
-        assert "_total" in f.layout.title.text
+    figs = plot_totals(_ctrl_aero())
+    for k, f in figs.items():
+        if k != "stab":
+            assert "_total" in f.layout.title.text
 
 
 # ---------------------------------------------------------------------------
@@ -196,29 +197,29 @@ def test_ctrl_figure_titles_contain_coef_name():
 @pytest.mark.req("req-aeroplot-9")
 def test_beta_ref_nearest_used():
     results = [_make_result(0.0, b) for b in [-5.0, 0.0, 5.0]]
-    figs = aero_fileplot(aero_filewrite(results), beta_ref=1.0)
+    figs = plot_totals(aero_filewrite(results), beta_ref=1.0)
     assert len(figs) >= 1
 
 
 # ---------------------------------------------------------------------------
-# aero_stabderivplot
+# plot_stab_derivs
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.req("req-aeroplot-10")
 def test_aero_stabderivplot_returns_5_figures():
     db = aero_filewrite([_make_result(a, 0.0) for a in [-5.0, 0.0, 5.0]])
-    figs = aero_stabderivplot(db)
+    figs = plot_stab_derivs(db)
     assert len(figs) == 5
-    for f in figs:
+    for f in figs.values():
         assert isinstance(f, go.Figure)
 
 
 @pytest.mark.req("req-aeroplot-11")
 def test_aero_stabderivplot_titles_contain_pertvar():
     db = aero_filewrite([_make_result(0.0, 0.0)])
-    figs = aero_stabderivplot(db)
-    titles = [f.layout.title.text for f in figs]
+    figs = plot_stab_derivs(db)
+    titles = [f.layout.title.text for f in figs.values()]
     assert any("α" in t for t in titles)
     assert any("β" in t for t in titles)
 
@@ -226,33 +227,33 @@ def test_aero_stabderivplot_titles_contain_pertvar():
 @pytest.mark.req("req-aeroplot-12")
 def test_aero_stabderivplot_empty_stab_deriv_returns_empty():
     db = AeroDatabase(date="2026-01-01")
-    figs = aero_stabderivplot(db)
-    assert figs == []
+    figs = plot_stab_derivs(db)
+    assert figs == {}
 
 
 # ---------------------------------------------------------------------------
-# aero_ctrlderivplot
+# plot_ctrl_derivs
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.req("req-aeroplot-13")
 def test_aero_ctrlderivplot_returns_one_figure_per_surface():
     db = aero_filewrite([_make_result(a, 0.0) for a in [-5.0, 0.0, 5.0]])
-    figs = aero_ctrlderivplot(db)
+    figs = plot_ctrl_derivs(db)
     assert len(figs) == 1  # one surface: elevator (d01)
-    assert isinstance(figs[0], go.Figure)
+    assert isinstance(figs["elevator"], go.Figure)
 
 
 @pytest.mark.req("req-aeroplot-14")
 def test_aero_ctrlderivplot_titles_contain_surface():
     db = aero_filewrite([_make_result(0.0, 0.0)])
-    figs = aero_ctrlderivplot(db)
+    figs = plot_ctrl_derivs(db)
     assert len(figs) == 1
-    assert "elevator" in figs[0].layout.title.text
+    assert "elevator" in figs["elevator"].layout.title.text
 
 
 @pytest.mark.req("req-aeroplot-15")
 def test_aero_ctrlderivplot_empty_ctrl_deriv_returns_empty():
     db = AeroDatabase(date="2026-01-01")
-    figs = aero_ctrlderivplot(db)
-    assert figs == []
+    figs = plot_ctrl_derivs(db)
+    assert figs == {}

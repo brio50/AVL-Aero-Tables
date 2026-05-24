@@ -1,7 +1,7 @@
 from avl_aero_tables.aero_fileplot import (
-    aero_ctrlderivplot,
-    aero_fileplot,
-    aero_stabderivplot,
+    plot_ctrl_derivs,
+    plot_stab_derivs,
+    plot_totals,
 )
 from avl_aero_tables.aero_filewrite import (
     AeroDatabase,
@@ -27,14 +27,14 @@ __all__ = [
     "CtrlTable",
     "StabTable",
     "StResult",
-    "aero_ctrlderivplot",
-    "aero_fileplot",
     "aero_filewrite",
-    "aero_stabderivplot",
     "avl_sweep",
     "avl_fileplot",
     "avl_fileread",
     "ctrl_deriv_to_dataframe",
+    "plot_ctrl_derivs",
+    "plot_stab_derivs",
+    "plot_totals",
     "results_to_dataframe",
     "stab_deriv_to_dataframe",
     "st_fileread",
