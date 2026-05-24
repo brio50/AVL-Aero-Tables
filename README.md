@@ -33,13 +33,15 @@ $ avl-aero-tables plot all _runs/bd/                # plot latest sweep results
 Call the same steps programmatically:
 
 ```python
-from avl_aero_tables import avl_fileread, avl_fileplot, avl_sweep, aero_filewrite, aero_fileplot
+from avl_aero_tables import avl_fileread, avl_fileplot, avl_sweep, aero_filewrite, plot_totals, plot_stab_derivs, plot_ctrl_derivs
 
 geom    = avl_fileread("examples/bd/bd.avl")            # parse geometry
 fig     = avl_fileplot(geom)                            # interactive 3-D plot
 results = avl_sweep("examples/bd/bd.avl", alpha, beta, out_dir="_runs")  # run AVL sweep
 aero    = aero_filewrite(results)                       # build lookup tables
-figs    = aero_fileplot(aero)                           # plot aero database
+figs_total = plot_totals(aero)                          # plot total aero tables
+figs_stab  = plot_stab_derivs(aero)                    # plot stability derivatives
+figs_ctrl  = plot_ctrl_derivs(aero)                    # plot control derivatives
 ```
 
 ## References

@@ -17,9 +17,9 @@ avl_aero_tables/          # Python package
   avl_cli.py          # CLI entry point (avl_aero_tables.avl_cli:main)
   avl_config.py       # YAML project-file schema and loader (InputSpec, SweepSpec)
   avl_sweep.py        # top-level sweep orchestration → list[StResult]
-  avl_fileplot.py     # four-view geometry plot → Figure
+  avl_fileplot.py     # four-view geometry plot → Figure (avl_fileplot)
   aero_filewrite.py   # pivot list[StResult] → AeroDatabase (numpy tables)
-  aero_fileplot.py    # 3-D surface plots of AeroDatabase tables
+  aero_fileplot.py    # 3-D surface plots of AeroDatabase tables (plot_totals, plot_stab_derivs, plot_ctrl_derivs)
   _plot_config.py     # shared Plotly defaults and utilities
 
 docs/                 # AVL user documentation
@@ -72,8 +72,10 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir, binary, out_format, y
     ├─ st_fileread(run_dir/.raw)            → list[StResult]
     │   └─ each StResult has .filename, .controls, .data (dict of floats)
     │
-    └─ results_to_dataframe(results)       → DataFrame → results_total.csv / results_deriv_stab.csv / results_deriv_ctrl.csv
-        └─ skipped when out_format == "df"
+    ├─ results_to_dataframe(results)       → DataFrame → results_total.csv / .json
+    ├─ stab_deriv_to_dataframe(results)    → DataFrame → results_deriv_stab.csv / .json
+    └─ ctrl_deriv_to_dataframe(results)    → DataFrame → results_deriv_ctrl.csv / .json
+        └─ all three skipped when out_format == "df"
 ```
 
 ---
