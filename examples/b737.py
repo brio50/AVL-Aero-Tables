@@ -21,7 +21,7 @@ def main(write_docs: bool = False) -> None:
     runs_dir = HERE / "_runs"
 
     # ── Geometry ──────────────────────────────────────────────────────────────
-    from avl_aero_tables import avl_fileread, avl_fileplot
+    from avl_aero_tables import avl_fileplot, avl_fileread
 
     geom = avl_fileread(B737_AVL)
     print(f"Geometry: {geom.header.name}")
@@ -58,38 +58,32 @@ def main(write_docs: bool = False) -> None:
     from avl_aero_tables import aero_filewrite
 
     aero = aero_filewrite(results)
-    print(f"\nAero database:")
+    print("\nAero database:")
     print(f"  stab CLtot      : {aero.stab['CLtot'].data.shape}  (alpha × beta)")
     print(f"  ctrl CLtot      : {aero.ctrl['CLtot_d04_elevator'].data.shape}  (alpha × beta × defl)")
     print(f"  stab_deriv keys : {len(aero.stab_deriv)}  (CLa, CLb, … Cnr)")
     print(f"  ctrl_deriv keys : {len(aero.ctrl_deriv)}  (CL_d01_slat … Cn_d05_rudder)")
 
     # ── Total-coefficient plots ───────────────────────────────────────────────
-    from avl_aero_tables import aero_fileplot
+    from avl_aero_tables import plot_totals
 
-    figs = aero_fileplot(aero, beta_ref=0.0)
-    names = ["b737_total_stab", "b737_total_ctrl_lift", "b737_total_ctrl_side", "b737_total_ctrl_drag",
-             "b737_total_ctrl_roll", "b737_total_ctrl_pitch", "b737_total_ctrl_yaw"]
-    for fig, name in zip(figs, names):
-        _save_html(fig, run_dir / f"{name}.html", DOCS_HTML / f"{name}.html", write_docs)
+    for key, fig in plot_totals(aero, beta_ref=0.0).items():
+        n = f"b737_total_{key}"
+        _save_html(fig, run_dir / f"{n}.html", DOCS_HTML / f"{n}.html", write_docs)
 
     # ── Stability-derivative plots ────────────────────────────────────────────
-    from avl_aero_tables import aero_stabderivplot
+    from avl_aero_tables import plot_stab_derivs
 
-    stab_figs = aero_stabderivplot(aero)
-    stab_names = ["b737_deriv_stab_alpha", "b737_deriv_stab_beta",
-                  "b737_deriv_stab_p", "b737_deriv_stab_q", "b737_deriv_stab_r"]
-    for fig, name in zip(stab_figs, stab_names):
-        _save_html(fig, run_dir / f"{name}.html", DOCS_HTML / f"{name}.html", write_docs)
+    for key, fig in plot_stab_derivs(aero).items():
+        n = f"b737_deriv_stab_{key}"
+        _save_html(fig, run_dir / f"{n}.html", DOCS_HTML / f"{n}.html", write_docs)
 
     # ── Control-derivative plots ──────────────────────────────────────────────
-    from avl_aero_tables import aero_ctrlderivplot
+    from avl_aero_tables import plot_ctrl_derivs
 
-    ctrl_figs = aero_ctrlderivplot(aero)
-    ctrl_surfaces = ["slat", "flap", "aileron", "elevator", "rudder"]
-    ctrl_names = [f"b737_deriv_ctrl_{s}" for s in ctrl_surfaces]
-    for fig, name in zip(ctrl_figs, ctrl_names):
-        _save_html(fig, run_dir / f"{name}.html", DOCS_HTML / f"{name}.html", write_docs)
+    for key, fig in plot_ctrl_derivs(aero).items():
+        n = f"b737_deriv_ctrl_{key}"
+        _save_html(fig, run_dir / f"{n}.html", DOCS_HTML / f"{n}.html", write_docs)
 
     print(f"\nDone. All outputs in {run_dir}")
     if write_docs:

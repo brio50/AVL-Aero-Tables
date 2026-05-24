@@ -43,12 +43,22 @@ _PERTURB_UNICODE: dict[str, str] = {
 
 # Single-letter subscript for each short-form coefficient prefix.
 _COEF_SUBSCRIPT: dict[str, str] = {
-    "CL": "L", 
-    "CY": "Y", 
+    "CL": "L",
+    "CY": "Y",
     "CD": "D",
-    "Cl": "l", 
-    "Cm": "m", 
+    "Cl": "l",
+    "Cm": "m",
     "Cn": "n",
+}
+
+# Human-readable word for each coefficient prefix (used in dict keys and filenames).
+_COEF_WORD: dict[str, str] = {
+    "CL": "lift",
+    "CY": "side",
+    "CD": "drag",
+    "Cl": "roll",
+    "Cm": "pitch",
+    "Cn": "yaw",
 }
 
 # Subplot titles for control-derivative figures: generic δ (surface is in figure title).
@@ -198,9 +208,9 @@ def plot_totals(
     Returns
     -------
     dict[str, plotly.graph_objects.Figure]
-        Keys: ``"stab"``, then ``"ctrl_CL"``, ``"ctrl_CY"``, ``"ctrl_CD"``,
-        ``"ctrl_Cl"``, ``"ctrl_Cm"``, ``"ctrl_Cn"`` (control keys present only
-        when ``aero.ctrl`` is non-empty).  Empty database returns ``{}``.
+        Keys: ``"stab"``, then ``"ctrl_lift"``, ``"ctrl_side"``, ``"ctrl_drag"``,
+        ``"ctrl_roll"``, ``"ctrl_pitch"``, ``"ctrl_yaw"`` (control keys present
+        only when ``aero.ctrl`` is non-empty).  Empty database returns ``{}``.
         Save with ``fig.write_html("out.html")``.
 
     Example
@@ -223,7 +233,7 @@ def plot_totals(
     7
     >>> figs["stab"].layout.title.text
     'Aerodynamic Coefficients — Neutral Controls'
-    >>> "_total" in figs["ctrl_CL"].layout.title.text
+    >>> "_total" in figs["ctrl_lift"].layout.title.text
     True
     """
     figs: dict[str, go.Figure] = {}
@@ -289,7 +299,7 @@ def plot_totals(
                 LABEL_ALPHA, label_delta(ctrl_tbl.surface), _COEF_LABEL[coef],
                 ctrl_tbl.surface,
             )
-        figs[f"ctrl_{coef_short}"] = fig_ctrl
+        figs[f"ctrl_{_COEF_WORD[coef_short]}"] = fig_ctrl
 
     return figs
 

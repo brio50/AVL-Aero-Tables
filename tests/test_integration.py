@@ -106,7 +106,7 @@ def test_cli_plot_aero(bd_tmp):
 
     run_dir = next(runs_dir.iterdir())
     assert (run_dir / "total_stab.html").exists()
-    assert (run_dir / "total_ctrl_CL.html").exists()
+    assert (run_dir / "total_ctrl_lift.html").exists()
 
 
 # ---------------------------------------------------------------------------

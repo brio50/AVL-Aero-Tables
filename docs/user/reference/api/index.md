@@ -67,15 +67,15 @@ sequenceDiagram
     U->>FW: list[StResult]
     FW-->>U: AeroDatabase
     U->>AP: AeroDatabase
-    AP-->>U: list[plotly.Figure]
-    U->>FS: fig.write_html() → list[.html]
+    AP-->>U: dict[str, plotly.Figure]
+    U->>FS: fig.write_html() → .html (per key)
 ```
 
 | Component | Role | Public? |
 |---|---|---|
 | {doc}`avl_fileplot` | Interactive four-view geometry plot → `plotly.Figure` → `.html` | Yes |
 | {doc}`aero_filewrite` | Exports results to CSV/JSON; pivots `list[StResult]` → `AeroDatabase` | Yes |
-| {doc}`aero_fileplot` | Interactive 3-D surface plots → `list[plotly.Figure]` → `list[.html]` | Yes |
+| {doc}`aero_fileplot` | Interactive 3-D surface plots → `dict[str, plotly.Figure]` → `.html` per key | Yes |
 
 ````
 
@@ -108,13 +108,13 @@ sequenceDiagram
         FR-->>CLI: AvlGeometry
         CLI->>FP: avl_fileplot(AvlGeometry)
         FP-->>CLI: Figure
-    else plot aero <runs_dir>
+    else plot totals / stab-deriv / ctrl-deriv <runs_dir>
         CLI->>FR: st_fileread(.raw/)
         FR-->>CLI: list[StResult]
         CLI->>FP: aero_filewrite(results)
         FP-->>CLI: AeroDatabase
-        CLI->>FP: aero_fileplot(db)
-        FP-->>CLI: list[Figure]
+        CLI->>FP: plot_totals / plot_stab_derivs / plot_ctrl_derivs(db)
+        FP-->>CLI: dict[str, Figure]
     end
     CLI-->>U: output / status
 ```

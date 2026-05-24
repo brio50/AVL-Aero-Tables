@@ -232,7 +232,7 @@ def _cmd_plot_stab_deriv(args: argparse.Namespace) -> int:
 
     figs = plot_stab_derivs(aero)
     for key, fig in figs.items():
-        out = result_dir / f"stab_deriv_{key}.html"
+        out = result_dir / f"deriv_stab_{key}.html"
         fig.write_html(
             str(out), include_plotlyjs="cdn", include_mathjax="cdn", post_script=MATHJAX_RETYPESET, config={"displayModeBar": True}
         )
@@ -253,7 +253,7 @@ def _cmd_plot_ctrl_deriv(args: argparse.Namespace) -> int:
 
     figs = plot_ctrl_derivs(aero)
     for key, fig in figs.items():
-        out = result_dir / f"ctrl_deriv_{key}.html"
+        out = result_dir / f"deriv_ctrl_{key}.html"
         fig.write_html(
             str(out), include_plotlyjs="cdn", include_mathjax="cdn", post_script=MATHJAX_RETYPESET, config={"displayModeBar": True}
         )

@@ -482,12 +482,12 @@ def test_plot_totals_writes_html_files(tmp_path):
 
     fake_figs = {
         "stab": MagicMock(),
-        "ctrl_CL": MagicMock(),
-        "ctrl_CY": MagicMock(),
-        "ctrl_CD": MagicMock(),
-        "ctrl_Cl": MagicMock(),
-        "ctrl_Cm": MagicMock(),
-        "ctrl_Cn": MagicMock(),
+        "ctrl_lift": MagicMock(),
+        "ctrl_side": MagicMock(),
+        "ctrl_drag": MagicMock(),
+        "ctrl_roll": MagicMock(),
+        "ctrl_pitch": MagicMock(),
+        "ctrl_yaw": MagicMock(),
     }
     fake_aero = MagicMock()
     with (
@@ -576,7 +576,7 @@ def test_plot_stab_deriv_writes_html_files(tmp_path):
     assert result == 0
     for key, fig in fake_figs.items():
         written = Path(fig.write_html.call_args[0][0])
-        assert written == run_dir / f"stab_deriv_{key}.html"
+        assert written == run_dir / f"deriv_stab_{key}.html"
     assert mock_browser.call_args[0][0].endswith("index.html")
 
 
@@ -629,7 +629,7 @@ def test_plot_ctrl_deriv_writes_html_files(tmp_path):
 
     assert result == 0
     written_names = [Path(fig.write_html.call_args[0][0]).name for fig in fake_figs.values()]
-    assert written_names == ["ctrl_deriv_flap.html", "ctrl_deriv_elevator.html"]
+    assert written_names == ["deriv_ctrl_flap.html", "deriv_ctrl_elevator.html"]
     assert mock_browser.call_args[0][0].endswith("index.html")
 
 

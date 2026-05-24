@@ -176,7 +176,7 @@ def test_ctrl_figures_produced():
 @pytest.mark.req("req-aeroplot-7")
 def test_ctrl_figure_has_one_surface_per_control():
     figs = plot_totals(_ctrl_aero())
-    ctrl_fig = figs["ctrl_CL"]
+    ctrl_fig = figs["ctrl_lift"]
     surfaces = [t for t in ctrl_fig.data if isinstance(t, go.Surface)]
     assert len(surfaces) == 1  # one surface (elevator only)
 
