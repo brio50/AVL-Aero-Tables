@@ -86,7 +86,7 @@ def test_cli_sweep(bd_tmp):
     assert len(run_dirs) == 1, "expected exactly one run directory"
 
     run_dir = run_dirs[0]
-    assert (run_dir / "results.csv").exists()
+    assert (run_dir / "results_total.csv").exists()
     assert (run_dir / "provenance.json").exists()
     st_files = list((run_dir / ".raw").glob("*.st"))
     assert len(st_files) == 9, f"expected 9 cases, got {len(st_files)}"

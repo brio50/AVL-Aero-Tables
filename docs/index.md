@@ -17,7 +17,7 @@ A Python package that drives AVL programmatically and returns structured aerodyn
 
 **The key idea:** AVL is normally operated interactively — you type commands into its terminal menu, load a hand-written `.run` file, and step through each flight condition manually. `avl-aero-tables` bypasses this entirely. It invokes the AVL binary with no arguments and pipes a complete stdin script — loading geometry (`LOAD`), run-case (`CASE`), and all sweep commands (OPER, alpha/beta/deflection settings, `st` saves) — running hundreds of flight conditions in a single Python call.
 
-Each sweep creates a timestamped subdirectory containing `results.csv`, a `provenance.json` record (git commit, dirty flag, source directory, snapshot path), AVL input snapshots in `.in/`, and raw `.st` output files in `.raw/` — so previous runs are never overwritten and every result is fully traceable. See {ref}`output-layout` for the full directory structure.
+Each sweep creates a timestamped subdirectory containing `results_total.csv`, a `provenance.json` record (git commit, dirty flag, source directory, snapshot path), AVL input snapshots in `.in/`, and raw `.st` output files in `.raw/` — so previous runs are never overwritten and every result is fully traceable. See {ref}`output-layout` for the full directory structure.
 
 Five functions cover the full workflow — from reading a geometry file through plotting a finished aero database. Use the CLI for one-command runs, or call the Python API directly:
 

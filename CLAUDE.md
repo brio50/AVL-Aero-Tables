@@ -72,7 +72,7 @@ avl_sweep.run(avl_file, alpha, beta, ctrl_sweeps, out_dir, binary, out_format, y
     ├─ st_fileread(run_dir/.raw)            → list[StResult]
     │   └─ each StResult has .filename, .controls, .data (dict of floats)
     │
-    └─ results_to_dataframe(results)       → DataFrame → results.csv / results.json
+    └─ results_to_dataframe(results)       → DataFrame → results_total.csv / results_deriv_stab.csv / results_deriv_ctrl.csv
         └─ skipped when out_format == "df"
 ```
 

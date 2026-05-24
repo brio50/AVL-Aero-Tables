@@ -27,6 +27,9 @@ sequenceDiagram
     BN->>FS: .raw/case_NNNN.st
     S->>FR: st_fileread(.raw/)
     FR-->>S: list[StResult]
+    S->>FS: results_total.csv / .json
+    S->>FS: results_deriv_stab.csv / .json
+    S->>FS: results_deriv_ctrl.csv / .json
     S-->>U: list[StResult]
 ```
 

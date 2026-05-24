@@ -161,13 +161,13 @@ def _run_with_format(out_dir, fmt):
 @pytest.mark.req("req-sweep-9")
 def test_out_format_csv_creates_file(tmp_path):
     _run_with_format(tmp_path, "csv")
-    assert any(tmp_path.rglob("results.csv"))
+    assert any(tmp_path.rglob("results_total.csv"))
 
 
 @pytest.mark.req("req-sweep-10")
 def test_out_format_json_creates_file(tmp_path):
     _run_with_format(tmp_path, "json")
-    assert any(tmp_path.rglob("results.json"))
+    assert any(tmp_path.rglob("results_total.json"))
 
 
 @pytest.mark.req("req-sweep-11")
