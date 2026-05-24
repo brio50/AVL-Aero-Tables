@@ -631,6 +631,67 @@ def test_plot_ctrl_deriv_writes_html_files(tmp_path):
     assert mock_browser.call_args[0][0].endswith("index.html")
 
 
+# ---------------------------------------------------------------------------
+# plot all
+# ---------------------------------------------------------------------------
+
+
+def test_plot_all_calls_all_three_plotters(tmp_path):
+    run_dir = tmp_path / "2026-01-01-120000"
+    run_dir.mkdir()
+
+    fake_aero = MagicMock()
+    fake_totals = {"stab": MagicMock(), "ctrl_lift": MagicMock()}
+    fake_stab = {"alpha": MagicMock(), "beta": MagicMock()}
+    fake_ctrl = {"flap": MagicMock()}
+
+    with (
+        patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
+        patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
+        patch("avl_aero_tables.aero_fileplot.plot_totals", return_value=fake_totals) as mock_totals,
+        patch("avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value=fake_stab) as mock_stab,
+        patch("avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value=fake_ctrl) as mock_ctrl,
+        patch("webbrowser.open") as mock_browser,
+    ):
+        result = main(["plot", "all", str(run_dir)])
+
+    assert result == 0
+    mock_totals.assert_called_once()
+    mock_stab.assert_called_once()
+    mock_ctrl.assert_called_once()
+    assert mock_browser.call_args[0][0].endswith("index.html")
+
+    written = {
+        Path(fig.write_html.call_args[0][0]).name
+        for figs in (fake_totals, fake_stab, fake_ctrl)
+        for fig in figs.values()
+    }
+    assert "total_stab.html" in written
+    assert "total_ctrl_lift.html" in written
+    assert "deriv_stab_alpha.html" in written
+    assert "deriv_stab_beta.html" in written
+    assert "deriv_ctrl_flap.html" in written
+
+
+def test_plot_all_beta_ref_forwarded(tmp_path):
+    run_dir = tmp_path / "2026-01-01-120000"
+    run_dir.mkdir()
+
+    fake_aero = MagicMock()
+    with (
+        patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
+        patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
+        patch("avl_aero_tables.aero_fileplot.plot_totals", return_value={}) as mock_totals,
+        patch("avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value={}),
+        patch("avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value={}),
+        patch("webbrowser.open"),
+    ):
+        main(["plot", "all", "--beta-ref", "3.0", str(run_dir)])
+
+    _, kwargs = mock_totals.call_args
+    assert kwargs.get("beta_ref") == pytest.approx(3.0)
+
+
 def test_write_index_html(tmp_path):
     from avl_aero_tables.avl_cli import _write_index_html
 

@@ -87,6 +87,19 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     ctrlderiv_p.add_argument("runs_dir", type=Path, help=_runs_help)
 
+    all_p = plot_sub.add_parser(
+        "all",
+        help="Generate all plots: totals, stab-deriv, and ctrl-deriv",
+    )
+    all_p.add_argument("runs_dir", type=Path, help=_runs_help)
+    all_p.add_argument(
+        "--beta-ref",
+        type=float,
+        default=0.0,
+        metavar="DEG",
+        help="Sideslip angle (deg) for control-surface slices (default: 0.0)",
+    )
+
     return p
 
 
@@ -256,6 +269,38 @@ def _cmd_plot_stab_deriv(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_plot_all(args: argparse.Namespace) -> int:
+    import webbrowser
+
+    from avl_aero_tables.aero_fileplot import plot_ctrl_derivs, plot_stab_derivs, plot_totals
+
+    result_dir, aero = _load_aero(args.runs_dir.resolve())
+    if aero is None:
+        return 1
+
+    all_figs = {}
+    for key, fig in plot_totals(aero, beta_ref=args.beta_ref).items():
+        all_figs[f"total_{key}"] = fig
+    for key, fig in plot_stab_derivs(aero).items():
+        all_figs[f"deriv_stab_{key}"] = fig
+    for key, fig in plot_ctrl_derivs(aero).items():
+        all_figs[f"deriv_ctrl_{key}"] = fig
+
+    for stem, fig in all_figs.items():
+        out = result_dir / f"{stem}.html"
+        fig.write_html(
+            str(out),
+            include_plotlyjs="cdn",
+            include_mathjax="cdn",
+            post_script=MATHJAX_RETYPESET,
+            config={"displayModeBar": True},
+        )
+        print(f"  → {out.name}")
+    index = _write_index_html(result_dir)
+    webbrowser.open(index.as_uri())
+    return 0
+
+
 def _cmd_plot_ctrl_deriv(args: argparse.Namespace) -> int:
     import webbrowser
 
@@ -317,6 +362,9 @@ def main(argv: list[str] | None = None) -> int:
         3-D control-derivative surfaces (CLd01, CYd01, …) — one figure per
         control surface.
 
+    ``plot all [--beta-ref DEG] <runs_dir>``
+        Generate all plots (totals, stab-deriv, ctrl-deriv) in one shot.
+
     Example
     -------
     .. code-block:: shell
@@ -330,6 +378,8 @@ def main(argv: list[str] | None = None) -> int:
         avl-aero-tables plot totals --beta-ref 5 _runs/bd/
         avl-aero-tables plot stab-deriv _runs/bd/
         avl-aero-tables plot ctrl-deriv _runs/bd/
+        avl-aero-tables plot all _runs/bd/
+        avl-aero-tables plot all --beta-ref 5 _runs/bd/
     """
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -358,6 +408,8 @@ def main(argv: list[str] | None = None) -> int:
             return _cmd_plot_stab_deriv(args)
         if args.plot_command == "ctrl-deriv":
             return _cmd_plot_ctrl_deriv(args)
+        if args.plot_command == "all":
+            return _cmd_plot_all(args)
 
     return 0
 
