@@ -210,7 +210,7 @@ def plot_totals(
     dict[str, plotly.graph_objects.Figure]
         Keys: ``"stab"``, then ``"ctrl_lift"``, ``"ctrl_side"``, ``"ctrl_drag"``,
         ``"ctrl_roll"``, ``"ctrl_pitch"``, ``"ctrl_yaw"`` (control keys present
-        only when ``aero.ctrl`` is non-empty).  Empty database returns ``{}``.
+        only when ``aero.total_ctrl`` is non-empty).  Empty database returns ``{}``.
         Save with ``fig.write_html("out.html")``.
 
     Example
@@ -241,7 +241,7 @@ def plot_totals(
     # ------------------------------------------------------------------
     # 1. Stability figure
     # ------------------------------------------------------------------
-    stab_coefs = [c for c in COEF_NAMES if c in aero.stab]
+    stab_coefs = [c for c in COEF_NAMES if c in aero.total_stab]
     if stab_coefs:
         n_cols = 3
         n_rows = (len(stab_coefs) + n_cols - 1) // n_cols
@@ -252,7 +252,7 @@ def plot_totals(
             "Aerodynamic Coefficients — Neutral Controls",
         )
         for i, coef in enumerate(stab_coefs):
-            tbl = aero.stab[coef]
+            tbl = aero.total_stab[coef]
             alpha_g, beta_g = np.meshgrid(tbl.alpha, tbl.beta, indexing="ij")
             _add_surface_trace(
                 fig_stab,
@@ -273,11 +273,11 @@ def plot_totals(
     # ------------------------------------------------------------------
     # 2. Control figures
     # ------------------------------------------------------------------
-    ctrl_surfaces = list(dict.fromkeys(t.surface for t in aero.ctrl.values()))
+    ctrl_surfaces = list(dict.fromkeys(t.surface for t in aero.total_ctrl.values()))
     if not ctrl_surfaces:
         return figs
 
-    sample_tbl = next(iter(aero.ctrl.values()))
+    sample_tbl = next(iter(aero.total_ctrl.values()))
     beta_arr = sample_tbl.beta
     bi = int(np.argmin(np.abs(beta_arr - beta_ref)))
     beta_actual = float(beta_arr[bi])
@@ -287,7 +287,7 @@ def plot_totals(
     n_rows_ctrl = (n_surfs + n_cols_ctrl - 1) // n_cols_ctrl
 
     for coef in COEF_NAMES:
-        ctrl_keys = [f"{coef}_{s}" for s in ctrl_surfaces if f"{coef}_{s}" in aero.ctrl]
+        ctrl_keys = [f"{coef}_{s}" for s in ctrl_surfaces if f"{coef}_{s}" in aero.total_ctrl]
         if not ctrl_keys:
             continue
 
@@ -295,11 +295,11 @@ def plot_totals(
         fig_ctrl, scene_names = _init_figure(
             n_rows_ctrl,
             n_cols_ctrl,
-            [aero.ctrl[k].surface for k in ctrl_keys],
+            [aero.total_ctrl[k].surface for k in ctrl_keys],
             f"{_COEF_LABEL[coef]} vs. α, δ  (β = {beta_actual:.1f}°)",
         )
         for j, key in enumerate(ctrl_keys):
-            ctrl_tbl = aero.ctrl[key]
+            ctrl_tbl = aero.total_ctrl[key]
             alpha_g, defl_g = np.meshgrid(ctrl_tbl.alpha, ctrl_tbl.defl, indexing="ij")
             _add_surface_trace(
                 fig_ctrl,

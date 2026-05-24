@@ -8,24 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] - 2026-05-23
 
 ### Added
-- `AeroDatabase` now captures all three `.st` output categories: `stab`/`ctrl` (total coefficients, unchanged), `stab_deriv` (30 stability-axis derivatives at neutral controls), and `ctrl_deriv` (6 × n_surfaces control derivatives at neutral controls)
-- `results_deriv_stab.{csv,json}` and `results_deriv_ctrl.{csv,json}` written alongside `results_total.{csv,json}` on every sweep
-- `plot_stab_derivs(aero)` — 5 Plotly figures (one per perturbation variable α β p′ q′ r′), 6 subplots each
-- `plot_ctrl_derivs(aero)` — one Plotly figure per control surface, 6 subplots each
-- `stab_deriv_to_dataframe(results)` and `ctrl_deriv_to_dataframe(results)` DataFrame helpers
-- CLI `plot stab-deriv` and `plot ctrl-deriv` subcommands
+- `AeroDatabase.stab_deriv` (30 stability derivatives) and `ctrl_deriv` (6 × n_surfaces control derivatives), populated from neutral-control runs
+- `plot_stab_derivs(aero)` and `plot_ctrl_derivs(aero)` plot functions
+- CLI `plot stab-deriv`, `plot ctrl-deriv`, and `plot all` subcommands
+- `stab_deriv_to_dataframe` and `ctrl_deriv_to_dataframe` helpers
 
 ### Changed
-- Output CSV/JSON filenames renamed to mirror HTML output pattern: `results.csv` → `results_total.csv`, `results_stab_deriv.csv` → `results_deriv_stab.csv`, `results_ctrl_deriv.csv` → `results_deriv_ctrl.csv` (breaking — update downstream consumers)
-- `aero_fileplot` → `plot_totals`; `aero_stabderivplot` → `plot_stab_derivs`; `aero_ctrlderivplot` → `plot_ctrl_derivs` (breaking — update imports)
-- All three plot functions return `dict[str, Figure]` instead of `list[Figure]`; keys are `"stab"`, `"ctrl_lift"` … `"ctrl_yaw"`, `"alpha"` … `"r"`, or surface name (breaking — update iteration)
-- CLI output filenames: `total_stab.html`, `total_ctrl_lift.html`, `deriv_stab_alpha.html`, `deriv_ctrl_flap.html` (breaking — update downstream consumers)
-- `plot aero` CLI subcommand renamed to `plot totals`; `--beta-ref DEG` option added (breaking — update scripts/aliases)
+- `AeroDatabase.stab` → `total_stab`; `AeroDatabase.ctrl` → `total_ctrl` (breaking)
+- `aero_fileplot` → `plot_totals`; `aero_stabderivplot` → `plot_stab_derivs`; `aero_ctrlderivplot` → `plot_ctrl_derivs` (breaking)
+- All plot functions return `dict[str, Figure]` instead of `list[Figure]` (breaking)
+- `plot aero` CLI subcommand renamed to `plot totals`; `--beta-ref DEG` added (breaking)
+- Output filenames: `results.csv` → `results_total.csv`, `results_stab_deriv.csv` → `results_deriv_stab.csv`, `results_ctrl_deriv.csv` → `results_deriv_ctrl.csv` (breaking)
 - Axis labels use Unicode (α β p′ q′ r′) instead of LaTeX strings
 
 ### Fixed
-- Plot titles no longer mislabel total-coefficient plots as stability/control derivatives
-- Plotly 3-D figures in sphinx-design tabs went blank when cycling between tabs or scrolling between tab sets; root cause was Chrome's ~16-context WebGL limit being exhausted as iframes accumulated across multiple tab sets — fixed by re-adding `docs/_static/custom.js` with an `IntersectionObserver` that blanks each `iframe.plotly-iframe` when it leaves the viewport and restores its `src` when it returns, keeping live WebGL contexts limited to what is actually on screen
+- Plot titles no longer mislabel total-coefficient plots as derivatives
+- Plotly WebGL context exhaustion in sphinx-design tabs; fixed with an `IntersectionObserver` in `docs/_static/custom.js`
 
 ## [1.8.0] - 2026-05-20
 

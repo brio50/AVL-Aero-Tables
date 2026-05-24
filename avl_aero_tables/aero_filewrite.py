@@ -88,8 +88,8 @@ class CtrlTable:
 class AeroDatabase:
     """Aero coefficient tables built from a sweep of AVL .st results.
 
-    stab[coef]           → StabTable  total coefficients, neutral-control, indexed α×β
-    ctrl[coef_surface]   → CtrlTable  total coefficients, all deflections, indexed α×β×δ
+    total_stab[coef]     → StabTable  total coefficients, neutral-control, indexed α×β
+    total_ctrl[coef_surface] → CtrlTable  total coefficients, all deflections, indexed α×β×δ
     stab_deriv[key]      → StabTable  stability derivatives (CLa, CLb, CLp, …, Cnr), neutral-control only, indexed α×β
     ctrl_deriv[key]      → StabTable  control derivatives (CL_d01_flap, …), neutral-control only, indexed α×β
     """
@@ -101,8 +101,8 @@ class AeroDatabase:
     Xref: float = 0.0
     Yref: float = 0.0
     Zref: float = 0.0
-    stab: dict[str, StabTable] = field(default_factory=dict)
-    ctrl: dict[str, CtrlTable] = field(default_factory=dict)
+    total_stab: dict[str, StabTable] = field(default_factory=dict)
+    total_ctrl: dict[str, CtrlTable] = field(default_factory=dict)
     stab_deriv: dict[str, StabTable] = field(default_factory=dict)
     ctrl_deriv: dict[str, StabTable] = field(default_factory=dict)
 
@@ -147,9 +147,9 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
     ...         "examples/bd/bd.avl", alpha=[-5, 0, 5, 10], beta=[0], out_dir=tmp
     ...     )
     >>> db = aero_filewrite(results)
-    >>> db.stab["CLtot"].data.shape
+    >>> db.total_stab["CLtot"].data.shape
     (4, 1)
-    >>> list(db.stab)
+    >>> list(db.total_stab)
     ['CLtot', 'CYtot', 'CDtot', 'Cltot', 'Cmtot', 'Cntot']
     """
     if not results:
@@ -179,7 +179,7 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
             setattr(db, fld, r0.data[fld])
 
     for coef in COEF_NAMES:
-        db.stab[coef] = StabTable(
+        db.total_stab[coef] = StabTable(
             coef=coef,
             alpha=alpha_arr,
             beta=beta_arr,
@@ -190,7 +190,7 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
         surf_key = f"{d_idx}_{ctrl_name}"
         defl_arr = surface_defls[d_idx]
         for coef in COEF_NAMES:
-            db.ctrl[f"{coef}_{surf_key}"] = CtrlTable(
+            db.total_ctrl[f"{coef}_{surf_key}"] = CtrlTable(
                 coef=coef,
                 surface=surf_key,
                 ctrl_name=ctrl_name,
@@ -229,12 +229,12 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
         for coef in COEF_NAMES:
             val = r.data.get(coef, np.nan)
             if all_neutral:
-                db.stab[coef].data[ai, bi] = val
+                db.total_stab[coef].data[ai, bi] = val
             for d_idx, ctrl_name in ctrl_map.items():
                 surf_key = f"{d_idx}_{ctrl_name}"
                 defl_val = r.data.get(ctrl_name, 0.0)
                 di = _find_idx(surface_defls[d_idx], defl_val)
-                db.ctrl[f"{coef}_{surf_key}"].data[ai, bi, di] = val
+                db.total_ctrl[f"{coef}_{surf_key}"].data[ai, bi, di] = val
 
         if all_neutral:
             for key in STAB_DERIV_NAMES:

@@ -129,8 +129,8 @@ def test_ref_fields_populated():
 def test_stab_tables_created_for_all_coefs():
     db = aero_filewrite([_make_result(5.0, 0.0)])
     for coef in COEF_NAMES:
-        assert coef in db.stab
-        assert isinstance(db.stab[coef], StabTable)
+        assert coef in db.total_stab
+        assert isinstance(db.total_stab[coef], StabTable)
 
 
 @pytest.mark.req("req-write-6")
@@ -139,8 +139,8 @@ def test_ctrl_tables_created_for_each_coef_surface():
     for coef in COEF_NAMES:
         for d_idx, ctrl_name in CTRL_MAP.items():
             key = f"{coef}_{d_idx}_{ctrl_name}"
-            assert key in db.ctrl
-            assert isinstance(db.ctrl[key], CtrlTable)
+            assert key in db.total_ctrl
+            assert isinstance(db.total_ctrl[key], CtrlTable)
 
 
 # ---------------------------------------------------------------------------
@@ -152,21 +152,21 @@ def test_ctrl_tables_created_for_each_coef_surface():
 def test_alpha_breakpoints_sorted():
     results = [_make_result(a, 0.0) for a in [5.0, -5.0, 0.0]]
     db = aero_filewrite(results)
-    np.testing.assert_array_equal(db.stab["CLtot"].alpha, [-5.0, 0.0, 5.0])
+    np.testing.assert_array_equal(db.total_stab["CLtot"].alpha, [-5.0, 0.0, 5.0])
 
 
 @pytest.mark.req("req-write-8")
 def test_beta_breakpoints_sorted():
     results = [_make_result(0.0, b) for b in [3.0, -3.0, 0.0]]
     db = aero_filewrite(results)
-    np.testing.assert_array_equal(db.stab["CLtot"].beta, [-3.0, 0.0, 3.0])
+    np.testing.assert_array_equal(db.total_stab["CLtot"].beta, [-3.0, 0.0, 3.0])
 
 
 @pytest.mark.req("req-write-9")
 def test_stab_table_shape():
     results = [_make_result(a, b) for a in [-5.0, 0.0, 5.0] for b in [-3.0, 0.0, 3.0]]
     db = aero_filewrite(results)
-    assert db.stab["CLtot"].data.shape == (3, 3)
+    assert db.total_stab["CLtot"].data.shape == (3, 3)
 
 
 # ---------------------------------------------------------------------------
@@ -178,14 +178,14 @@ def test_stab_table_shape():
 def test_neutral_case_fills_stab_table():
     r = _make_result(5.0, 0.0, coef_vals={"CLtot": 0.58})
     db = aero_filewrite([r])
-    assert db.stab["CLtot"].data[0, 0] == pytest.approx(0.58)
+    assert db.total_stab["CLtot"].data[0, 0] == pytest.approx(0.58)
 
 
 @pytest.mark.req("req-write-11")
 def test_non_neutral_does_not_fill_stab_table():
     r = _make_result(5.0, 0.0, deflections={"flap": 10.0})
     db = aero_filewrite([r])
-    assert np.isnan(db.stab["CLtot"].data[0, 0])
+    assert np.isnan(db.total_stab["CLtot"].data[0, 0])
 
 
 @pytest.mark.req("req-write-9", "req-write-10")
@@ -194,8 +194,8 @@ def test_multiple_alphas_stab_shape_and_values():
         _make_result(a, 0.0, coef_vals={"CLtot": a * 0.1}) for a in [-5.0, 0.0, 5.0]
     ]
     db = aero_filewrite(results)
-    assert db.stab["CLtot"].data.shape == (3, 1)
-    np.testing.assert_allclose(db.stab["CLtot"].data[:, 0], [-0.5, 0.0, 0.5], atol=1e-9)
+    assert db.total_stab["CLtot"].data.shape == (3, 1)
+    np.testing.assert_allclose(db.total_stab["CLtot"].data[:, 0], [-0.5, 0.0, 0.5], atol=1e-9)
 
 
 # ---------------------------------------------------------------------------
@@ -210,7 +210,7 @@ def test_ctrl_table_defl_breakpoints():
     ]
     db = aero_filewrite(results)
     key = "CLtot_d01_flap"
-    np.testing.assert_array_equal(db.ctrl[key].defl, [-5.0, 0.0, 5.0])
+    np.testing.assert_array_equal(db.total_ctrl[key].defl, [-5.0, 0.0, 5.0])
 
 
 @pytest.mark.req("req-write-12")
@@ -221,7 +221,7 @@ def test_ctrl_table_shape():
         for d in [-5.0, 0.0, 5.0]
     ]
     db = aero_filewrite(results)
-    assert db.ctrl["CLtot_d01_flap"].data.shape == (2, 1, 3)
+    assert db.total_ctrl["CLtot_d01_flap"].data.shape == (2, 1, 3)
 
 
 @pytest.mark.req("req-write-14")
@@ -232,14 +232,14 @@ def test_ctrl_table_values_filled():
     ]
     db = aero_filewrite(results)
     np.testing.assert_allclose(
-        db.ctrl["CLtot_d01_flap"].data[0, 0, :], [0.4, 0.5, 0.6], atol=1e-9
+        db.total_ctrl["CLtot_d01_flap"].data[0, 0, :], [0.4, 0.5, 0.6], atol=1e-9
     )
 
 
 @pytest.mark.req("req-write-15")
 def test_ctrl_table_surface_and_ctrl_name():
     db = aero_filewrite([_make_result(0.0, 0.0)])
-    t = db.ctrl["CLtot_d01_flap"]
+    t = db.total_ctrl["CLtot_d01_flap"]
     assert t.surface == "d01_flap"
     assert t.ctrl_name == "flap"
 
@@ -264,7 +264,7 @@ def test_no_controls_empty_ctrl_dict():
         "Cntot": 0.0,
     }
     db = aero_filewrite([r])
-    assert db.ctrl == {}
+    assert db.total_ctrl == {}
 
 
 @pytest.mark.req("req-write-17")
@@ -282,7 +282,7 @@ def test_no_controls_stab_table_filled():
         "Cntot": 0.0,
     }
     db = aero_filewrite([r])
-    assert db.stab["CLtot"].data[0, 0] == pytest.approx(0.42)
+    assert db.total_stab["CLtot"].data[0, 0] == pytest.approx(0.42)
 
 
 # ---------------------------------------------------------------------------
@@ -301,7 +301,7 @@ def test_missing_coef_produces_nan():
     r = _make_result(0.0, 0.0)
     del r.data["CDtot"]
     db = aero_filewrite([r])
-    assert np.isnan(db.stab["CDtot"].data[0, 0])
+    assert np.isnan(db.total_stab["CDtot"].data[0, 0])
 
 
 # ---------------------------------------------------------------------------

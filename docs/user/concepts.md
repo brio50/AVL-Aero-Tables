@@ -143,6 +143,7 @@ results_deriv_ctrl.csv     → control derivatives (neutral-control cases only)
 avl-aero-tables plot totals     _runs/bd/   # total coefficients
 avl-aero-tables plot stab-deriv _runs/bd/   # stability derivatives
 avl-aero-tables plot ctrl-deriv _runs/bd/   # control derivatives
+avl-aero-tables plot all        _runs/bd/   # all three in one shot
 ```
 
 ## Neutral Runs
@@ -151,15 +152,15 @@ A **neutral-control run** is a case where every control surface deflection is ze
 
 `aero_filewrite` populates four separate table stores:
 
-- **`aero.stab`** — total coefficients (CLtot, CDtot, Cmtot, …) vs. α and β; filled **only** from neutral-control runs
-- **`aero.ctrl`** — total coefficients indexed by α, β, and deflection angle; filled from all control-surface runs
+- **`aero.total_stab`** — total coefficients (CLtot, CDtot, Cmtot, …) vs. α and β; filled **only** from neutral-control runs
+- **`aero.total_ctrl`** — total coefficients indexed by α, β, and deflection angle; filled from all control-surface runs
 - **`aero.stab_deriv`** — stability derivatives (CLa, CLb, CLp, …, Cnr) vs. α and β; filled **only** from neutral-control runs
 - **`aero.ctrl_deriv`** — control derivatives (∂CL/∂δ, ∂Cm/∂δ, …) vs. α and β; filled **only** from neutral-control runs
 
 This ensures that off-neutral sweeps (e.g. elevator at ±20°) do not corrupt the baseline maps.
 
 ````{important}
-Include `0.0` in every `ctrl_sweeps` deflection list, or `aero.stab` will be empty.
+Include `0.0` in every `ctrl_sweeps` deflection list, or `aero.total_stab` will be empty.
 
 ```python
 ctrl_sweeps = {
@@ -180,7 +181,7 @@ results = avl_sweep(
 )
 ```
 
-The result is the baseline aerodynamic map — CL, CD, Cm, CY, Cl, Cn across the flight envelope — stored in `aero.stab` after passing through `aero_filewrite`. Every other sweep type is referenced against this baseline.
+The result is the baseline aerodynamic map — CL, CD, Cm, CY, Cl, Cn across the flight envelope — stored in `aero.total_stab` after passing through `aero_filewrite`. Every other sweep type is referenced against this baseline.
 
 ## Control Sweeps
 

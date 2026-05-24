@@ -59,8 +59,8 @@ def main(write_docs: bool = False) -> None:
 
     aero = aero_filewrite(results)
     print("\nAero database:")
-    print(f"  stab CLtot      : {aero.stab['CLtot'].data.shape}  (alpha × beta)")
-    print(f"  ctrl CLtot      : {aero.ctrl['CLtot_d04_elevator'].data.shape}  (alpha × beta × defl)")
+    print(f"  total_stab CLtot : {aero.total_stab['CLtot'].data.shape}  (alpha × beta)")
+    print(f"  total_ctrl CLtot : {aero.total_ctrl['CLtot_d04_elevator'].data.shape}  (alpha × beta × defl)")
     print(f"  stab_deriv keys : {len(aero.stab_deriv)}  (CLa, CLb, … Cnr)")
     print(f"  ctrl_deriv keys : {len(aero.ctrl_deriv)}  (CL_d01_slat … Cn_d05_rudder)")
 
