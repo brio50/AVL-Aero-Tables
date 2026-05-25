@@ -77,6 +77,52 @@ D &= C_D \cdot \tfrac{1}{2}\rho V^2 \cdot S_\text{ref} \\
 
 where $L$, $Y$, $D$ are lift, side force, and drag; $\bar{L}$, $\bar{M}$, $\bar{N}$ are roll, pitch, and yaw moments — all in units consistent with the input geometry. These are exact at $\beta = 0$. For nonzero sideslip, $C_D$ and $C_Y$ require correction before scaling — see {eq}`eq-wind-coeffs`.
 
+```{admonition} Computing dimensional forces
+:class: tip
+
+`Sref`, `Cref`, and `Bref` are echoed from the `.avl` header into every `.st` file and exposed as attributes on `AeroDatabase` — no separate geometry read is required. Supply `rho` and `V` at simulation time (they change each timestep and are never passed to `avl_sweep`):
+
+```python
+from scipy.interpolate import RegularGridInterpolator
+
+from avl_aero_tables import avl_sweep
+from avl_aero_tables.aero_filewrite import aero_filewrite
+
+results = avl_sweep("examples/bd/bd.avl", alpha=[-4, 0, 4, 8], beta=[-5, 0, 5], out_dir="_runs")
+db = aero_filewrite(results)
+
+# Build one interpolator per coefficient (bilinear over the alpha × beta grid)
+_coefs = ("CLtot", "CDtot", "CYtot", "Cltot", "Cmtot", "Cntot")
+interp = {
+    c: RegularGridInterpolator(
+        (db.total_stab[c].alpha, db.total_stab[c].beta),
+        db.total_stab[c].data,
+    )
+    for c in _coefs
+}
+
+# --- simulation loop ---
+# Units must be consistent with the geometry's Lunit/Munit/Tunit declarations
+# (e.g. slug/ft³ + ft/s for ft-based geometry; kg/m³ + m/s for SI geometry)
+rho   = ...   # density
+V     = ...   # airspeed
+alpha = ...   # angle of attack (deg)
+beta  = ...   # sideslip angle (deg)
+
+q  = 0.5 * rho * V**2
+pt = [[alpha, beta]]   # RegularGridInterpolator expects shape (n_pts, n_dims)
+
+L = float(interp["CLtot"](pt)) * q * db.Sref
+D = float(interp["CDtot"](pt)) * q * db.Sref
+Y = float(interp["CYtot"](pt)) * q * db.Sref
+l = float(interp["Cltot"](pt)) * q * db.Sref * db.Bref
+m = float(interp["Cmtot"](pt)) * q * db.Sref * db.Cref
+n = float(interp["Cntot"](pt)) * q * db.Sref * db.Bref
+```
+
+`db.Sref`, `db.Cref`, and `db.Bref` are also columns in `results_total.csv` / `results_total.json` but are not included in the `results_deriv_stab` or `results_deriv_ctrl` output files.
+```
+
 ### Sideslip Correction
 
 When $\beta \neq 0$, stability-axis `CD` and `CY` are not the true wind-axis drag and side force. AVL's stability axes account for angle of attack ($\alpha$) but not sideslip ($\beta$) — when $\beta \neq 0$, $x_s$ does *not* fully point into the relative wind. As a result, what AVL labels `CD` is not purely the force opposing the velocity vector, and `CY` is not purely the perpendicular side force.
