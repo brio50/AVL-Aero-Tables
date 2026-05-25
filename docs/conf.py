@@ -26,6 +26,7 @@ extensions = [
     "sphinx_design",
     "plotly_figure",
     "sphinx.ext.mathjax",
+    "sphinx_multiversion",
 ]
 
 # -- Source ---------------------------------------------------------------

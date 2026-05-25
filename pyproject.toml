@@ -38,6 +38,7 @@ docs = [
     "sphinxcontrib-mermaid",
     "sphinx-design",
     "sphinx-autobuild",
+    "sphinx-multiversion",
 ]
 
 [tool.setuptools.packages.find]
