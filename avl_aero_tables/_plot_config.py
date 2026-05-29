@@ -33,7 +33,7 @@ AXIS_3D: dict[str, Any] = dict(
 
 # Camera for the geometry figure: nose-left, flying toward viewer.
 CAMERA_GEOM: dict[str, Any] = dict(
-    eye=dict(x=-1.5, y=1.5, z=0.8), up=dict(x=0, y=0, z=1)
+    eye=dict(x=-1.2, y=-1.2, z=0.65), up=dict(x=0, y=0, z=1)
 )
 
 # Camera for aero surface plots: isometric view from front-right above.

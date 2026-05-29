@@ -135,8 +135,8 @@ def test_stability_figure_first():
 def test_stability_subplot_titles():
     figs = plot_totals(_minimal_aero())
     titles = {a.text for a in figs["stab"].layout.annotations}
-    assert "CL_total" in titles
-    assert "CD_total" in titles
+    assert r"$C_{L,\mathrm{total}}$" in titles
+    assert r"$C_{D,\mathrm{total}}$" in titles
 
 
 # ---------------------------------------------------------------------------
@@ -186,7 +186,7 @@ def test_ctrl_figure_titles_contain_coef_name():
     figs = plot_totals(_ctrl_aero())
     for k, f in figs.items():
         if k != "stab":
-            assert "_total" in f.layout.title.text
+            assert "Coefficient" in f.layout.title.text
 
 
 # ---------------------------------------------------------------------------
@@ -220,8 +220,8 @@ def test_aero_stabderivplot_titles_contain_pertvar():
     db = aero_filewrite([_make_result(0.0, 0.0)])
     figs = plot_stab_derivs(db)
     titles = [f.layout.title.text for f in figs.values()]
-    assert any("α" in t for t in titles)
-    assert any("β" in t for t in titles)
+    assert any("Angle of Attack" in t for t in titles)
+    assert any("Angle of Sideslip" in t for t in titles)
 
 
 @pytest.mark.req("req-aeroplot-12")
@@ -249,7 +249,7 @@ def test_aero_ctrlderivplot_titles_contain_surface():
     db = aero_filewrite([_make_result(0.0, 0.0)])
     figs = plot_ctrl_derivs(db)
     assert len(figs) == 1
-    assert "elevator" in figs["elevator"].layout.title.text
+    assert "Elevator" in figs["elevator"].layout.title.text
 
 
 @pytest.mark.req("req-aeroplot-15")

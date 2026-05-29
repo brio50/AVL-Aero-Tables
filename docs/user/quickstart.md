@@ -2,7 +2,7 @@
 
 ## Input Structure
 
-An AVL geometry is a set of files that must travel together. The Bubble Dancer (`examples/bd/`) illustrates the typical structure — a sailplane with a fuselage body, four control surfaces (flap, aileron, elevator, rudder), and external airfoil coordinate files:
+An AVL geometry is a set of files that must travel together. The Bubble Dancer (`examples/bd/`) illustrates the typical structure: a sailplane with a fuselage body, four control surfaces (flap, aileron, elevator, rudder), and external airfoil coordinate files:
 
 ```{code-block} text
 :class: no-copybutton filetree
@@ -16,7 +16,7 @@ An AVL geometry is a set of files that must travel together. The Bubble Dancer (
 
 ## Project Layout
 
-Keep all these files together. AVL's working directory is set to the folder containing the `.avl` file, so every relative path inside it (`fuseBD.dat`, `ag35.dat`, etc.) resolves automatically — relative to the `.avl` file, not your shell's current directory. Moving the `.avl` file without its companions will cause AVL to silently produce geometry with missing surfaces.
+Keep all these files together. AVL's working directory is set to the folder containing the `.avl` file, so every relative path inside it (`fuseBD.dat`, `ag35.dat`, etc.) resolves automatically (relative to the `.avl` file, not your shell's current directory). Moving the `.avl` file without its companions will cause AVL to silently produce geometry with missing surfaces.
 
 For your own project, keep geometry inputs versioned in git and runs outside of version control:
 
@@ -34,19 +34,18 @@ For your own project, keep geometry inputs versioned in git and runs outside of 
 └── 📄 .gitignore            ← contains: _runs/
 ```
 
-See {ref}`output-layout` for the full contents of each timestamped run directory.
+See [Directory Layout](concepts.md#directory-layout) for the full contents of each timestamped run directory.
 
-(quickstart:cli)=
 ## CLI
 
 % To update plots in this section: python examples/bd.py --docs
 
-The fastest path from geometry to results — define your sweep in a YAML project file, then run three commands.
+The fastest path from geometry to results: define your sweep in a YAML project file, then run three commands.
 
 ```{seealso}
-- [examples/bd/bd.avl](https://github.com/brio50/avl-aero-tables/blob/master/examples/bd/bd.avl) — Bubble Dancer geometry with control surfaces and airfoil references
-- [examples/bd/bd.yml](https://github.com/brio50/avl-aero-tables/blob/master/examples/bd/bd.yml) — project file driving the sweep below
-- [examples/bd.py](https://github.com/brio50/avl-aero-tables/blob/master/examples/bd.py) — regenerates all plots in this section (`--docs` flag)
+- [examples/bd/bd.avl](https://github.com/brio50/avl-aero-tables/blob/master/examples/bd/bd.avl): Bubble Dancer geometry with control surfaces and airfoil references
+- [examples/bd/bd.yml](https://github.com/brio50/avl-aero-tables/blob/master/examples/bd/bd.yml): project file driving the sweep below
+- [examples/bd.py](https://github.com/brio50/avl-aero-tables/blob/master/examples/bd.py): regenerates all plots in this section (`--docs` flag)
 ```
 
 ### Project File
@@ -115,7 +114,7 @@ AVL sweep complete → /your/project/examples/_runs/bd/bd_2026-05-20-191250  (55
 `````
 
 ```{note}
-While AVL runs, a Rich spinner (`⠹ Running AVL…`) animates in-place on the terminal — it disappears when the sweep finishes, leaving only the completion line.
+While AVL runs, a Rich spinner (`⠹ Running AVL...`) animates in-place on the terminal, disappearing when the sweep finishes and leaving only the completion line.
 Pass `--quiet` to suppress all console output.
 
 Results land in `_runs/<yml-stem>/<avl-stem>_<timestamp>/` relative to the **project root** (one directory up from the `.yml` file). This differs from the Python API, where you control `out_dir` directly.
@@ -123,15 +122,15 @@ Results land in `_runs/<yml-stem>/<avl-stem>_<timestamp>/` relative to the **pro
 
 ### Plot Results
 
-AVL produces three categories of output per flight condition — each has its own `plot` subcommand. Pass a parent directory to use the latest sweep, or a specific timestamped directory to target a particular run.
+AVL produces three categories of output per flight condition, each with its own `plot` subcommand. Pass a parent directory to use the latest sweep, or a specific timestamped directory to target a particular run.
 
-See {ref}`concepts:output-types` for a full description of each category and its simulation use.
+See [Data Categories](concepts.md#data-categories) for a full description of each category and its simulation use.
 
 #### Total Coefficients
 
 ```{admonition} Nonlinear 6-DOF table-lookup
 :class: note
-Total force and moment coefficients ($C_{L_\mathrm{total}}$, $C_{D_\mathrm{total}}$, $C_{m_\mathrm{total}}$, …) integrated at each flight condition. These are the tables a nonlinear 6-DOF simulation queries at each timestep — the primary output for flight dynamics work.
+Total force and moment coefficients ($C_{(L,Y,D)_\mathrm{total}}$, $C_{(l,m,n)_\mathrm{total}}$) integrated at each flight condition. These are the tables a nonlinear 6-DOF simulation queries at each timestep, the primary output for flight dynamics work.
 ```
 
 ```````{card}
@@ -188,14 +187,14 @@ $ avl-aero-tables plot totals _runs/bd/
 ```````
 
 ```{tip}
-The "Stability" tab shows coefficients vs. $\alpha$ and $\beta$ at neutral controls. The $C_L$/$C_Y$/… tabs each show coefficient vs. $\alpha$ and $\delta$ for every control surface, sliced at **$\beta = 0°$** by default. To inspect a different sideslip, pass `--beta-ref <deg>` — e.g. `avl-aero-tables plot totals --beta-ref 5 _runs/bd/`.
+The "Stability" tab shows coefficients vs. $\alpha$ and $\beta$ at neutral controls. The $C_L$/$C_Y$/... tabs each show coefficient vs. $\alpha$ and $\delta$ for every control surface, sliced at **$\beta = 0°$** by default. To inspect a different sideslip, pass `--beta-ref <deg>`, e.g. `avl-aero-tables plot totals --beta-ref 5 _runs/bd/`.
 ```
 
 #### Stability Derivatives
 
-```{admonition} Linear analysis — stability derivatives, trim sensitivity, control law design
+```{admonition} Linear analysis: stability derivatives
 :class: note
-Linearised $\partial C / \partial(\alpha, \beta, p', q', r')$ at neutral controls. One figure per perturbation variable, six subplots per figure ($C_L$, $C_Y$, $C_D$, $C_l$, $C_m$, $C_n$). Use these for stability analysis (phugoid, dutch roll), trim sensitivity, and linear control law derivation — not as table-lookup coefficients in a nonlinear sim.
+Linearized $\partial C_*/\partial(\alpha, \beta, p', q', r')$ at neutral controls. One figure per perturbation variable, six subplots per figure ($C_L$, $C_Y$, $C_D$, $C_l$, $C_m$, $C_n$). Use these for stability analysis (phugoid, dutch roll, spiral) and linear plant model construction, not as table-lookup coefficients in a nonlinear sim.
 ```
 
 ```````{card}
@@ -218,23 +217,23 @@ $ avl-aero-tables plot stab-deriv _runs/bd/
 
 `````{tab-set}
 :class: aero-plots
-````{tab-item} ∂C*/∂α
+````{tab-item} $\partial C^*/\partial\alpha$
 ```{plotly-figure} _static/html/bd_deriv_stab_alpha.html
 ```
 ````
-````{tab-item} ∂C*/∂β
+````{tab-item} $\partial C^*/\partial\beta$
 ```{plotly-figure} _static/html/bd_deriv_stab_beta.html
 ```
 ````
-````{tab-item} ∂C*/∂p'
+````{tab-item} $\partial C^*/\partial p'$
 ```{plotly-figure} _static/html/bd_deriv_stab_p.html
 ```
 ````
-````{tab-item} ∂C*/∂q'
+````{tab-item} $\partial C^*/\partial q'$
 ```{plotly-figure} _static/html/bd_deriv_stab_q.html
 ```
 ````
-````{tab-item} ∂C*/∂r'
+````{tab-item} $\partial C^*/\partial r'$
 ```{plotly-figure} _static/html/bd_deriv_stab_r.html
 ```
 ````
@@ -242,11 +241,6 @@ $ avl-aero-tables plot stab-deriv _runs/bd/
 ```````
 
 #### Control Derivatives
-
-```{admonition} Control effectiveness — surface sizing, linear autopilot design
-:class: note
-Linearised $\partial C / \partial\delta_\text{surface}$ at neutral controls. One figure per control surface, six subplots per figure ($C_L$, $C_Y$, $C_D$, $C_l$, $C_m$, $C_n$ vs. $\alpha$ and $\beta$). Use these for control allocation, handling qualities assessment, and linear autopilot gain derivation.
-```
 
 ```````{card}
 :class-card: cli-card full-width
@@ -287,18 +281,17 @@ $ avl-aero-tables plot ctrl-deriv _runs/bd/
 ```````
 
 ```{seealso}
-See {ref}`concepts:aero-coefficients` for coefficient definitions, axis conventions, and how to recover dimensional forces and moments.
+See [Aerodynamics](concepts.md#aerodynamics) for coefficient definitions, axis conventions, and how to recover dimensional forces and moments.
 ```
 
-(quickstart:python-api)=
 ## Python API
 
 % To update plots in this section: python examples/b737.py --docs
 
 ```{seealso}
-- [examples/b737/b737.avl](https://github.com/brio50/avl-aero-tables/blob/master/examples/b737/b737.avl) — Boeing 737 geometry with wing, horizontal tail, and vertical tail
-- [examples/b737/b737.yml](https://github.com/brio50/avl-aero-tables/blob/master/examples/b737/b737.yml) — project file driving the sweep below
-- [examples/b737.py](https://github.com/brio50/avl-aero-tables/blob/master/examples/b737.py) — fully runnable version of this walkthrough (`--docs` flag)
+- [examples/b737/b737.avl](https://github.com/brio50/avl-aero-tables/blob/master/examples/b737/b737.avl): Boeing 737 geometry with wing, horizontal tail, and vertical tail
+- [examples/b737/b737.yml](https://github.com/brio50/avl-aero-tables/blob/master/examples/b737/b737.yml): project file driving the sweep below
+- [examples/b737.py](https://github.com/brio50/avl-aero-tables/blob/master/examples/b737.py): fully runnable version of this walkthrough (`--docs` flag)
 ```
 
 ### Read & Plot Geometry
@@ -332,7 +325,7 @@ fig.write_html("b737_geometry.html", include_plotlyjs="cdn")
 
 ### Sweep Alpha / Beta
 
-`out_dir` is a base directory — `avl_sweep` creates `_runs/b737_<timestamp>/` inside it automatically.  The completion message and debug log are written to `<run_dir>/<stem>.log` (where `<stem>` is the `.avl` filename without extension — e.g. `b737.log` for `b737.avl`); nothing is printed to the console unless you configure `logging` yourself.
+`out_dir` is a base directory; `avl_sweep` creates `_runs/b737_<timestamp>/` inside it automatically.  The completion message and debug log are written to `<run_dir>/<stem>.log` (where `<stem>` is the `.avl` filename without extension, e.g. `b737.log` for `b737.avl`); nothing is printed to the console unless you configure `logging` yourself.
 
 `````{card}
 :class-card: cli-card
@@ -431,7 +424,7 @@ AeroDatabase: 5α × 3β  |  δ_slat = 3, δ_flap = 3, δ_aileron = 3, δ_elevat
 
 ```{admonition} Nonlinear 6-DOF table-lookup
 :class: note
-Total force and moment coefficients ($C_{L_\mathrm{total}}$, $C_{D_\mathrm{total}}$, $C_{m_\mathrm{total}}$, …) — the primary output for flight dynamics work. The "Stability" figure shows coefficients vs. $\alpha$ and $\beta$ at neutral controls; each subsequent figure shows one coefficient vs. $\alpha$ and $\delta$ for every control surface.
+Total force and moment coefficients ($C_{L,D,Y_\mathrm{total}}$ and $C_{l,m,n_\mathrm{total}}$), the primary output for flight dynamics work. The "Stability" figure shows coefficients vs. $\alpha$ and $\beta$ at neutral controls; each subsequent figure shows one coefficient vs. $\alpha$ and $\delta$ for every control surface.
 ```
 
 ```````{card}
@@ -485,14 +478,14 @@ for name, fig in figs.items():
 ```````
 
 ```{tip}
-The control-surface figures show a **$\beta = 0°$ slice** of the full 3-D table ($\alpha \times \beta \times \delta$). To inspect off-zero sideslip, pass `beta_ref` — e.g. `plot_totals(aero, beta_ref=5.0)`.
+The control-surface figures show a **$\beta = 0°$ slice** of the full 3-D table ($\alpha \times \beta \times \delta$). To inspect off-zero sideslip, pass `beta_ref`, e.g. `plot_totals(aero, beta_ref=5.0)`.
 ```
 
 #### Stability Derivatives
 
-```{admonition} Linear analysis — stability derivatives, trim sensitivity, control law design
+```{admonition} Linear analysis: stability derivatives
 :class: note
-Linearised $\partial C / \partial(\alpha, \beta, p', q', r')$ at neutral controls. One figure per perturbation variable, six subplots per figure ($C_L$, $C_Y$, $C_D$, $C_l$, $C_m$, $C_n$). Use for stability analysis and linear control law derivation — not as look-up coefficients in a nonlinear sim.
+Linearized $\partial C_*/\partial(\alpha, \beta, p', q', r')$ at neutral controls. One figure per perturbation variable, six subplots per figure ($C_L$, $C_Y$, $C_D$, $C_l$, $C_m$, $C_n$). Use these for stability analysis (phugoid, dutch roll, spiral) and linear plant model construction, not as look-up coefficients in a nonlinear sim.
 ```
 
 ```````{card}
@@ -513,23 +506,23 @@ for name, fig in plot_stab_derivs(aero).items():
 
 `````{tab-set}
 :class: aero-plots
-````{tab-item} ∂C*/∂α
+````{tab-item} $\partial C^*/\partial\alpha$
 ```{plotly-figure} _static/html/b737_deriv_stab_alpha.html
 ```
 ````
-````{tab-item} ∂C*/∂β
+````{tab-item} $\partial C^*/\partial\beta$
 ```{plotly-figure} _static/html/b737_deriv_stab_beta.html
 ```
 ````
-````{tab-item} ∂C*/∂p'
+````{tab-item} $\partial C^*/\partial p'$
 ```{plotly-figure} _static/html/b737_deriv_stab_p.html
 ```
 ````
-````{tab-item} ∂C*/∂q'
+````{tab-item} $\partial C^*/\partial q'$
 ```{plotly-figure} _static/html/b737_deriv_stab_q.html
 ```
 ````
-````{tab-item} ∂C*/∂r'
+````{tab-item} $\partial C^*/\partial r'$
 ```{plotly-figure} _static/html/b737_deriv_stab_r.html
 ```
 ````
@@ -537,11 +530,6 @@ for name, fig in plot_stab_derivs(aero).items():
 ```````
 
 #### Control Derivatives
-
-```{admonition} Control effectiveness — surface sizing, linear autopilot design
-:class: note
-Linearised $\partial C / \partial\delta_\text{surface}$ at neutral controls. One figure per control surface, six subplots per figure ($C_L$, $C_Y$, $C_D$, $C_l$, $C_m$, $C_n$ vs. $\alpha$ and $\beta$). Use for control allocation, handling qualities assessment, and linear autopilot gain derivation.
-```
 
 ```````{card}
 :class-card: cli-card full-width
@@ -585,5 +573,5 @@ for surface, fig in plot_ctrl_derivs(aero).items():
 ```````
 
 ```{seealso}
-See {ref}`concepts:aero-coefficients` for coefficient definitions, axis conventions, and how to recover dimensional forces and moments. See {ref}`concepts:output-types` for when to use totals vs. derivatives in simulation.
+See [Aerodynamics](concepts.md#aerodynamics) for coefficient definitions, axis conventions, and how to recover dimensional forces and moments. See [Data Categories](concepts.md#data-categories) for when to use totals vs. derivatives in simulation.
 ```

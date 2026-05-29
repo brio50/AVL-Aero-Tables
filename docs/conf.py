@@ -33,6 +33,7 @@ extensions = [
 source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 myst_enable_extensions = ["deflist", "amsmath", "dollarmath"]
+myst_heading_anchors = 3
 
 # -- HTML -----------------------------------------------------------------
 
@@ -54,6 +55,7 @@ html_theme_options = {
 
 # -- Extensions -----------------------------------------------------------
 
+math_eqref_format = "Eqn. ({number})"
 copybutton_selector = "div:not(.no-copybutton) > div.highlight > pre"
 
 autodoc_default_options = {

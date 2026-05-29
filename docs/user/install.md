@@ -114,10 +114,10 @@ AVL is a Fortran program distributed as source by MIT. Build it and place the bi
    )
    ```
 
-   Close and reopen any terminals for the change to take effect. You can also do this through **System Settings → System → About → Advanced system settings → Environment Variables** — edit the `Path` entry under *User variables* and append `%USERPROFILE%\AppData\Local\Programs\avl`.
+   Close and reopen any terminals for the change to take effect. You can also do this through **System Settings > System > About > Advanced system settings > Environment Variables**: edit the `Path` entry under *User variables* and append `%USERPROFILE%\AppData\Local\Programs\avl`.
 
 ```{note}
-On Windows, `avl-aero-tables verify` locates `avl.exe` via PATH — not `~/bin/avl`. As long as the folder above is on your PATH, the verify step below will succeed.
+On Windows, `avl-aero-tables verify` locates `avl.exe` via PATH, not `~/bin/avl`. As long as the folder above is on your PATH, the verify step below will succeed.
 ```
 
 `````

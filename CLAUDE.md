@@ -23,6 +23,7 @@ avl_aero_tables/          # Python package
   _plot_config.py     # shared Plotly defaults and utilities
 
 docs/                 # AVL user documentation
+  user/reference/avl_doc.txt   # OFFICIAL AVL docs by Drela & Youngren — first place to check for any AVL behavior question
 examples/             # runnable scripts + reference geometries
   bd.py               # Bubble Dancer end-to-end example
   b737.py             # B737 end-to-end example

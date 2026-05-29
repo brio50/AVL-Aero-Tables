@@ -286,12 +286,12 @@ def avl_fileplot(geometry: AvlGeometry) -> "go.Figure":
         dict(
             label="Iso",
             method="relayout",
-            args=[{_cam: {"eye": dict(x=-1.5, y=1.5, z=0.8), "up": _up_z}}],
+            args=[{_cam: {"eye": dict(x=-1.2, y=-1.2, z=0.65), "up": _up_z}}],
         ),
         dict(
-            label="Right",
+            label="Left",
             method="relayout",
-            args=[{_cam: {"eye": dict(x=0.0, y=2.5, z=0.0), "up": _up_z}}],
+            args=[{_cam: {"eye": dict(x=0.0, y=-2.5, z=0.0), "up": _up_z}}],
         ),
         dict(
             label="Front",

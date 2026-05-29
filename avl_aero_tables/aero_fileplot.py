@@ -22,7 +22,7 @@ from avl_aero_tables.aero_filewrite import (
     AeroDatabase,
 )
 
-# Display labels for each total coefficient (standard aerospace notation)
+# z-axis labels for total coefficients: Unicode.
 _COEF_LABEL: dict[str, str] = {
     "CLtot": "CL_total",
     "CYtot": "CY_total",
@@ -32,13 +32,10 @@ _COEF_LABEL: dict[str, str] = {
     "Cntot": "Cn_total",
 }
 
-# Maps plain perturbation identifier → Unicode string used in axis labels and titles.
-_PERTURB_UNICODE: dict[str, str] = {
-    "alpha": "α",
-    "beta": "β",
-    "p": "p'",
-    "q": "q'",
-    "r": "r'",
+# Subplot / figure-title labels for total coefficients: LaTeX.
+_COEF_LABEL_LATEX: dict[str, str] = {
+    f"{prefix}tot": rf"$C_{{{sub},\mathrm{{total}}}}$"
+    for prefix, sub in {"CL": "L", "CY": "Y", "CD": "D", "Cl": "l", "Cm": "m", "Cn": "n"}.items()
 }
 
 # Single-letter subscript for each short-form coefficient prefix.
@@ -61,14 +58,17 @@ _COEF_WORD: dict[str, str] = {
     "Cn": "yaw",
 }
 
-# Subplot titles for control-derivative figures: generic δ (surface is in figure title).
+# Whether each coefficient is a force or moment coefficient.
+_COEF_KIND: dict[str, str] = {
+    "CL": "Force", "CY": "Force", "CD": "Force",
+    "Cl": "Moment", "Cm": "Moment", "Cn": "Moment",
+}
+
+# Subplot titles for control-derivative figures: LaTeX partial notation.
+# Surface name is appended at figure-build time inside plot_ctrl_derivs.
 _CTRL_DERIV_SUBPLOT_LABEL: dict[str, str] = {
-    "CL": "CLδ",
-    "CY": "CYδ",
-    "CD": "CDδ",
-    "Cl": "Clδ",
-    "Cm": "Cmδ",
-    "Cn": "Cnδ",
+    f"C{sub}": rf"$\partial C_{{{sub}}}/\partial\delta$"
+    for sub in ("L", "Y", "D", "l", "m", "n")
 }
 
 # Perturbation-variable groupings for stability-derivative figures.
@@ -80,12 +80,18 @@ _DERIV_GROUPS: dict[str, tuple[str, ...]] = {
     "r": ("CLr", "CYr", "CDr", "Clr", "Cmr", "Cnr"),
 }
 
-# Generated from _COEF_SUBSCRIPT × _PERTURB_UNICODE.
-# e.g. "CLa" → "CLα",  "CLp" → "CLp'",  "Cnr" → "Cnr'"
+# z-axis labels: compact shorthand.  e.g. "CLa" → "CLα",  "Cnr" → "Cnr'"
 _STAB_DERIV_LABEL: dict[str, str] = {
-    f"{prefix}{var[0]}": f"C{sub}{unicode}"
+    f"{prefix}{k}": f"C{sub}{sym}"
     for prefix, sub in _COEF_SUBSCRIPT.items()
-    for var, unicode in _PERTURB_UNICODE.items()
+    for k, sym in {"a": "α", "b": "β", "p": "p'", "q": "q'", "r": "r'"}.items()
+}
+
+# Subplot titles: LaTeX partial notation.  e.g. "CLa" → "$\partial C_L/\partial\alpha$"
+_STAB_DERIV_SUBPLOT_LABEL: dict[str, str] = {
+    f"{prefix}{k}": rf"$\partial C_{{{sub}}}/\partial {sym}$"
+    for prefix, sub in _COEF_SUBSCRIPT.items()
+    for k, sym in {"a": r"\alpha", "b": r"\beta", "p": "p'", "q": "q'", "r": "r'"}.items()
 }
 
 if TYPE_CHECKING:
@@ -118,10 +124,10 @@ def _init_figure(
     n_scenes = n_rows * n_cols
     scene_names = ["scene" if i == 0 else f"scene{i + 1}" for i in range(n_scenes)]
     fig.update_layout(
-        title=dict(text=title_text, x=0.5, xanchor="center", y=0.99, yanchor="top"),
+        title=dict(text=title_text, x=0.5, xanchor="center", y=0.97, yanchor="top"),
         height=(height or 330 * n_rows),
         showlegend=False,
-        margin=dict(l=30, r=30, t=55, b=20),
+        margin=dict(l=30, r=30, t=70, b=20),
         modebar=dict(
             orientation="v",
             bgcolor="rgba(255,255,255,0.6)",
@@ -233,7 +239,7 @@ def plot_totals(
     7
     >>> figs["stab"].layout.title.text
     'Aerodynamic Coefficients — Neutral Controls'
-    >>> "_total" in figs["ctrl_lift"].layout.title.text
+    >>> "Lift" in figs["ctrl_lift"].layout.title.text
     True
     """
     figs: dict[str, go.Figure] = {}
@@ -248,7 +254,7 @@ def plot_totals(
         fig_stab, scene_names = _init_figure(
             n_rows,
             n_cols,
-            [_COEF_LABEL.get(c, c) for c in stab_coefs],
+            [_COEF_LABEL_LATEX.get(c, c) for c in stab_coefs],
             "Aerodynamic Coefficients — Neutral Controls",
         )
         for i, coef in enumerate(stab_coefs):
@@ -295,8 +301,8 @@ def plot_totals(
         fig_ctrl, scene_names = _init_figure(
             n_rows_ctrl,
             n_cols_ctrl,
-            [aero.total_ctrl[k].surface for k in ctrl_keys],
-            f"{_COEF_LABEL[coef]} vs. α, δ  (β = {beta_actual:.1f}°)",
+            [aero.total_ctrl[k].surface.split("_", 1)[1] for k in ctrl_keys],
+            f"Total {_COEF_WORD[coef_short].title()} {_COEF_KIND[coef_short]} Coefficient — Control Deflection (β = {beta_actual:.1f}°)",
         )
         for j, key in enumerate(ctrl_keys):
             ctrl_tbl = aero.total_ctrl[key]
@@ -311,7 +317,7 @@ def plot_totals(
                 ctrl_tbl.data[:, bi, :],
                 COLORSCALE_CTRL,
                 LABEL_ALPHA,
-                label_delta(ctrl_tbl.surface),
+                label_delta(ctrl_tbl.surface.split("_", 1)[1]),
                 _COEF_LABEL[coef],
                 ctrl_tbl.surface,
             )
@@ -373,8 +379,10 @@ def plot_stab_derivs(aero: AeroDatabase) -> "dict[str, go.Figure]":
         fig, scene_names = _init_figure(
             n_rows,
             n_cols,
-            [_STAB_DERIV_LABEL.get(k, k) for k in keys],
-            f"Stability Derivatives — ∂C*/∂{_PERTURB_UNICODE[perturb_var]}",
+            [_STAB_DERIV_SUBPLOT_LABEL.get(k, k) for k in keys],
+            "Stability Derivatives — "
+            + {"alpha": "Angle of Attack", "beta": "Angle of Sideslip",
+               "p": "Roll Rate", "q": "Pitch Rate", "r": "Yaw Rate"}[perturb_var],
         )
         for i, key in enumerate(keys):
             if key not in aero.stab_deriv:
@@ -440,7 +448,7 @@ def plot_ctrl_derivs(aero: AeroDatabase) -> "dict[str, go.Figure]":
     4
     >>> "Control Derivatives" in figs["flap"].layout.title.text
     True
-    >>> "flap" in figs["flap"].layout.title.text
+    >>> "Flap" in figs["flap"].layout.title.text
     True
     """
     if not aero.ctrl_deriv:
@@ -469,14 +477,16 @@ def plot_ctrl_derivs(aero: AeroDatabase) -> "dict[str, go.Figure]":
             continue
 
         subplot_titles = [
-            f"{_CTRL_DERIV_SUBPLOT_LABEL.get(c, c)}_{ctrl_name}"
+            _CTRL_DERIV_SUBPLOT_LABEL.get(c, c).replace(
+                r"/\partial\delta$", rf"/\partial\delta_{{\mathrm{{{ctrl_name}}}}}$"
+            )
             for c in CTRL_DERIV_COEFS
         ]
         fig, scene_names = _init_figure(
             n_rows,
             n_cols,
             subplot_titles,
-            f"Control Derivatives — ∂C*/∂δ_{ctrl_name}",
+            f"Control Derivatives — {ctrl_name.title()}",
         )
         for i, key in enumerate(keys):
             if key not in aero.ctrl_deriv:
