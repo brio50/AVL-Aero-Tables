@@ -35,8 +35,8 @@ sequenceDiagram
 
 | Component | Role | Public? |
 |---|---|---|
-| {doc}`avl_sweep` | Top-level orchestrator — the `avl_sweep()` entry point | Yes |
-| {doc}`avl_fileread` | Parses AVL file formats: `.avl` geometry → `AvlGeometry`; `.st` output → `list[StResult]` | Yes |
+| {doc}`avl_sweep` | Top-level orchestrator, the `avl_sweep()` entry point | Yes |
+| {doc}`avl_fileread` | Parses AVL file formats: `.avl` geometry to `AvlGeometry`; `.st` output to `list[StResult]` | Yes |
 | {doc}`avl_rungen` | Builds `.in/reset.run` and `.in/sweep.inp` (the AVL stdin script) | Internal |
 | {doc}`avl_bin` | Locates, verifies, and invokes the AVL Fortran binary via subprocess | Indirect |
 
@@ -76,9 +76,9 @@ sequenceDiagram
 
 | Component | Role | Public? |
 |---|---|---|
-| {doc}`avl_fileplot` | Interactive four-view geometry plot → `plotly.Figure` → `.html` | Yes |
-| {doc}`aero_filewrite` | Exports results to CSV/JSON; pivots `list[StResult]` → `AeroDatabase` | Yes |
-| {doc}`aero_fileplot` | Interactive 3-D surface plots → `dict[str, plotly.Figure]` → `.html` per key | Yes |
+| {doc}`avl_fileplot` | Interactive four-view geometry plot, returns `plotly.Figure` written to `.html` | Yes |
+| {doc}`aero_filewrite` | Exports results to CSV/JSON; pivots `list[StResult]` to `AeroDatabase` | Yes |
+| {doc}`aero_fileplot` | Interactive 3-D surface plots, returns `dict[str, plotly.Figure]`, one `.html` per key | Yes |
 
 ````
 
@@ -124,7 +124,7 @@ sequenceDiagram
 
 | Component | Role | Public? |
 |---|---|---|
-| {doc}`avl_cli` | `avl-aero-tables` CLI entry point — argument parsing and command dispatch | CLI only |
+| {doc}`avl_cli` | `avl-aero-tables` CLI entry point: argument parsing and command dispatch | CLI only |
 | {doc}`avl_config` | YAML project-file schema (`ProjectConfig`) and `load_config()` | CLI only |
 
 ````
