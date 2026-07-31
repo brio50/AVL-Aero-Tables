@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-07-31
+
+### Added
+- `AeroDatabase.interpolate(coef, alpha, beta, defl=0.0, surface=None, method="linear", bounds_error=True)` — queries `total_stab`/`total_ctrl` tables at arbitrary `(alpha, beta[, defl])` points between breakpoints via `scipy.interpolate.RegularGridInterpolator`, instead of only at the discrete points AVL was run at (#7); accepts scalar or array-like inputs for vectorized batch queries, and caches interpolators per `(coef, surface, method, bounds_error)`
+- `scipy` added to core dependencies
+
+### Fixed
+- `docs/user/concepts.md`'s Force & Moment Lookup tutorial used `method="pchip"` over a 3-point beta axis, which scipy rejects (`pchip` requires ≥4 points per axis); rewritten to use `AeroDatabase.interpolate()`
+
 ## [2.0.2] - 2026-07-31
 
 ### Fixed
