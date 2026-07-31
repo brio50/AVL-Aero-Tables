@@ -3,10 +3,11 @@ from pathlib import Path
 
 import pytest
 
-from avl_aero_tables.avl_fileread import avl_fileread
+from avl_aero_tables.avl_fileread import AvlDesignEntry, avl_fileread
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
 BD_AVL = EXAMPLES / "bd" / "bd.avl"
+SUPRA_AVL = EXAMPLES / "supra" / "supra.avl"
 ALL_AVL_FILES = sorted(p for p in EXAMPLES.glob("**/*.avl") if "_runs" not in p.parts)
 
 
@@ -81,3 +82,54 @@ def test_all_avl_files_parse(avl_file):
         g = avl_fileread(avl_file)
     assert g.header.name != ""
     assert isinstance(g.surface, dict)
+
+
+@pytest.mark.req("req-geom-10")
+def test_airfoil_section_parses(tmp_path):
+    avl_text = """\
+Test Airfoil
+0.0
+0     0     0.0
+10.0  1.0   10.0
+0.25  0.0   0.0
+
+SURFACE
+Wing
+4  1.0  4  1.0
+
+SECTION
+0.0  0.0  0.0  1.0  0.0  0  0
+
+AIRFOIL 0.2 0.8
+1.0   0.0
+0.5   0.05
+0.0   0.0
+0.5  -0.03
+1.0   0.0
+"""
+    avl_file = tmp_path / "airfoil.avl"
+    avl_file.write_text(avl_text)
+
+    g = avl_fileread(avl_file)
+    sec = g.surface["Wing"].sections[0]
+    assert sec.airfoil_x1 == pytest.approx(0.2)
+    assert sec.airfoil_x2 == pytest.approx(0.8)
+    assert sec.airfoil_coords == pytest.approx(
+        [(1.0, 0.0), (0.5, 0.05), (0.0, 0.0), (0.5, -0.03), (1.0, 0.0)]
+    )
+
+
+@pytest.mark.req("req-geom-11")
+def test_supra_design_variables():
+    g = avl_fileread(SUPRA_AVL)
+    outer_wing = g.surface["Outer_Wing"]
+    assert outer_wing.sections[0].design == []
+    assert outer_wing.sections[1].design == [AvlDesignEntry("twist", 1.0)]
+
+
+@pytest.mark.req("req-geom-12")
+def test_supra_afil_range_params():
+    g = avl_fileread(SUPRA_AVL)
+    inner_wing = g.surface["Inner_Wing"]
+    assert inner_wing.sections[0].afile == "ag40d.dat"
+    assert inner_wing.sections[1].afile == "ag41d.dat"

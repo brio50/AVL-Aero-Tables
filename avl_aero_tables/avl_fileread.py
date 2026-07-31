@@ -36,6 +36,14 @@ class AvlControlEntry:
 
 
 @dataclass
+class AvlDesignEntry:
+    """One design-variable perturbation attached to a section."""
+
+    name: str
+    weight: float
+
+
+@dataclass
 class AvlSectionEntry:
     """One chordwise section of a lifting surface."""
 
@@ -50,6 +58,10 @@ class AvlSectionEntry:
     afile: str | None = None
     claf: float | None = None
     controls: list[AvlControlEntry] = field(default_factory=list)
+    airfoil_coords: list[tuple[float, float]] = field(default_factory=list)
+    airfoil_x1: float = 0.0
+    airfoil_x2: float = 1.0
+    design: list[AvlDesignEntry] = field(default_factory=list)
 
 
 @dataclass
@@ -275,14 +287,28 @@ def avl_fileread(avl_file: str | Path) -> AvlGeometry:
                     )
                 )
 
-            elif kw == "NACA":
+            elif kw.split()[0] == "NACA":
                 i += 1
                 cur_surf.sections[-1].naca = eval_lines[i].strip()
 
-            elif kw in ("AIRFOIL", "DESIGN"):
-                pass  # TODO: not yet implemented
+            elif kw.split()[0] == "AIRFOIL":
+                parts = tline.split()
+                sec = cur_surf.sections[-1]
+                sec.airfoil_x1 = float(parts[1]) if len(parts) > 1 else 0.0
+                sec.airfoil_x2 = float(parts[2]) if len(parts) > 2 else 1.0
+                while i + 1 < n and len(_floats(eval_lines[i + 1])) >= 2:
+                    i += 1
+                    vals = _floats(eval_lines[i])
+                    sec.airfoil_coords.append((vals[0], vals[1]))
 
-            elif kw == "AFIL":
+            elif kw == "DESIGN":
+                i += 1
+                parts = eval_lines[i].split()
+                cur_surf.sections[-1].design.append(
+                    AvlDesignEntry(name=parts[0], weight=float(parts[1]))
+                )
+
+            elif kw.split()[0] == "AFIL":
                 i += 1
                 cur_surf.sections[-1].afile = eval_lines[i].strip()
 
