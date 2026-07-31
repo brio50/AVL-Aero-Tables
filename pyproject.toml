@@ -31,13 +31,19 @@ dev = [
     "types-PyYAML",
 ]
 docs = [
-    "sphinx>=7",
+    # sphinx-multiversion (0.2.4, latest on PyPI, unmaintained since ~2021)
+    # calls the pre-Sphinx-9 `Config.read(confdir, overrides)` positional
+    # signature; Sphinx 9 made `overrides`/`tags` required keyword-only
+    # arguments, which breaks it outright (TypeError at build time). Cap
+    # below 9 until either project releases a fix.
+    "sphinx>=8.2,<9",
     "sphinx-book-theme",
     "myst-parser",
     "sphinx-copybutton",
     "sphinxcontrib-mermaid",
     "sphinx-design",
     "sphinx-autobuild",
+    "sphinx-multiversion",
 ]
 
 [tool.setuptools.packages.find]
