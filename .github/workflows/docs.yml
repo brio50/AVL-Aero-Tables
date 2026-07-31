@@ -19,6 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # sphinx-multiversion builds one subdirectory per matched git tag
+          # / branch (see smv_tag_whitelist/smv_branch_whitelist in
+          # docs/conf.py) and needs the full history + tags to find them; the
+          # default shallow, single-branch checkout only has the current commit.
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -27,8 +33,16 @@ jobs:
       - name: Install docs dependencies
         run: pip install -e ".[docs]"
 
-      - name: Build Sphinx docs
-        run: sphinx-build -b html docs docs/_build/html -W --keep-going
+      - name: Build versioned Sphinx docs
+        run: python -m sphinx_multiversion docs docs/_build/html -W --keep-going
+
+      - name: Generate version switcher + landing-page redirect
+        run: |
+          python -m sphinx_multiversion docs docs/_build/html --dump-metadata > /tmp/smv-metadata.json
+          python docs/_scripts/gen_switcher.py \
+            /tmp/smv-metadata.json \
+            docs/_build/html \
+            "https://brio50.github.io/avl-aero-tables"
 
       - uses: actions/upload-pages-artifact@v3
         with:
