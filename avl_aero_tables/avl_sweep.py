@@ -30,6 +30,7 @@ from avl_aero_tables.avl_rungen import make_run_command, make_run_reset
 _log = logging.getLogger(__name__)
 
 _FORMATS = frozenset(("csv", "json", "df"))
+_MODES = frozenset(("independent", "combinatorial"))
 
 
 def _ensure_neutral_in_sweeps(
@@ -110,6 +111,7 @@ def run(
     binary: Path | None = None,
     out_format: Literal["csv", "json", "df"] = "csv",
     yml_file: Path | str | None = None,
+    mode: Literal["independent", "combinatorial"] = "independent",
 ) -> list[StResult]:
     """Run AVL stability analysis for a sweep of alpha, beta, and deflections.
 
@@ -140,6 +142,23 @@ def run(
         Path to the .yml project file (CLI use only).  When provided,
         ``provenance.json`` records ``entry: "cli"`` and copies the .yml
         into ``.in/<avl_stem>/``.
+    mode:
+        ``"independent"`` (default): each surface in ``ctrl_sweeps`` is swept
+        one at a time, with all other surfaces held at 0° — matches the
+        original MATLAB behavior and is unchanged from prior releases.
+        ``"combinatorial"``: every surface in ``ctrl_sweeps`` is deflected
+        *simultaneously* in each case, one case per element of the Cartesian
+        product of all surfaces' deflection lists.  Case count grows as the
+        product of each surface's number of deflection values.  Combinatorial
+        results are still returned as a flat ``list[StResult]``, and are still
+        written to ``results_total.csv``/``.json`` via ``results_to_dataframe``
+        (which has no dimensionality assumptions); but ``aero_filewrite``'s
+        ``total_ctrl`` tables — which are 3-D per-surface (alpha, beta, defl)
+        — only populate from cases where a single surface is deflected while
+        every other stays neutral, since a run with N surfaces deflected at
+        once doesn't fit that shape.  In practice this means combinatorial
+        cases beyond the shared all-neutral point are omitted from
+        ``total_ctrl`` (they remain in the raw results/CSV/JSON output).
 
     Returns
     -------
@@ -167,6 +186,8 @@ def run(
         raise ValueError(
             f"out_format {out_format!r} not recognised; choose from {sorted(_FORMATS)}"
         )
+    if mode not in _MODES:
+        raise ValueError(f"mode {mode!r} not recognised; choose from {sorted(_MODES)}")
     avl_file = Path(avl_file).resolve()
     avl_dir = avl_file.parent
     avl_name = avl_file.stem
@@ -226,6 +247,7 @@ def run(
                 staging,
                 avl_file=avl_file.name,
                 run_file=str(staging / "reset.run"),
+                mode=mode,
             )
 
             # sweep.inp: human-readable record of the stdin script fed to AVL;
@@ -240,6 +262,7 @@ def run(
                     raw_dir,
                     avl_file=str(avl_file),
                     run_file=str(in_dir / "reset.run"),
+                    mode=mode,
                 )
             )
 

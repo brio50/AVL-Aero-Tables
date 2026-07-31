@@ -164,3 +164,128 @@ def test_command_multiple_alphas_produce_multiple_runs():
         [-6.0, 0.0, 6.0], [0.0], CTRL_NAMES, {}, OUT_DIR, AVL_FILE, RUN_FILE
     )
     assert text.count("A A") == 3  # one run per alpha when no ctrl_sweeps
+
+
+# ---------------------------------------------------------------------------
+# mode="independent" vs mode="combinatorial"
+# ---------------------------------------------------------------------------
+
+CTRL_SWEEPS_2SURF = {
+    "elevator": [-5.0, 0.0, 5.0],
+    "rudder": [-10.0, 0.0, 10.0],
+}
+
+
+@pytest.mark.req("req-cmd-21")
+def test_command_mode_defaults_to_independent():
+    default_text = make_run_command(
+        [0.0], [0.0], CTRL_NAMES, CTRL_SWEEPS_2SURF, OUT_DIR, AVL_FILE, RUN_FILE
+    )
+    explicit_text = make_run_command(
+        [0.0],
+        [0.0],
+        CTRL_NAMES,
+        CTRL_SWEEPS_2SURF,
+        OUT_DIR,
+        AVL_FILE,
+        RUN_FILE,
+        mode="independent",
+    )
+    assert default_text == explicit_text
+
+
+@pytest.mark.req("req-cmd-22")
+def test_command_independent_sweeps_one_surface_at_a_time():
+    text = make_run_command(
+        [0.0],
+        [0.0],
+        CTRL_NAMES,
+        CTRL_SWEEPS_2SURF,
+        OUT_DIR,
+        AVL_FILE,
+        RUN_FILE,
+        mode="independent",
+    )
+    # 3 elevator points + 3 rudder points = 6 cases, one Di line per case
+    assert text.count("A A") == 6
+    assert text.count("D3 D3") == 3  # elevator (index 3)
+    assert text.count("D4 D4") == 3  # rudder (index 4)
+    # no case sets both D3 and D4 simultaneously
+    # text.split("OPER") yields a leading header block and a trailing block
+    # after the last case's reopening OPER (just "Quit"); both are excluded.
+    for block in text.split("OPER")[1:-1]:
+        case_lines = block.splitlines()
+        assert not (
+            any(line.startswith("D3 D3") for line in case_lines)
+            and any(line.startswith("D4 D4") for line in case_lines)
+        )
+
+
+@pytest.mark.req("req-cmd-23")
+def test_command_combinatorial_cross_product_case_count():
+    text = make_run_command(
+        [0.0, 5.0],
+        [0.0],
+        CTRL_NAMES,
+        CTRL_SWEEPS_2SURF,
+        OUT_DIR,
+        AVL_FILE,
+        RUN_FILE,
+        mode="combinatorial",
+    )
+    # 2 alpha × 1 beta × (3 elevator × 3 rudder) = 18 cases
+    assert text.count("A A") == 18
+    assert text.count("D3 D3") == 18
+    assert text.count("D4 D4") == 18
+
+
+@pytest.mark.req("req-cmd-24")
+def test_command_combinatorial_deflects_both_surfaces_per_case():
+    text = make_run_command(
+        [0.0],
+        [0.0],
+        CTRL_NAMES,
+        CTRL_SWEEPS_2SURF,
+        OUT_DIR,
+        AVL_FILE,
+        RUN_FILE,
+        mode="combinatorial",
+    )
+    # every case block between successive OPER commands sets both D3 and D4
+    # text.split("OPER") yields a leading header block and a trailing block
+    # after the last case's reopening OPER (just "Quit"); both are excluded.
+    for block in text.split("OPER")[1:-1]:
+        case_lines = block.splitlines()
+        assert any(line.startswith("D3 D3") for line in case_lines)
+        assert any(line.startswith("D4 D4") for line in case_lines)
+
+
+@pytest.mark.req("req-cmd-25")
+def test_command_combinatorial_includes_all_neutral_case():
+    text = make_run_command(
+        [0.0],
+        [0.0],
+        CTRL_NAMES,
+        CTRL_SWEEPS_2SURF,
+        OUT_DIR,
+        AVL_FILE,
+        RUN_FILE,
+        mode="combinatorial",
+    )
+    assert "D3 D3 0" in text
+    assert "D4 D4 0" in text
+
+
+@pytest.mark.req("req-cmd-26")
+def test_command_invalid_mode_raises():
+    with pytest.raises(ValueError, match="not recognised"):
+        make_run_command(
+            [0.0],
+            [0.0],
+            CTRL_NAMES,
+            {},
+            OUT_DIR,
+            AVL_FILE,
+            RUN_FILE,
+            mode="both",  # type: ignore[arg-type]
+        )

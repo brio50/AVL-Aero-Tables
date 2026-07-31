@@ -130,6 +130,38 @@ def test_sweep_spec_inserts_zero_into_ctrl_sweeps():
     assert spec.ctrl_sweeps["elevator"] == sorted(spec.ctrl_sweeps["elevator"])
 
 
+def test_sweep_spec_mode_defaults_to_independent():
+    from avl_aero_tables.avl_config import SweepSpec
+
+    spec = SweepSpec.model_validate({"alpha": [0.0], "beta": [0.0]})
+    assert spec.mode == "independent"
+
+
+def test_sweep_spec_mode_accepts_combinatorial():
+    from avl_aero_tables.avl_config import SweepSpec
+
+    spec = SweepSpec.model_validate(
+        {"alpha": [0.0], "beta": [0.0], "mode": "combinatorial"}
+    )
+    assert spec.mode == "combinatorial"
+
+
+def test_load_config_invalid_mode_exits(tmp_path):
+    yml = tmp_path / "bad.yml"
+    yml.write_text(
+        textwrap.dedent("""\
+        input:
+          geometry: x.avl
+        sweep:
+          alpha: [0]
+          beta: [0]
+          mode: sometimes
+    """)
+    )
+    with pytest.raises(SystemExit):
+        _load_config(yml)
+
+
 def test_load_config_non_numeric_alpha_exits(tmp_path):
     yml = tmp_path / "bad.yml"
     yml.write_text("input:\n  geometry: x.avl\nsweep:\n  alpha: [foo]\n  beta: [0]\n")
@@ -243,6 +275,45 @@ def test_sweep_passes_correct_args(tmp_path):
     assert captured["beta"] == [0]
     assert captured["ctrl_sweeps"] == {"elevator": [-10, 0, 10]}
     assert captured["out_format"] == "json"
+    assert captured["mode"] == "independent"
+
+
+def test_sweep_passes_mode_to_run(tmp_path):
+    sub = tmp_path / "bd"
+    sub.mkdir()
+    yml = sub / "bd.yml"
+    yml.write_text(
+        textwrap.dedent("""\
+        input:
+          geometry: bd.avl
+        sweep:
+          alpha: [-5, 0, 5]
+          beta: [0]
+          ctrl_sweeps:
+            elevator: [-10, 0, 10]
+            rudder: [-10, 0, 10]
+          mode: combinatorial
+    """)
+    )
+    (sub / "bd.avl").touch()
+
+    captured: dict[str, object] = {}
+
+    def fake_run(**kwargs: object) -> list[object]:
+        captured.update(kwargs)
+        return []
+
+    fake_geom = MagicMock()
+    fake_geom.ctrl_names = ["elevator", "rudder"]
+
+    with (
+        patch("avl_aero_tables.avl_fileread.avl_fileread", return_value=fake_geom),
+        patch("avl_aero_tables.avl_sweep.run", side_effect=fake_run),
+    ):
+        result = main(["sweep", str(yml)])
+
+    assert result == 0
+    assert captured["mode"] == "combinatorial"
 
 
 def test_sweep_bad_ctrl_key_exits(tmp_path):
@@ -648,9 +719,15 @@ def test_plot_all_calls_all_three_plotters(tmp_path):
     with (
         patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
-        patch("avl_aero_tables.aero_fileplot.plot_totals", return_value=fake_totals) as mock_totals,
-        patch("avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value=fake_stab) as mock_stab,
-        patch("avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value=fake_ctrl) as mock_ctrl,
+        patch(
+            "avl_aero_tables.aero_fileplot.plot_totals", return_value=fake_totals
+        ) as mock_totals,
+        patch(
+            "avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value=fake_stab
+        ) as mock_stab,
+        patch(
+            "avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value=fake_ctrl
+        ) as mock_ctrl,
         patch("webbrowser.open") as mock_browser,
     ):
         result = main(["plot", "all", str(run_dir)])
@@ -681,7 +758,9 @@ def test_plot_all_beta_ref_forwarded(tmp_path):
     with (
         patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
-        patch("avl_aero_tables.aero_fileplot.plot_totals", return_value={}) as mock_totals,
+        patch(
+            "avl_aero_tables.aero_fileplot.plot_totals", return_value={}
+        ) as mock_totals,
         patch("avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value={}),
         patch("avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value={}),
         patch("webbrowser.open"),

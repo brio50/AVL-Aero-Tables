@@ -226,11 +226,30 @@ def aero_filewrite(results: list[StResult]) -> AeroDatabase:
             abs(r.data.get(name, 0.0)) < 1e-6 for name in ctrl_map.values()
         )
 
+        # total_ctrl is a 3-D (alpha, beta, defl) table *per surface*, which only
+        # has an unambiguous meaning when every other surface is neutral in that
+        # case — true for every case in "independent" sweeps (by construction,
+        # only one surface is ever deflected at a time) and for the shared
+        # all-neutral case in "combinatorial" sweeps.  A combinatorial case with
+        # two or more surfaces deflected simultaneously doesn't fit this 3-D
+        # shape (it would need one axis per swept surface) and is intentionally
+        # skipped here — those rows remain available via results_to_dataframe.
+        single_surface_active = {
+            d_idx: all(
+                abs(r.data.get(other_name, 0.0)) < 1e-6
+                for other_name in ctrl_map.values()
+                if other_name != ctrl_name
+            )
+            for d_idx, ctrl_name in ctrl_map.items()
+        }
+
         for coef in COEF_NAMES:
             val = r.data.get(coef, np.nan)
             if all_neutral:
                 db.total_stab[coef].data[ai, bi] = val
             for d_idx, ctrl_name in ctrl_map.items():
+                if not single_surface_active[d_idx]:
+                    continue
                 surf_key = f"{d_idx}_{ctrl_name}"
                 defl_val = r.data.get(ctrl_name, 0.0)
                 di = _find_idx(surface_defls[d_idx], defl_val)

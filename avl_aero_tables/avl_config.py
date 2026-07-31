@@ -19,6 +19,7 @@ class SweepSpec(BaseModel):
     alpha: list[float]
     beta: list[float]
     ctrl_sweeps: dict[str, list[float]] = {}
+    mode: Literal["independent", "combinatorial"] = "independent"
 
     @field_validator("alpha", "beta")
     @classmethod

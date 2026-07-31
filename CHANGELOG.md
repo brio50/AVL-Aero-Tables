@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-07-31
+
+### Added
+- `mode` parameter on `avl_sweep.run()`, `avl_rungen.make_run_command()`, and `SweepSpec` (YAML `sweep.mode`): `"independent"` (default, unchanged) sweeps each `ctrl_sweeps` surface one at a time; `"combinatorial"` deflects every surface simultaneously, one AVL case per element of the Cartesian product of all surfaces' deflection lists (#1)
+
+### Changed
+- `aero_filewrite`'s `total_ctrl` tables now only pivot in cases where a single control surface is deflected while every other stays neutral; this is unconditionally true for `"independent"`-mode results (no behavior change) but means `"combinatorial"` cases with two or more surfaces deflected at once are excluded from `total_ctrl` — they remain available via `results_to_dataframe`/`results_total.csv`/`.json` (#1)
+
 ## [2.0.2] - 2026-07-31
 
 ### Fixed

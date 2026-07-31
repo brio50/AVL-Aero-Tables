@@ -223,6 +223,60 @@ def test_run_inserts_zero_into_ctrl_sweeps(tmp_path):
     assert "D1 D1 0.0" in captured_cmd[0] or "0.0" in captured_cmd[0]
 
 
+# ---------------------------------------------------------------------------
+# mode="independent" (default) vs mode="combinatorial"
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.req("req-sweep-18")
+def test_run_mode_defaults_to_independent(tmp_path):
+    captured_cmd: list[str] = []
+
+    def _fake_run(cmd: str, **kwargs: object) -> MagicMock:
+        captured_cmd.append(cmd)
+        return _make_mock_result()
+
+    with patch("avl_aero_tables.avl_sweep.avl_runner.run", side_effect=_fake_run):
+        run(
+            BD_AVL,
+            alpha=[0.0],
+            beta=[0.0],
+            ctrl_sweeps={"elevator": [-10.0, 0.0, 10.0], "rudder": [-5.0, 0.0, 5.0]},
+            out_dir=tmp_path,
+        )
+
+    # independent: 3 elevator + 3 rudder = 6 cases, never both Di in one case
+    assert captured_cmd[0].count("A A") == 6
+
+
+@pytest.mark.req("req-sweep-19")
+def test_run_combinatorial_mode_cross_product(tmp_path):
+    captured_cmd: list[str] = []
+
+    def _fake_run(cmd: str, **kwargs: object) -> MagicMock:
+        captured_cmd.append(cmd)
+        return _make_mock_result()
+
+    with patch("avl_aero_tables.avl_sweep.avl_runner.run", side_effect=_fake_run):
+        run(
+            BD_AVL,
+            alpha=[0.0],
+            beta=[0.0],
+            ctrl_sweeps={"elevator": [-10.0, 0.0, 10.0], "rudder": [-5.0, 0.0, 5.0]},
+            out_dir=tmp_path,
+            mode="combinatorial",
+        )
+
+    # combinatorial: 3 elevator × 3 rudder = 9 cases, each setting both Di
+    assert captured_cmd[0].count("A A") == 9
+
+
+@pytest.mark.req("req-sweep-20")
+def test_run_invalid_mode_raises(tmp_path):
+    with pytest.raises(ValueError, match="not recognised"):
+        run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path, mode="both")  # type: ignore[arg-type]
+
+
 @pytest.mark.req("req-sweep-15")
 def test_run_writes_sweep_inp(tmp_path):
     mock_result = _make_mock_result()
