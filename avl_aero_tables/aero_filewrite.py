@@ -4,13 +4,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date as _date
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 from avl_aero_tables.avl_fileread import StResult
 
 if TYPE_CHECKING:
+    import h5py
     import pandas as pd
 
 COEF_NAMES = ("CLtot", "CYtot", "CDtot", "Cltot", "Cmtot", "Cntot")
@@ -328,3 +330,172 @@ def results_to_dataframe(results: list[StResult]) -> "pd.DataFrame":
 
     rows = [{"filename": r.filename, **r.data} for r in results]
     return pd.DataFrame(rows)
+
+
+# ---------------------------------------------------------------------------
+# External export (.mat / .h5) — optional dependencies, lazy-imported
+# ---------------------------------------------------------------------------
+#
+# Shared hierarchy (identical field structure for both formats; "." separators
+# below become "/" group paths in HDF5):
+#
+#   date, Sref, Cref, Bref, Xref, Yref, Zref     top-level scalars
+#   breakpoints.alpha, breakpoints.beta          1-D arrays, shared by every
+#                                                 total_stab/stab_deriv/ctrl_deriv
+#                                                 table (identical by construction
+#                                                 in aero_filewrite — stored once)
+#   breakpoints.defl.<surface>                   1-D array, per control surface
+#                                                 (e.g. "d01_flap") — varies by
+#                                                 surface, so cannot live at the
+#                                                 top level like alpha/beta
+#   stab.<coef>                                  (n_alpha, n_beta), e.g. stab.CLtot
+#   ctrl.<surface>.<coef>                        (n_alpha, n_beta, n_defl),
+#                                                 e.g. ctrl.d01_flap.CLtot
+#   stab_deriv.<key>                             (n_alpha, n_beta), e.g. stab_deriv.CLa
+#   ctrl_deriv.<key>                             (n_alpha, n_beta),
+#                                                 e.g. ctrl_deriv.CL_d01_flap
+#
+# stab_deriv/ctrl_deriv are included (not just total_stab/total_ctrl) so a
+# MATLAB/Simulink consumer gets the full picture — derivatives are exactly as
+# useful downstream as the totals and aero_filewrite already computes them.
+
+
+def _breakpoints(db: AeroDatabase) -> tuple[np.ndarray, np.ndarray]:
+    """Return the (alpha, beta) breakpoints shared by every table in db.
+
+    total_stab/stab_deriv/ctrl_deriv/total_ctrl all share identical alpha/beta
+    breakpoints by construction in aero_filewrite(), so the first non-empty
+    table's axes are authoritative.
+    """
+    for tables in (db.total_stab, db.stab_deriv, db.ctrl_deriv):
+        for table in tables.values():
+            return table.alpha, table.beta
+    for ctrl_table in db.total_ctrl.values():
+        return ctrl_table.alpha, ctrl_table.beta
+    raise ValueError(
+        "AeroDatabase has no tables — cannot determine alpha/beta breakpoints"
+    )
+
+
+def _ctrl_by_surface(db: AeroDatabase) -> dict[str, dict[str, CtrlTable]]:
+    """Group total_ctrl (keyed "<coef>_<surface>") into {surface: {coef: table}}."""
+    out: dict[str, dict[str, CtrlTable]] = {}
+    for table in db.total_ctrl.values():
+        out.setdefault(table.surface, {})[table.coef] = table
+    return out
+
+
+def _db_to_nested_dict(db: AeroDatabase) -> dict[str, Any]:
+    """Build the nested dict shared by aero_to_mat and aero_to_hdf5.
+
+    scipy.io.savemat converts nested dicts into nested MATLAB structs directly;
+    aero_to_hdf5 walks the same structure, turning nested dicts into HDF5
+    groups and leaf arrays/scalars into datasets.
+    """
+    alpha, beta = _breakpoints(db)
+    ctrl_by_surface = _ctrl_by_surface(db)
+
+    out: dict[str, Any] = {"date": db.date}
+    for fld in REF_FIELDS:
+        out[fld] = float(getattr(db, fld))
+
+    out["breakpoints"] = {
+        "alpha": alpha,
+        "beta": beta,
+        "defl": {
+            surface: next(iter(tables.values())).defl
+            for surface, tables in ctrl_by_surface.items()
+        },
+    }
+    out["stab"] = {coef: table.data for coef, table in db.total_stab.items()}
+    out["ctrl"] = {
+        surface: {coef: table.data for coef, table in tables.items()}
+        for surface, tables in ctrl_by_surface.items()
+    }
+    out["stab_deriv"] = {key: table.data for key, table in db.stab_deriv.items()}
+    out["ctrl_deriv"] = {key: table.data for key, table in db.ctrl_deriv.items()}
+    return out
+
+
+def aero_to_mat(db: AeroDatabase, path: str | Path) -> None:
+    """Write an AeroDatabase to a MATLAB .mat file via scipy.io.savemat.
+
+    Builds a nested dict — converted by savemat into nested MATLAB structs —
+    mirroring the AeroDatabase hierarchy (see the module-level comment above
+    _breakpoints for the exact field layout: date/Sref/.../breakpoints/stab/
+    ctrl/stab_deriv/ctrl_deriv). Field/struct names are taken directly from
+    AeroDatabase's own dict keys (coefficient names, "<d_idx>_<surface>" surface
+    keys, derivative keys), all of which are already valid MATLAB identifiers.
+
+    Requires the optional ``scipy`` dependency:
+    ``pip install avl-aero-tables[export]``
+
+    Parameters
+    ----------
+    db:
+        AeroDatabase produced by aero_filewrite().
+    path:
+        Output .mat file path.
+
+    Raises
+    ------
+    ImportError
+        If scipy is not installed.
+    ValueError
+        If db has no tables to derive alpha/beta breakpoints from.
+    """
+    try:
+        import scipy.io
+    except ImportError as exc:
+        raise ImportError(
+            "aero_to_mat requires scipy — install with: "
+            "pip install avl-aero-tables[export]"
+        ) from exc
+
+    scipy.io.savemat(str(path), _db_to_nested_dict(db))
+
+
+def _write_h5_group(group: "h5py.Group", data: dict[str, Any]) -> None:
+    for key, val in data.items():
+        if isinstance(val, dict):
+            _write_h5_group(group.create_group(key), val)
+        else:
+            group.create_dataset(key, data=val)
+
+
+def aero_to_hdf5(db: AeroDatabase, path: str | Path) -> None:
+    """Write an AeroDatabase to an HDF5 (.h5) file via h5py.
+
+    Mirrors aero_to_mat's hierarchy with "/" group paths instead of MATLAB
+    struct fields, e.g. /stab/CLtot, /ctrl/d01_flap/CLtot, /breakpoints/alpha,
+    /breakpoints/defl/d01_flap, /stab_deriv/CLa, /ctrl_deriv/CL_d01_flap (see
+    the module-level comment above _breakpoints for the exact field layout).
+    Readable from MATLAB via ``h5read(path, "/stab/CLtot")``.
+
+    Requires the optional ``h5py`` dependency:
+    ``pip install avl-aero-tables[export]``
+
+    Parameters
+    ----------
+    db:
+        AeroDatabase produced by aero_filewrite().
+    path:
+        Output .h5 file path.
+
+    Raises
+    ------
+    ImportError
+        If h5py is not installed.
+    ValueError
+        If db has no tables to derive alpha/beta breakpoints from.
+    """
+    try:
+        import h5py
+    except ImportError as exc:
+        raise ImportError(
+            "aero_to_hdf5 requires h5py — install with: "
+            "pip install avl-aero-tables[export]"
+        ) from exc
+
+    with h5py.File(str(path), "w") as f:
+        _write_h5_group(f, _db_to_nested_dict(db))

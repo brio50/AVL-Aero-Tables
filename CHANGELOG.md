@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-07-31
+
+### Added
+- `aero_to_mat(db, path)` — write an `AeroDatabase` to a MATLAB `.mat` file via `scipy.io.savemat`, as a nested struct: top-level `date`/`Sref`/`Cref`/`Bref`/`Xref`/`Yref`/`Zref`, `breakpoints.alpha`/`breakpoints.beta` (shared across all tables), `breakpoints.defl.<surface>` (per control surface), `stab.<coef>`, `ctrl.<surface>.<coef>`, `stab_deriv.<key>`, `ctrl_deriv.<key>` (#6)
+- `aero_to_hdf5(db, path)` — write an `AeroDatabase` to an HDF5 `.h5` file via `h5py`, mirroring the same hierarchy as group paths (e.g. `/stab/CLtot`, `/ctrl/d01_flap/CLtot`, `/breakpoints/alpha`, `/breakpoints/defl/d01_flap`), readable from MATLAB via `h5read` (#6)
+- New `export` optional-dependency extra (`pip install avl-aero-tables[export]`) providing `scipy` and `h5py`; both are lazy-imported inside `aero_to_mat`/`aero_to_hdf5` respectively and raise an actionable `ImportError` if missing — kept out of core `dependencies` so CSV/JSON-only users aren't forced into either
+
 ## [2.0.2] - 2026-07-31
 
 ### Fixed
