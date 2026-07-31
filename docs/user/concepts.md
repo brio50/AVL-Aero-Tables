@@ -419,7 +419,8 @@ interp = {
     c: RegularGridInterpolator(
         (tab.alpha, tab.beta),
         tab.data,
-        method="pchip",     # monotone cubic, continuous derivatives at breakpoints
+        method="linear",    # "pchip"/"cubic" give a smoother, continuously-differentiable
+                            # lookup but need >= 4 breakpoints along every swept axis
         bounds_error=True,  # raise if alpha/beta leave the sweep range
     )
     for c, tab in db.total_stab.items()
