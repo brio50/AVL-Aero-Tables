@@ -195,7 +195,9 @@ def test_multiple_alphas_stab_shape_and_values():
     ]
     db = aero_filewrite(results)
     assert db.total_stab["CLtot"].data.shape == (3, 1)
-    np.testing.assert_allclose(db.total_stab["CLtot"].data[:, 0], [-0.5, 0.0, 0.5], atol=1e-9)
+    np.testing.assert_allclose(
+        db.total_stab["CLtot"].data[:, 0], [-0.5, 0.0, 0.5], atol=1e-9
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -360,3 +362,91 @@ def test_ctrl_deriv_only_neutral():
     r = _make_result(5.0, 0.0, deflections={"flap": 10.0})
     db = aero_filewrite([r])
     assert np.isnan(db.ctrl_deriv["CL_d01_flap"].data[0, 0])
+
+
+# ---------------------------------------------------------------------------
+# AeroDatabase.interpolate
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.req("req-write-26")
+def test_interpolate_at_breakpoint_matches_exact_value():
+    results = [
+        _make_result(a, 0.0, coef_vals={"CLtot": a * 0.1}) for a in [-5.0, 0.0, 5.0]
+    ]
+    db = aero_filewrite(results)
+    assert db.interpolate("CLtot", 0.0, 0.0) == pytest.approx(0.0)
+    assert db.interpolate("CLtot", 5.0, 0.0) == pytest.approx(0.5)
+
+
+@pytest.mark.req("req-write-26")
+def test_interpolate_between_breakpoints_is_linear():
+    results = [
+        _make_result(a, 0.0, coef_vals={"CLtot": a * 0.1}) for a in [-5.0, 0.0, 5.0]
+    ]
+    db = aero_filewrite(results)
+    assert db.interpolate("CLtot", 2.5, 0.0) == pytest.approx(0.25)
+
+
+@pytest.mark.req("req-write-33")
+def test_interpolate_handles_singleton_beta_axis():
+    # beta has a single breakpoint (0.0) — must not require >= 2 points on that axis
+    results = [
+        _make_result(a, 0.0, coef_vals={"CLtot": a * 0.1}) for a in [-5.0, 0.0, 5.0]
+    ]
+    db = aero_filewrite(results)
+    assert db.total_stab["CLtot"].beta.shape == (1,)
+    assert db.interpolate("CLtot", 2.5, 0.0) == pytest.approx(0.25)
+
+
+@pytest.mark.req("req-write-32")
+def test_interpolate_vectorized_query():
+    results = [
+        _make_result(a, 0.0, coef_vals={"CLtot": a * 0.1}) for a in [-5.0, 0.0, 5.0]
+    ]
+    db = aero_filewrite(results)
+    out = db.interpolate("CLtot", np.array([-2.5, 0.0, 2.5]), 0.0)
+    np.testing.assert_allclose(out, [-0.25, 0.0, 0.25], atol=1e-9)
+
+
+@pytest.mark.req("req-write-28")
+def test_interpolate_unknown_coef_raises_keyerror():
+    db = aero_filewrite([_make_result(5.0, 0.0)])
+    with pytest.raises(KeyError):
+        db.interpolate("NotACoef", 0.0, 0.0)
+
+
+@pytest.mark.req("req-write-27")
+def test_interpolate_nonzero_defl_without_surface_raises():
+    db = aero_filewrite([_make_result(5.0, 0.0)])
+    with pytest.raises(ValueError, match="surface"):
+        db.interpolate("CLtot", 0.0, 0.0, defl=5.0)
+
+
+@pytest.mark.req("req-write-31")
+def test_interpolate_out_of_bounds_raises_by_default():
+    results = [
+        _make_result(a, 0.0, coef_vals={"CLtot": a * 0.1}) for a in [-5.0, 0.0, 5.0]
+    ]
+    db = aero_filewrite(results)
+    with pytest.raises(ValueError):
+        db.interpolate("CLtot", 50.0, 0.0)
+
+
+@pytest.mark.req("req-write-30")
+def test_interpolate_ctrl_table_with_surface():
+    results = [
+        _make_result(0.0, 0.0, coef_vals={"CLtot": v}, deflections={"flap": d})
+        for d, v in [(-10.0, 0.4), (0.0, 0.5), (10.0, 0.6)]
+    ]
+    db = aero_filewrite(results)
+    assert db.interpolate(
+        "CLtot", 0.0, 0.0, defl=5.0, surface="d01_flap"
+    ) == pytest.approx(0.55)
+
+
+@pytest.mark.req("req-write-29")
+def test_interpolate_unknown_surface_raises_keyerror():
+    db = aero_filewrite([_make_result(5.0, 0.0)])
+    with pytest.raises(KeyError):
+        db.interpolate("CLtot", 0.0, 0.0, defl=1.0, surface="d99_bogus")

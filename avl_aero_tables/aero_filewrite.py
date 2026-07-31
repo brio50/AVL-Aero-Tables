@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date as _date
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -105,6 +106,144 @@ class AeroDatabase:
     total_ctrl: dict[str, CtrlTable] = field(default_factory=dict)
     stab_deriv: dict[str, StabTable] = field(default_factory=dict)
     ctrl_deriv: dict[str, StabTable] = field(default_factory=dict)
+    _interp_cache: dict[tuple[Any, ...], Callable[[np.ndarray], np.ndarray]] = field(
+        default_factory=dict, repr=False, compare=False
+    )
+
+    def interpolate(
+        self,
+        coef: str,
+        alpha: float | np.ndarray,
+        beta: float | np.ndarray,
+        defl: float | np.ndarray = 0.0,
+        surface: str | None = None,
+        method: str = "linear",
+        bounds_error: bool = True,
+    ) -> float | np.ndarray:
+        """Interpolate a coefficient at an arbitrary (alpha, beta[, defl]) point.
+
+        Looks up ``total_stab[coef]`` (2-D, neutral-control) when ``surface`` is
+        omitted, or ``total_ctrl[f"{coef}_{surface}"]`` (3-D, indexed by
+        deflection too) when ``surface`` is given. ``alpha``/``beta``/``defl``
+        may be scalars or broadcastable arrays for batch queries (e.g. an
+        entire flight trajectory at once).
+
+        Parameters
+        ----------
+        coef:
+            Coefficient name, e.g. "CLtot" (see COEF_NAMES).
+        alpha, beta:
+            Query point(s), in the same units as the breakpoints (degrees).
+        defl:
+            Control surface deflection(s) (degrees). Must be 0.0 unless
+            ``surface`` is given — a neutral (`total_stab`) table has no
+            deflection axis to interpolate against.
+        surface:
+            Control surface key, e.g. "d01_flap" (`CtrlTable.surface`).
+            Required to interpolate at a non-zero deflection.
+        method:
+            Passed to `scipy.interpolate.RegularGridInterpolator`. "linear"
+            (default) works for any breakpoint count; "pchip"/"cubic" need
+            at least 4 breakpoints along every non-degenerate axis.
+        bounds_error:
+            Raise if the query point falls outside the swept range (default).
+            Extrapolating an AVL table beyond its swept envelope — e.g. past
+            stall — is not physically justified, so this defaults to strict.
+
+        Returns
+        -------
+        float | np.ndarray
+            A scalar if alpha, beta, and defl were all scalars; otherwise an
+            array broadcast to their common shape.
+
+        Example
+        -------
+        >>> import tempfile
+        >>> from avl_aero_tables import avl_sweep
+        >>> with tempfile.TemporaryDirectory() as tmp:
+        ...     results = avl_sweep(
+        ...         "examples/bd/bd.avl", alpha=[-5, 0, 5, 10], beta=[0], out_dir=tmp
+        ...     )
+        >>> db = aero_filewrite(results)
+        >>> round(db.interpolate("CLtot", alpha=2.5, beta=0.0), 4) > 0
+        True
+        """
+        alpha_arr = np.asarray(alpha, dtype=float)
+        beta_arr = np.asarray(beta, dtype=float)
+        defl_arr = np.asarray(defl, dtype=float)
+        scalar_query = alpha_arr.ndim == 0 and beta_arr.ndim == 0 and defl_arr.ndim == 0
+
+        if surface is not None:
+            key = f"{coef}_{surface}"
+            if key not in self.total_ctrl:
+                available = sorted(
+                    s.surface for s in self.total_ctrl.values() if s.coef == coef
+                )
+                raise KeyError(
+                    f"{key!r} not found in total_ctrl — available surfaces for "
+                    f"{coef!r}: {available}"
+                )
+            table_ctrl = self.total_ctrl[key]
+            axes: tuple[np.ndarray, ...] = (
+                table_ctrl.alpha,
+                table_ctrl.beta,
+                table_ctrl.defl,
+            )
+            data = table_ctrl.data
+            alpha_b, beta_b, defl_b = np.broadcast_arrays(alpha_arr, beta_arr, defl_arr)
+            pts = np.stack([alpha_b, beta_b, defl_b], axis=-1)
+            cache_key: tuple[Any, ...] = ("ctrl", key, method, bounds_error)
+        else:
+            if np.any(defl_arr != 0.0):
+                raise ValueError(
+                    "defl must be 0.0 when surface is not specified — total_stab "
+                    "has no deflection axis; pass surface=<name> to interpolate "
+                    "a total_ctrl table at a non-zero deflection"
+                )
+            if coef not in self.total_stab:
+                raise KeyError(
+                    f"{coef!r} not found in total_stab — available: "
+                    f"{sorted(self.total_stab)}"
+                )
+            table_stab = self.total_stab[coef]
+            axes = (table_stab.alpha, table_stab.beta)
+            data = table_stab.data
+            alpha_b, beta_b = np.broadcast_arrays(alpha_arr, beta_arr)
+            pts = np.stack([alpha_b, beta_b], axis=-1)
+            cache_key = ("stab", coef, method, bounds_error)
+
+        cached = self._interp_cache.get(cache_key)
+        if cached is None:
+            keep = [i for i, ax in enumerate(axes) if ax.size > 1]
+            interp_fn: Callable[[np.ndarray], np.ndarray]
+            if not keep:
+                value = float(np.asarray(data).reshape(-1)[0])
+
+                def interp_fn(query_pts: np.ndarray) -> np.ndarray:
+                    return np.full(query_pts.shape[:-1], value)
+
+            else:
+                from scipy.interpolate import RegularGridInterpolator
+
+                squeeze_axes = tuple(i for i in range(len(axes)) if i not in keep)
+                grid_interp = RegularGridInterpolator(
+                    tuple(axes[i] for i in keep),
+                    np.squeeze(data, axis=squeeze_axes) if squeeze_axes else data,
+                    method=method,
+                    bounds_error=bounds_error,
+                )
+                if len(keep) == len(axes):
+                    interp_fn = grid_interp
+                else:
+
+                    def interp_fn(query_pts: np.ndarray) -> np.ndarray:
+                        return np.asarray(grid_interp(query_pts[..., keep]))
+
+            cached = interp_fn
+            self._interp_cache[cache_key] = cached
+
+        result = cached(pts)
+        return result.item() if scalar_query else result
 
 
 def _sorted_unique(vals: list[float]) -> np.ndarray:

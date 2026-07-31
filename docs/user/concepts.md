@@ -405,25 +405,16 @@ This means:
 
 `Sref`, `Cref`, and `Bref` are echoed from the `.avl` header into every `.st` file and exposed as attributes on `AeroDatabase`; no separate geometry read is required. Supply `rho` and `V` at simulation time; they change each timestep and are never passed to `avl_sweep`.
 
+`AeroDatabase.interpolate(coef, alpha, beta)` wraps `scipy.interpolate.RegularGridInterpolator` internally (one instance per `(coef, method, bounds_error)` combination, built lazily and cached on the `AeroDatabase`) so tables don't need to be interpolated by hand. It defaults to `method="linear"` — the only method guaranteed to work regardless of how many breakpoints were swept; `"pchip"`/`"cubic"` give a smoother, continuously-differentiable lookup (useful when feeding a linearised control law) but need at least 4 breakpoints along every swept axis.
+
 ```python
 import numpy as np
-from scipy.interpolate import RegularGridInterpolator
 
 from avl_aero_tables import avl_sweep
 from avl_aero_tables.aero_filewrite import aero_filewrite
 
 results = avl_sweep("examples/bd/bd.avl", alpha=[-4, 0, 4, 8], beta=[-5, 0, 5], out_dir="_runs")
 db = aero_filewrite(results)
-
-interp = {
-    c: RegularGridInterpolator(
-        (tab.alpha, tab.beta),
-        tab.data,
-        method="pchip",     # monotone cubic, continuous derivatives at breakpoints
-        bounds_error=True,  # raise if alpha/beta leave the sweep range
-    )
-    for c, tab in db.total_stab.items()
-}
 
 # --- simulation loop ---
 # Units must be consistent with the geometry's Lunit/Munit/Tunit declarations
@@ -441,17 +432,19 @@ q = 0.5 * rho * V**2
 # Table lookup gives AVL's stability-axis coefficients at the actual (alpha, beta) condition.
 # The aerodynamic effect of sideslip is captured by the table; the trig below is a separate
 # geometric rotation from stability axes to wind axes (see eq-wind-coeffs, eq-wind-moments).
-CD_stab = interp["CDtot"]([[alpha, beta]]).item()
-CY_stab = interp["CYtot"]([[alpha, beta]]).item()
-Cl_stab = interp["Cltot"]([[alpha, beta]]).item()
-Cm_stab = interp["Cmtot"]([[alpha, beta]]).item()
+CD_stab = db.interpolate("CDtot", alpha, beta)
+CY_stab = db.interpolate("CYtot", alpha, beta)
+Cl_stab = db.interpolate("Cltot", alpha, beta)
+Cm_stab = db.interpolate("Cmtot", alpha, beta)
 
-L = interp["CLtot"]([[alpha, beta]]).item() * q * db.Sref
+L = db.interpolate("CLtot", alpha, beta) * q * db.Sref
 D = (CD_stab * cosd(beta) - CY_stab * sind(beta)) * q * db.Sref
 Y = (CD_stab * sind(beta) + CY_stab * cosd(beta)) * q * db.Sref
 
 # Bref ≠ Cref so the moment rotation must be applied in dimensional form
 l = (Cl_stab * db.Bref * cosd(beta) + Cm_stab * db.Cref * sind(beta)) * q * db.Sref
 m = (Cm_stab * db.Cref * cosd(beta) - Cl_stab * db.Bref * sind(beta)) * q * db.Sref
-n = interp["Cntot"]([[alpha, beta]]).item() * q * db.Sref * db.Bref
+n = db.interpolate("Cntot", alpha, beta) * q * db.Sref * db.Bref
 ```
+
+Control-surface effectiveness is looked up the same way, indexed by deflection too: `db.interpolate("CLtot", alpha, beta, defl=12.0, surface="d01_flap")` reads `total_ctrl["CLtot_d01_flap"]`.

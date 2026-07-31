@@ -35,7 +35,14 @@ _COEF_LABEL: dict[str, str] = {
 # Subplot / figure-title labels for total coefficients: LaTeX.
 _COEF_LABEL_LATEX: dict[str, str] = {
     f"{prefix}tot": rf"$C_{{{sub},\mathrm{{total}}}}$"
-    for prefix, sub in {"CL": "L", "CY": "Y", "CD": "D", "Cl": "l", "Cm": "m", "Cn": "n"}.items()
+    for prefix, sub in {
+        "CL": "L",
+        "CY": "Y",
+        "CD": "D",
+        "Cl": "l",
+        "Cm": "m",
+        "Cn": "n",
+    }.items()
 }
 
 # Single-letter subscript for each short-form coefficient prefix.
@@ -60,8 +67,12 @@ _COEF_WORD: dict[str, str] = {
 
 # Whether each coefficient is a force or moment coefficient.
 _COEF_KIND: dict[str, str] = {
-    "CL": "Force", "CY": "Force", "CD": "Force",
-    "Cl": "Moment", "Cm": "Moment", "Cn": "Moment",
+    "CL": "Force",
+    "CY": "Force",
+    "CD": "Force",
+    "Cl": "Moment",
+    "Cm": "Moment",
+    "Cn": "Moment",
 }
 
 # Subplot titles for control-derivative figures: LaTeX partial notation.
@@ -91,7 +102,13 @@ _STAB_DERIV_LABEL: dict[str, str] = {
 _STAB_DERIV_SUBPLOT_LABEL: dict[str, str] = {
     f"{prefix}{k}": rf"$\partial C_{{{sub}}}/\partial {sym}$"
     for prefix, sub in _COEF_SUBSCRIPT.items()
-    for k, sym in {"a": r"\alpha", "b": r"\beta", "p": "p'", "q": "q'", "r": "r'"}.items()
+    for k, sym in {
+        "a": r"\alpha",
+        "b": r"\beta",
+        "p": "p'",
+        "q": "q'",
+        "r": "r'",
+    }.items()
 }
 
 if TYPE_CHECKING:
@@ -293,7 +310,9 @@ def plot_totals(
     n_rows_ctrl = (n_surfs + n_cols_ctrl - 1) // n_cols_ctrl
 
     for coef in COEF_NAMES:
-        ctrl_keys = [f"{coef}_{s}" for s in ctrl_surfaces if f"{coef}_{s}" in aero.total_ctrl]
+        ctrl_keys = [
+            f"{coef}_{s}" for s in ctrl_surfaces if f"{coef}_{s}" in aero.total_ctrl
+        ]
         if not ctrl_keys:
             continue
 
@@ -381,8 +400,13 @@ def plot_stab_derivs(aero: AeroDatabase) -> "dict[str, go.Figure]":
             n_cols,
             [_STAB_DERIV_SUBPLOT_LABEL.get(k, k) for k in keys],
             "Stability Derivatives — "
-            + {"alpha": "Angle of Attack", "beta": "Angle of Sideslip",
-               "p": "Roll Rate", "q": "Pitch Rate", "r": "Yaw Rate"}[perturb_var],
+            + {
+                "alpha": "Angle of Attack",
+                "beta": "Angle of Sideslip",
+                "p": "Roll Rate",
+                "q": "Pitch Rate",
+                "r": "Yaw Rate",
+            }[perturb_var],
         )
         for i, key in enumerate(keys):
             if key not in aero.stab_deriv:

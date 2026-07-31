@@ -648,9 +648,15 @@ def test_plot_all_calls_all_three_plotters(tmp_path):
     with (
         patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
-        patch("avl_aero_tables.aero_fileplot.plot_totals", return_value=fake_totals) as mock_totals,
-        patch("avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value=fake_stab) as mock_stab,
-        patch("avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value=fake_ctrl) as mock_ctrl,
+        patch(
+            "avl_aero_tables.aero_fileplot.plot_totals", return_value=fake_totals
+        ) as mock_totals,
+        patch(
+            "avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value=fake_stab
+        ) as mock_stab,
+        patch(
+            "avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value=fake_ctrl
+        ) as mock_ctrl,
         patch("webbrowser.open") as mock_browser,
     ):
         result = main(["plot", "all", str(run_dir)])
@@ -681,7 +687,9 @@ def test_plot_all_beta_ref_forwarded(tmp_path):
     with (
         patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
-        patch("avl_aero_tables.aero_fileplot.plot_totals", return_value={}) as mock_totals,
+        patch(
+            "avl_aero_tables.aero_fileplot.plot_totals", return_value={}
+        ) as mock_totals,
         patch("avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value={}),
         patch("avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value={}),
         patch("webbrowser.open"),

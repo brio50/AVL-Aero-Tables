@@ -17,6 +17,7 @@ dependencies = [
     "pyyaml",
     "pydantic",
     "rich",
+    "scipy",
 ]
 
 [project.scripts]
@@ -66,6 +67,10 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "plotly.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "scipy.*"
 ignore_missing_imports = true
 
 [tool.sphinx-autobuild]
