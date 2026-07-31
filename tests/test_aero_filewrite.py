@@ -195,7 +195,9 @@ def test_multiple_alphas_stab_shape_and_values():
     ]
     db = aero_filewrite(results)
     assert db.total_stab["CLtot"].data.shape == (3, 1)
-    np.testing.assert_allclose(db.total_stab["CLtot"].data[:, 0], [-0.5, 0.0, 0.5], atol=1e-9)
+    np.testing.assert_allclose(
+        db.total_stab["CLtot"].data[:, 0], [-0.5, 0.0, 0.5], atol=1e-9
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -360,3 +362,58 @@ def test_ctrl_deriv_only_neutral():
     r = _make_result(5.0, 0.0, deflections={"flap": 10.0})
     db = aero_filewrite([r])
     assert np.isnan(db.ctrl_deriv["CL_d01_flap"].data[0, 0])
+
+
+# ---------------------------------------------------------------------------
+# total_ctrl guard against combinatorial-style rows (multiple surfaces
+# deflected simultaneously in the same case) — see avl_sweep.run(mode=...)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.req("req-write-26")
+def test_combinatorial_row_excluded_from_ctrl_table():
+    # r2 deflects both flap and aileron at once (as a combinatorial-mode run
+    # would); r3 deflects only flap, matching independent-mode semantics.
+    # Both happen to set flap=10.0, so without the single-surface-active
+    # guard r2 (processed last) would silently overwrite r3's value.
+    r1 = _make_result(0.0, 0.0, coef_vals={"CLtot": 0.5})  # all-neutral
+    r3 = _make_result(
+        0.0, 0.0, coef_vals={"CLtot": 0.6}, deflections={"flap": 10.0, "aileron": 0.0}
+    )
+    r2 = _make_result(
+        0.0, 0.0, coef_vals={"CLtot": 0.9}, deflections={"flap": 10.0, "aileron": 5.0}
+    )
+    db = aero_filewrite([r1, r2, r3])
+
+    flap_table = db.total_ctrl["CLtot_d01_flap"]
+    di_flap10 = int(np.searchsorted(flap_table.defl, 10.0))
+    # r3's independent-style value must win; r2's combinatorial row is skipped
+    assert flap_table.data[0, 0, di_flap10] == pytest.approx(0.6)
+
+    aileron_table = db.total_ctrl["CLtot_d02_aileron"]
+    di_aileron5 = int(np.searchsorted(aileron_table.defl, 5.0))
+    # aileron=5.0 only appears in r2, which is entirely excluded (flap != 0 too)
+    assert np.isnan(aileron_table.data[0, 0, di_aileron5])
+
+
+@pytest.mark.req("req-write-27")
+def test_combinatorial_row_still_appears_in_results_dataframe():
+    from avl_aero_tables.aero_filewrite import results_to_dataframe
+
+    r = _make_result(
+        0.0, 0.0, coef_vals={"CLtot": 0.9}, deflections={"flap": 10.0, "aileron": 5.0}
+    )
+    df = results_to_dataframe([r])
+    assert df.loc[0, "flap"] == pytest.approx(10.0)
+    assert df.loc[0, "aileron"] == pytest.approx(5.0)
+    assert df.loc[0, "CLtot"] == pytest.approx(0.9)
+
+
+@pytest.mark.req("req-write-28")
+def test_neutral_case_unaffected_by_combinatorial_guard():
+    # the shared all-neutral row (every surface at 0.0) still has exactly one
+    # surface "active" trivially and must keep populating every ctrl table.
+    r = _make_result(0.0, 0.0, coef_vals={"CLtot": 0.5})
+    db = aero_filewrite([r])
+    assert db.total_ctrl["CLtot_d01_flap"].data[0, 0, 0] == pytest.approx(0.5)
+    assert db.total_ctrl["CLtot_d02_aileron"].data[0, 0, 0] == pytest.approx(0.5)

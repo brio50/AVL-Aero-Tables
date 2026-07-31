@@ -205,7 +205,7 @@ The result is the baseline aerodynamic map ($C_L$, $C_D$, $C_m$, $C_Y$, $C_l$, $
 
 ### Control Sweeps
 
-When `ctrl_sweeps` is provided, each surface's deflection list is swept **independently** across every $(\alpha, \beta)$ point, **not** as a full factorial combination of all surfaces simultaneously.
+When `ctrl_sweeps` is provided, `mode` controls how multiple surfaces combine. The default, `mode="independent"`, sweeps each surface's deflection list **independently** across every $(\alpha, \beta)$ point, **not** as a full factorial combination of all surfaces simultaneously.
 
 Each run deflects exactly one surface; all others remain at zero (neutral). This is equivalent to computing a finite-difference control derivative: $\partial C_L / \partial \delta_\text{elev}$ while holding rudder and aileron fixed.
 
@@ -226,7 +226,37 @@ ctrl_sweeps = {
 ```
 
 ```{note}
-If you need a full combinatorial sweep (every elevator $\times$ every rudder deflection), run `avl_sweep` multiple times or build the `ctrl_sweeps` product yourself before calling it.
+`db.total_ctrl` (from `aero_filewrite`) is a 3-D `(alpha, beta, deflection)` table per surface, which only has an unambiguous meaning when every *other* surface is neutral — exactly what `mode="independent"` guarantees for every case.
+```
+
+### Combinatorial Sweeps
+
+Pass `mode="combinatorial"` to deflect **every** surface in `ctrl_sweeps` simultaneously, one AVL run per element of the Cartesian product of all surfaces' deflection lists — the same thing AVL's `OPER` menu lets you do interactively by setting more than one `Di` variable before running a case:
+
+```python
+results = avl_sweep(
+    avl_file="examples/bd/bd.avl",
+    alpha=[0.0],
+    beta=[0.0],
+    ctrl_sweeps={
+        "elevator": [-10.0, 0.0, 10.0],  # 3 points
+        "rudder":   [-10.0, 0.0, 10.0],  # 3 points
+    },
+    mode="combinatorial",
+)
+# n_cases = n_alpha × n_beta × 3 × 3 = 9, not 6
+```
+
+The total case count is:
+
+```
+n_cases = n_alpha × n_beta × prod(len(deflections) for each surface)
+```
+
+which grows fast — use combinatorial mode judiciously for many surfaces or many deflection points.
+
+```{note}
+`db.total_ctrl` only accepts cases where a single surface is deflected while every other stays neutral (see above), so **combinatorial cases with two or more surfaces deflected at once are not pivoted into `total_ctrl`** — that 3-D-per-surface shape has no cell for a simultaneous multi-surface deflection. They remain fully available in the raw per-case output (`results_to_dataframe`, `results_total.csv`/`.json`). The shared all-neutral case (every surface at 0.0) is unaffected and still populates every surface's `total_ctrl` table.
 ```
 
 ### Step Guidance

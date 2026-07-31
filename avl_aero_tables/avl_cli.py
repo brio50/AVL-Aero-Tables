@@ -135,6 +135,7 @@ def _cmd_sweep(args: argparse.Namespace) -> int:
         out_dir=out_dir,
         out_format=cfg.output.format,
         yml_file=yml,
+        mode=cfg.sweep.mode,
     )
     return 0
 
@@ -272,7 +273,11 @@ def _cmd_plot_stab_deriv(args: argparse.Namespace) -> int:
 def _cmd_plot_all(args: argparse.Namespace) -> int:
     import webbrowser
 
-    from avl_aero_tables.aero_fileplot import plot_ctrl_derivs, plot_stab_derivs, plot_totals
+    from avl_aero_tables.aero_fileplot import (
+        plot_ctrl_derivs,
+        plot_stab_derivs,
+        plot_totals,
+    )
 
     result_dir, aero = _load_aero(args.runs_dir.resolve())
     if aero is None:

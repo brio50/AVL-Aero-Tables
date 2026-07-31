@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import itertools
 from pathlib import Path
+from typing import Literal
 
 
 def make_run_reset(
@@ -97,6 +99,7 @@ def make_run_command(
     out_dir: Path,
     avl_file: str | Path,
     run_file: str | Path,
+    mode: Literal["independent", "combinatorial"] = "independent",
 ) -> str:
     """Return the AVL stdin command script for a sweep.
 
@@ -123,6 +126,17 @@ def make_run_command(
         Path to the .avl geometry file passed to the LOAD command.
     run_file:
         Path to the reset .run file passed to the CASE command.
+    mode:
+        ``"independent"`` (default): surfaces in ``ctrl_sweeps`` are swept one
+        at a time — each case deflects a single surface with all others held
+        at 0°.  This matches the original MATLAB behavior and is unchanged
+        from prior releases.
+        ``"combinatorial"``: one case is emitted per element of the Cartesian
+        product of every surface's deflection list, with *all* swept surfaces
+        deflected simultaneously in each case (AVL's ``OPER`` menu natively
+        supports setting multiple ``Di`` variables before running a case).
+        Case count grows as the product of each surface's number of
+        deflection values, so use judiciously for many surfaces.
 
     Example
     -------
@@ -141,9 +155,46 @@ def make_run_command(
     'LOAD bd.avl'
     >>> cmd.count("A A")  # one alpha line per case
     2
+
+    >>> cmd = make_run_command(
+    ...     alpha=[0.0],
+    ...     beta=[0.0],
+    ...     ctrl_names=["flap", "aileron", "elevator", "rudder"],
+    ...     ctrl_sweeps={"elevator": [-5.0, 0.0, 5.0], "rudder": [-10.0, 0.0, 10.0]},
+    ...     out_dir=Path("/tmp/avl_out"),
+    ...     avl_file="bd.avl",
+    ...     run_file="/tmp/avl_x/reset.run",
+    ...     mode="combinatorial",
+    ... )
+    >>> cmd.count("A A")  # 1 alpha × 1 beta × (3 elevator × 3 rudder) cases
+    9
     """
+    if mode not in ("independent", "combinatorial"):
+        raise ValueError(
+            f"mode {mode!r} not recognised; choose 'independent' or 'combinatorial'"
+        )
+
     out_dir = Path(out_dir)
     lines: list[str] = [f"LOAD {avl_file}", f"CASE {run_file}", "PLOP", "G", "", "OPER"]
+
+    case_num = 0
+
+    if mode == "combinatorial" and ctrl_sweeps:
+        combo_names = [name for name in ctrl_sweeps if name in ctrl_names]
+        combo_indices = [ctrl_names.index(name) + 1 for name in combo_names]
+        combo_values = [ctrl_sweeps[name] for name in combo_names]
+        for a in alpha:
+            for b in beta:
+                for combo in itertools.product(*combo_values):
+                    case_num += 1
+                    st_path = out_dir / f"case_{case_num:04d}.st"
+                    lines.append(f"A A {a:f}")
+                    lines.append(f"B B {b:f}")
+                    for surf_idx, defl in zip(combo_indices, combo):
+                        lines.append(f"D{surf_idx} D{surf_idx} {defl:g}")
+                    lines.extend(["i", "x", "st", str(st_path), "", "CINI", "OPER"])
+        lines.extend(["", "Quit", ""])
+        return "\n".join(lines)
 
     ctrl_points: list[tuple[int, float]] = [
         (ctrl_names.index(name) + 1, defl)
@@ -152,7 +203,6 @@ def make_run_command(
         for defl in defl_vals
     ]
 
-    case_num = 0
     for a in alpha:
         for b in beta:
             if ctrl_points:
