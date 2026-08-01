@@ -46,6 +46,9 @@ def main(write_docs: bool = False) -> None:
             "rudder":   [-10.0, 0.0, 10.0],
         },
         out_dir=runs_dir,
+        # avl_sweep()'s own default is now in-memory only (no files written) —
+        # pass out_format explicitly here to keep writing results_total.csv etc.
+        out_format="csv",
     )
 
     # avl_sweep created _runs/b737_<timestamp>/ — find it as the most recent subdir

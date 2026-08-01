@@ -100,6 +100,19 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Sideslip angle (deg) for control-surface slices (default: 0.0)",
     )
 
+    convert_p = sub.add_parser(
+        "convert",
+        help="Write additional output format(s) to an existing run directory "
+        "without re-running AVL",
+    )
+    convert_p.add_argument("runs_dir", type=Path, help=_runs_help)
+    convert_p.add_argument(
+        "--format",
+        required=True,
+        metavar="FMT[,FMT...]",
+        help="Comma-separated formats to write: csv, json, mat, h5",
+    )
+
     return p
 
 
@@ -206,9 +219,13 @@ def _resolve_result_dir(runs_dir: Path) -> Path | None:
     return subdirs[-1] if subdirs else None
 
 
-def _load_aero(runs_dir: Path):  # type: ignore[return]
-    """Resolve runs_dir to a result directory; return (result_dir, AeroDatabase)."""
-    from avl_aero_tables.aero_filewrite import aero_filewrite
+def _load_results(runs_dir: Path):  # type: ignore[no-untyped-def]
+    """Resolve runs_dir to a result directory; return (result_dir, list[StResult]).
+
+    Re-parses ``.raw/*.st`` (written unconditionally by every sweep regardless
+    of ``out_format``), so this never re-invokes AVL — used by both
+    ``_load_aero`` and the ``convert`` subcommand.
+    """
     from avl_aero_tables.avl_fileread import st_fileread
 
     result_dir = _resolve_result_dir(runs_dir)
@@ -216,6 +233,16 @@ def _load_aero(runs_dir: Path):  # type: ignore[return]
         print(f"ERROR: No sweep results found in {runs_dir}.", file=sys.stderr)
         return None, None
     results = st_fileread(result_dir / ".raw")
+    return result_dir, results
+
+
+def _load_aero(runs_dir: Path):  # type: ignore[no-untyped-def]
+    """Resolve runs_dir to a result directory; return (result_dir, AeroDatabase)."""
+    from avl_aero_tables.aero_filewrite import aero_filewrite
+
+    result_dir, results = _load_results(runs_dir)
+    if result_dir is None:
+        return None, None
     return result_dir, aero_filewrite(results)
 
 
@@ -272,7 +299,11 @@ def _cmd_plot_stab_deriv(args: argparse.Namespace) -> int:
 def _cmd_plot_all(args: argparse.Namespace) -> int:
     import webbrowser
 
-    from avl_aero_tables.aero_fileplot import plot_ctrl_derivs, plot_stab_derivs, plot_totals
+    from avl_aero_tables.aero_fileplot import (
+        plot_ctrl_derivs,
+        plot_stab_derivs,
+        plot_totals,
+    )
 
     result_dir, aero = _load_aero(args.runs_dir.resolve())
     if aero is None:
@@ -326,6 +357,75 @@ def _cmd_plot_ctrl_deriv(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_convert(args: argparse.Namespace) -> int:
+    """Write additional out_format(s) into an existing run directory.
+
+    Re-parses .raw/*.st (already written by every sweep regardless of
+    out_format) instead of re-invoking AVL — see _load_results.
+    """
+    from avl_aero_tables.aero_filewrite import (
+        aero_filewrite,
+        aero_to_hdf5,
+        aero_to_mat,
+        ctrl_deriv_to_dataframe,
+        results_to_dataframe,
+        stab_deriv_to_dataframe,
+    )
+    from avl_aero_tables.avl_sweep import _check_format_deps, _normalize_out_format
+
+    raw_formats = [f.strip() for f in args.format.split(",") if f.strip()]
+    try:
+        formats = _normalize_out_format(raw_formats)
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    if not formats:
+        print(
+            "ERROR: --format must specify at least one of: csv, json, mat, h5",
+            file=sys.stderr,
+        )
+        return 1
+    try:
+        _check_format_deps(set(formats))
+    except ImportError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
+    result_dir, results = _load_results(args.runs_dir.resolve())
+    if result_dir is None:
+        return 1
+
+    if "csv" in formats or "json" in formats:
+        df = results_to_dataframe(results)
+        df_stab = stab_deriv_to_dataframe(results)
+        df_ctrl = ctrl_deriv_to_dataframe(results)
+        if "csv" in formats:
+            df.to_csv(result_dir / "results_total.csv", index=False)
+            df_stab.to_csv(result_dir / "results_deriv_stab.csv", index=False)
+            df_ctrl.to_csv(result_dir / "results_deriv_ctrl.csv", index=False)
+            print(f"  → {result_dir / 'results_total.csv'}")
+        if "json" in formats:
+            df.to_json(result_dir / "results_total.json", orient="records", indent=2)
+            df_stab.to_json(
+                result_dir / "results_deriv_stab.json", orient="records", indent=2
+            )
+            df_ctrl.to_json(
+                result_dir / "results_deriv_ctrl.json", orient="records", indent=2
+            )
+            print(f"  → {result_dir / 'results_total.json'}")
+
+    if "mat" in formats or "h5" in formats:
+        aero_db = aero_filewrite(results)
+        if "mat" in formats:
+            aero_to_mat(aero_db, result_dir / "results_total.mat")
+            print(f"  → {result_dir / 'results_total.mat'}")
+        if "h5" in formats:
+            aero_to_hdf5(aero_db, result_dir / "results_total.h5")
+            print(f"  → {result_dir / 'results_total.h5'}")
+
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """Entry point for the ``avl-aero-tables`` CLI.
 
@@ -365,6 +465,13 @@ def main(argv: list[str] | None = None) -> int:
     ``plot all [--beta-ref DEG] <runs_dir>``
         Generate all plots (totals, stab-deriv, ctrl-deriv) in one shot.
 
+    ``convert --format FMT[,FMT...] <runs_dir>``
+        Write additional output format(s) (``csv``, ``json``, ``mat``,
+        ``h5``) into an existing run directory by re-parsing its ``.raw/``
+        ``.st`` files — never re-invokes AVL.  Accepts the same
+        ``runs_dir`` (exact run directory, or parent directory to use the
+        latest run) as the ``plot`` subcommands.
+
     Example
     -------
     .. code-block:: shell
@@ -380,6 +487,7 @@ def main(argv: list[str] | None = None) -> int:
         avl-aero-tables plot ctrl-deriv _runs/bd/
         avl-aero-tables plot all _runs/bd/
         avl-aero-tables plot all --beta-ref 5 _runs/bd/
+        avl-aero-tables convert _runs/bd/ --format mat,h5
     """
     parser = _build_parser()
     args = parser.parse_args(argv)
@@ -410,6 +518,9 @@ def main(argv: list[str] | None = None) -> int:
             return _cmd_plot_ctrl_deriv(args)
         if args.plot_command == "all":
             return _cmd_plot_all(args)
+
+    if args.command == "convert":
+        return _cmd_convert(args)
 
     return 0
 

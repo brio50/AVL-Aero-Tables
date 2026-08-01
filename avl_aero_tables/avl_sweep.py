@@ -11,10 +11,12 @@ import tempfile
 import tomllib
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
 
 from avl_aero_tables import avl_bin as avl_runner
 from avl_aero_tables.aero_filewrite import (
+    aero_filewrite,
+    aero_to_hdf5,
+    aero_to_mat,
     ctrl_deriv_to_dataframe,
     results_to_dataframe,
     stab_deriv_to_dataframe,
@@ -29,7 +31,62 @@ from avl_aero_tables.avl_rungen import make_run_command, make_run_reset
 
 _log = logging.getLogger(__name__)
 
-_FORMATS = frozenset(("csv", "json", "df"))
+_FORMATS = frozenset(("csv", "json", "mat", "h5"))
+
+
+def _normalize_out_format(out_format: str | list[str] | None) -> list[str]:
+    """Normalize an ``out_format`` argument into a list of format strings.
+
+    - ``None`` → ``[]`` (in-memory only, no files written — today's ``"df"``
+      behavior, and ``run()``'s own default when the caller passes nothing)
+    - the literal string ``"df"`` → ``[]`` (backward compat with the old
+      three-way ``Literal["csv", "json", "df"]`` choice)
+    - any other bare string (e.g. ``"csv"``) → ``[value]``
+    - a list is returned as-is (after validation)
+
+    Every element of the resulting list must be one of ``_FORMATS``; anything
+    else raises ``ValueError``.
+    """
+    if out_format is None or out_format == "df":
+        formats: list[str] = []
+    elif isinstance(out_format, str):
+        formats = [out_format]
+    else:
+        formats = list(out_format)
+
+    bad = [f for f in formats if f not in _FORMATS]
+    if bad:
+        raise ValueError(
+            f"out_format {out_format!r} not recognised; choose from "
+            f"{sorted(_FORMATS)} (or 'df' / None for in-memory only)"
+        )
+    return formats
+
+
+def _check_format_deps(formats: set[str]) -> None:
+    """Fail fast if a requested format's optional dependency is missing.
+
+    Called immediately after normalizing/validating ``out_format``, before
+    ``run_dir`` is created or AVL is invoked — so a missing ``scipy``/``h5py``
+    is caught before wasting a potentially long AVL sweep on a format that
+    can't be written at the end.
+    """
+    if "mat" in formats:
+        try:
+            import scipy.io  # noqa: F401
+        except ImportError as exc:
+            raise ImportError(
+                "out_format 'mat' requires scipy — install with: "
+                "pip install avl-aero-tables[export]"
+            ) from exc
+    if "h5" in formats:
+        try:
+            import h5py  # noqa: F401
+        except ImportError as exc:
+            raise ImportError(
+                "out_format 'h5' requires h5py — install with: "
+                "pip install avl-aero-tables[export]"
+            ) from exc
 
 
 def _ensure_neutral_in_sweeps(
@@ -108,7 +165,7 @@ def run(
     ctrl_sweeps: dict[str, list[float]] | None = None,
     out_dir: Path | str | None = None,
     binary: Path | None = None,
-    out_format: Literal["csv", "json", "df"] = "csv",
+    out_format: str | list[str] | None = None,
     yml_file: Path | str | None = None,
 ) -> list[StResult]:
     """Run AVL stability analysis for a sweep of alpha, beta, and deflections.
@@ -132,10 +189,20 @@ def run(
     binary:
         Path to the AVL binary.  Auto-detected if not provided.
     out_format:
-        Export format for results saved alongside the .st files.
-        One of ``"csv"`` (default), ``"json"``,
-        or ``"df"`` (DataFrame in memory only — no file written).
-        The file is written to ``out_dir/results.<ext>``.
+        Export format(s) for results saved alongside the .st files.
+        One of ``"csv"``, ``"json"``, ``"mat"``, or ``"h5"`` — or a list of
+        any combination, so a single sweep can write multiple formats at
+        once without re-running AVL (e.g. ``["csv", "mat"]``).
+        ``None`` (the default for this function) or the literal string
+        ``"df"`` write no files at all — results are only returned in
+        memory.  Note this default differs from the CLI/YAML path, whose
+        ``OutputSpec.format`` still defaults to ``"csv"`` — see CHANGELOG.
+        Each requested format is written to ``run_dir/results_total.<ext>``
+        (``"csv"``/``"json"`` also write ``results_deriv_stab.<ext>`` and
+        ``results_deriv_ctrl.<ext>``).  ``"mat"``/``"h5"`` require the
+        optional ``scipy``/``h5py`` dependencies
+        (``pip install avl-aero-tables[export]``); missing dependencies
+        raise ``ImportError`` before AVL is invoked.
     yml_file:
         Path to the .yml project file (CLI use only).  When provided,
         ``provenance.json`` records ``entry: "cli"`` and copies the .yml
@@ -163,10 +230,9 @@ def run(
     >>> results[0].data["Alpha"]
     -5.0
     """
-    if out_format not in _FORMATS:
-        raise ValueError(
-            f"out_format {out_format!r} not recognised; choose from {sorted(_FORMATS)}"
-        )
+    formats = _normalize_out_format(out_format)
+    _check_format_deps(set(formats))
+
     avl_file = Path(avl_file).resolve()
     avl_dir = avl_file.parent
     avl_name = avl_file.stem
@@ -287,15 +353,18 @@ def run(
 
         results = st_fileread(raw_dir)
 
-        if out_format != "df":
+        # csv/json share one set of DataFrames; mat/h5 share one AeroDatabase
+        # (built via aero_filewrite) — each pivot/build only happens once,
+        # regardless of how many of its dependent formats are requested.
+        if "csv" in formats or "json" in formats:
             df = results_to_dataframe(results)
             df_stab = stab_deriv_to_dataframe(results)
             df_ctrl = ctrl_deriv_to_dataframe(results)
-            if out_format == "csv":
+            if "csv" in formats:
                 df.to_csv(run_dir / "results_total.csv", index=False)
                 df_stab.to_csv(run_dir / "results_deriv_stab.csv", index=False)
                 df_ctrl.to_csv(run_dir / "results_deriv_ctrl.csv", index=False)
-            elif out_format == "json":
+            if "json" in formats:
                 df.to_json(run_dir / "results_total.json", orient="records", indent=2)
                 df_stab.to_json(
                     run_dir / "results_deriv_stab.json", orient="records", indent=2
@@ -303,6 +372,13 @@ def run(
                 df_ctrl.to_json(
                     run_dir / "results_deriv_ctrl.json", orient="records", indent=2
                 )
+
+        if "mat" in formats or "h5" in formats:
+            aero_db = aero_filewrite(results)
+            if "mat" in formats:
+                aero_to_mat(aero_db, run_dir / "results_total.mat")
+            if "h5" in formats:
+                aero_to_hdf5(aero_db, run_dir / "results_total.h5")
 
         _log.info("AVL sweep complete → %s  (%d cases)", run_dir, len(results))
         return results
