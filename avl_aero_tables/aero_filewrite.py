@@ -333,7 +333,7 @@ def results_to_dataframe(results: list[StResult]) -> "pd.DataFrame":
 
 
 # ---------------------------------------------------------------------------
-# External export (.mat / .h5) — optional dependencies, lazy-imported
+# External export (.mat / .h5)
 # ---------------------------------------------------------------------------
 #
 # Shared hierarchy (identical field structure for both formats; "." separators
@@ -427,9 +427,6 @@ def aero_to_mat(db: AeroDatabase, path: str | Path) -> None:
     AeroDatabase's own dict keys (coefficient names, "<d_idx>_<surface>" surface
     keys, derivative keys), all of which are already valid MATLAB identifiers.
 
-    Requires the optional ``scipy`` dependency:
-    ``pip install avl-aero-tables[export]``
-
     Parameters
     ----------
     db:
@@ -439,18 +436,10 @@ def aero_to_mat(db: AeroDatabase, path: str | Path) -> None:
 
     Raises
     ------
-    ImportError
-        If scipy is not installed.
     ValueError
         If db has no tables to derive alpha/beta breakpoints from.
     """
-    try:
-        import scipy.io
-    except ImportError as exc:
-        raise ImportError(
-            "aero_to_mat requires scipy — install with: "
-            "pip install avl-aero-tables[export]"
-        ) from exc
+    import scipy.io
 
     scipy.io.savemat(str(path), _db_to_nested_dict(db))
 
@@ -472,9 +461,6 @@ def aero_to_hdf5(db: AeroDatabase, path: str | Path) -> None:
     the module-level comment above _breakpoints for the exact field layout).
     Readable from MATLAB via ``h5read(path, "/stab/CLtot")``.
 
-    Requires the optional ``h5py`` dependency:
-    ``pip install avl-aero-tables[export]``
-
     Parameters
     ----------
     db:
@@ -484,18 +470,10 @@ def aero_to_hdf5(db: AeroDatabase, path: str | Path) -> None:
 
     Raises
     ------
-    ImportError
-        If h5py is not installed.
     ValueError
         If db has no tables to derive alpha/beta breakpoints from.
     """
-    try:
-        import h5py
-    except ImportError as exc:
-        raise ImportError(
-            "aero_to_hdf5 requires h5py — install with: "
-            "pip install avl-aero-tables[export]"
-        ) from exc
+    import h5py
 
     with h5py.File(str(path), "w") as f:
         _write_h5_group(f, _db_to_nested_dict(db))

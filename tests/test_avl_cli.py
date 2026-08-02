@@ -603,8 +603,6 @@ def test_convert_comma_separated_formats(tmp_path):
 @pytest.mark.req("req-cli-45")
 def test_convert_mat_h5_writes_without_avl(tmp_path):
     """convert never touches avl_bin — it only re-parses the existing .raw/."""
-    pytest.importorskip("scipy.io")
-    pytest.importorskip("h5py")
     run_dir = tmp_path / "2026-01-01-120000"
     (run_dir / ".raw").mkdir(parents=True)
 
@@ -650,30 +648,6 @@ def test_convert_no_results_exits(tmp_path):
 
     result = main(["convert", str(empty_dir), "--format", "csv"])
     assert result == 1
-
-
-@pytest.mark.req("req-cli-49")
-def test_convert_missing_dependency_exits_before_loading_results(tmp_path):
-    run_dir = tmp_path / "2026-01-01-120000"
-    (run_dir / ".raw").mkdir(parents=True)
-
-    import builtins
-
-    real_import = builtins.__import__
-
-    def _blocking_import(name, *args, **kwargs):
-        if name.startswith("scipy"):
-            raise ImportError("no scipy in this test")
-        return real_import(name, *args, **kwargs)
-
-    with (
-        patch("avl_aero_tables.avl_fileread.st_fileread") as mock_st_fileread,
-        patch("builtins.__import__", side_effect=_blocking_import),
-    ):
-        result = main(["convert", str(run_dir), "--format", "mat"])
-
-    assert result == 1
-    mock_st_fileread.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

@@ -371,7 +371,7 @@ def _cmd_convert(args: argparse.Namespace) -> int:
         results_to_dataframe,
         stab_deriv_to_dataframe,
     )
-    from avl_aero_tables.avl_sweep import _check_format_deps, _normalize_out_format
+    from avl_aero_tables.avl_sweep import _normalize_out_format
 
     raw_formats = [f.strip() for f in args.format.split(",") if f.strip()]
     try:
@@ -384,11 +384,6 @@ def _cmd_convert(args: argparse.Namespace) -> int:
             "ERROR: --format must specify at least one of: csv, json, mat, h5",
             file=sys.stderr,
         )
-        return 1
-    try:
-        _check_format_deps(set(formats))
-    except ImportError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
     result_dir, results = _load_results(args.runs_dir.resolve())

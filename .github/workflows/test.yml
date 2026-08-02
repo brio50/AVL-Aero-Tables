@@ -36,7 +36,7 @@ jobs:
           cp avl ~/bin/avl
 
       - name: Install Python dependencies
-        run: pip install -e ".[dev,export]"
+        run: pip install -e ".[dev]"
 
       - name: Run tests
         run: pytest

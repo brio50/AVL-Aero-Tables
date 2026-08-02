@@ -378,8 +378,6 @@ Both formats share the same nested hierarchy (`.` becomes a MATLAB struct field 
 | `stab_deriv.<key>` | `(n_alpha, n_beta)` stability derivative, e.g. `stab_deriv.CLa` |
 | `ctrl_deriv.<key>` | `(n_alpha, n_beta)` control derivative, e.g. `ctrl_deriv.CL_d01_flap` |
 
-Requires the optional `export` extra: `pip install avl-aero-tables[export]` (provides `scipy` and `h5py`).
-
 **At sweep time**, request `mat`/`h5` alongside (or instead of) `csv`/`json` — all requested formats are written from a single AVL run:
 
 ```python

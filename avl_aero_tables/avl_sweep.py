@@ -63,32 +63,6 @@ def _normalize_out_format(out_format: str | list[str] | None) -> list[str]:
     return formats
 
 
-def _check_format_deps(formats: set[str]) -> None:
-    """Fail fast if a requested format's optional dependency is missing.
-
-    Called immediately after normalizing/validating ``out_format``, before
-    ``run_dir`` is created or AVL is invoked — so a missing ``scipy``/``h5py``
-    is caught before wasting a potentially long AVL sweep on a format that
-    can't be written at the end.
-    """
-    if "mat" in formats:
-        try:
-            import scipy.io  # noqa: F401
-        except ImportError as exc:
-            raise ImportError(
-                "out_format 'mat' requires scipy — install with: "
-                "pip install avl-aero-tables[export]"
-            ) from exc
-    if "h5" in formats:
-        try:
-            import h5py  # noqa: F401
-        except ImportError as exc:
-            raise ImportError(
-                "out_format 'h5' requires h5py — install with: "
-                "pip install avl-aero-tables[export]"
-            ) from exc
-
-
 def _ensure_neutral_in_sweeps(
     ctrl_sweeps: dict[str, list[float]],
 ) -> dict[str, list[float]]:
@@ -199,10 +173,7 @@ def run(
         ``OutputSpec.format`` still defaults to ``"csv"`` — see CHANGELOG.
         Each requested format is written to ``run_dir/results_total.<ext>``
         (``"csv"``/``"json"`` also write ``results_deriv_stab.<ext>`` and
-        ``results_deriv_ctrl.<ext>``).  ``"mat"``/``"h5"`` require the
-        optional ``scipy``/``h5py`` dependencies
-        (``pip install avl-aero-tables[export]``); missing dependencies
-        raise ``ImportError`` before AVL is invoked.
+        ``results_deriv_ctrl.<ext>``).
     yml_file:
         Path to the .yml project file (CLI use only).  When provided,
         ``provenance.json`` records ``entry: "cli"`` and copies the .yml
@@ -231,7 +202,6 @@ def run(
     -5.0
     """
     formats = _normalize_out_format(out_format)
-    _check_format_deps(set(formats))
 
     avl_file = Path(avl_file).resolve()
     avl_dir = avl_file.parent

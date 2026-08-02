@@ -195,7 +195,9 @@ def test_multiple_alphas_stab_shape_and_values():
     ]
     db = aero_filewrite(results)
     assert db.total_stab["CLtot"].data.shape == (3, 1)
-    np.testing.assert_allclose(db.total_stab["CLtot"].data[:, 0], [-0.5, 0.0, 0.5], atol=1e-9)
+    np.testing.assert_allclose(
+        db.total_stab["CLtot"].data[:, 0], [-0.5, 0.0, 0.5], atol=1e-9
+    )
 
 
 # ---------------------------------------------------------------------------

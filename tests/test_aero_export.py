@@ -1,22 +1,14 @@
-"""Tests for aero_to_mat / aero_to_hdf5: exporting AeroDatabase to .mat/.h5.
-
-Requires the optional `export` extra (scipy + h5py) — skipped gracefully via
-pytest.importorskip if not installed, so a plain `pip install -e ".[dev]"`
-checkout still collects and passes this module (CI installs `.[dev,export]`
-so the real read-back assertions run there).
-"""
+"""Tests for aero_to_mat / aero_to_hdf5: exporting AeroDatabase to .mat/.h5."""
 
 from __future__ import annotations
 
+import h5py
 import numpy as np
 import pytest
+import scipy.io as scipy_io
 from test_aero_filewrite import CTRL_MAP, _make_result
 
 from avl_aero_tables.aero_filewrite import aero_filewrite, aero_to_hdf5, aero_to_mat
-
-h5py = pytest.importorskip("h5py")
-scipy_io = pytest.importorskip("scipy.io")
-
 
 # ---------------------------------------------------------------------------
 # Fixture database
@@ -220,46 +212,3 @@ def test_aero_to_hdf5_accepts_str_path(tmp_path):
     import os
 
     assert os.path.exists(path)
-
-
-# ---------------------------------------------------------------------------
-# Error handling — no optional dependency installed
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.req("req-export-15")
-def test_aero_to_mat_missing_scipy_raises_actionable_import_error(
-    monkeypatch, tmp_path
-):
-    import builtins
-
-    real_import = builtins.__import__
-
-    def fake_import(name, *args, **kwargs):
-        if name == "scipy.io" or name.startswith("scipy"):
-            raise ImportError("simulated missing scipy")
-        return real_import(name, *args, **kwargs)
-
-    monkeypatch.setattr(builtins, "__import__", fake_import)
-    db = _make_db()
-    with pytest.raises(ImportError, match="pip install avl-aero-tables\\[export\\]"):
-        aero_to_mat(db, tmp_path / "aero.mat")
-
-
-@pytest.mark.req("req-export-16")
-def test_aero_to_hdf5_missing_h5py_raises_actionable_import_error(
-    monkeypatch, tmp_path
-):
-    import builtins
-
-    real_import = builtins.__import__
-
-    def fake_import(name, *args, **kwargs):
-        if name == "h5py" or name.startswith("h5py"):
-            raise ImportError("simulated missing h5py")
-        return real_import(name, *args, **kwargs)
-
-    monkeypatch.setattr(builtins, "__import__", fake_import)
-    db = _make_db()
-    with pytest.raises(ImportError, match="pip install avl-aero-tables\\[export\\]"):
-        aero_to_hdf5(db, tmp_path / "aero.h5")

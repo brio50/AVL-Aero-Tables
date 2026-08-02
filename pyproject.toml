@@ -17,6 +17,8 @@ dependencies = [
     "pyyaml",
     "pydantic",
     "rich",
+    "scipy",
+    "h5py",
 ]
 
 [project.scripts]
@@ -38,16 +40,6 @@ docs = [
     "sphinxcontrib-mermaid",
     "sphinx-design",
     "sphinx-autobuild",
-]
-# Optional export targets for AeroDatabase (aero_to_mat / aero_to_hdf5).
-# Kept out of core `dependencies` deliberately — most users only need the
-# pandas/CSV path, and scipy + h5py are heavy for that (see #7, where a
-# scipy-only AeroDatabase.interpolate() feature was intentionally not merged
-# for the same reason). Both are lazy-imported inside aero_to_mat/aero_to_hdf5
-# with an actionable ImportError pointing back to this extra.
-export = [
-    "scipy",
-    "h5py",
 ]
 
 [tool.setuptools.packages.find]

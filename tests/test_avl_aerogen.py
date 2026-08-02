@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from avl_aero_tables.avl_fileread import StResult, avl_fileread
-from avl_aero_tables.avl_sweep import _check_format_deps, _normalize_out_format, run
+from avl_aero_tables.avl_sweep import _normalize_out_format, run
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
 BD_AVL = EXAMPLES / "bd" / "bd.avl"
@@ -203,8 +203,6 @@ def test_out_format_list_writes_multiple_formats(tmp_path):
 
 @pytest.mark.req("req-sweep-20")
 def test_out_format_mat_h5_share_one_aero_filewrite_call(tmp_path):
-    pytest.importorskip("scipy.io")
-    pytest.importorskip("h5py")
     mock_result = _make_mock_result()
     with (
         patch("avl_aero_tables.avl_sweep.avl_runner.run", return_value=mock_result),
@@ -226,25 +224,6 @@ def test_out_format_mat_h5_share_one_aero_filewrite_call(tmp_path):
     spy.assert_called_once()
     assert any(tmp_path.rglob("results_total.mat"))
     assert any(tmp_path.rglob("results_total.h5"))
-
-
-@pytest.mark.req("req-sweep-21")
-def test_check_format_deps_raises_before_avl_invoked(tmp_path):
-    """A missing optional dependency must fail before AVL is ever invoked."""
-    import builtins
-
-    real_import = builtins.__import__
-
-    def _blocking_import(name, *args, **kwargs):
-        if name == "scipy.io" or name.startswith("scipy"):
-            raise ImportError("no scipy in this test")
-        return real_import(name, *args, **kwargs)
-
-    with patch("avl_aero_tables.avl_sweep.avl_runner.run") as mock_run:
-        with patch("builtins.__import__", side_effect=_blocking_import):
-            with pytest.raises(ImportError, match="pip install avl-aero-tables"):
-                run(BD_AVL, alpha=[0.0], beta=[0.0], out_dir=tmp_path, out_format="mat")
-    mock_run.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -275,12 +254,6 @@ def test_normalize_out_format_invalid_element_raises():
         _normalize_out_format(["csv", "xlsx"])
     with pytest.raises(ValueError, match="not recognised"):
         _normalize_out_format("xlsx")
-
-
-@pytest.mark.req("req-sweep-26")
-def test_check_format_deps_noop_for_csv_json():
-    """csv/json never trigger the optional-dependency check."""
-    _check_format_deps({"csv", "json"})  # must not raise
 
 
 # ---------------------------------------------------------------------------
