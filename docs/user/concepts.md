@@ -322,7 +322,9 @@ avl-aero-tables plot all _runs/bd/          # all three in one shot
 Every sweep creates a timestamped subdirectory inside the `out_dir` you pass:
 
 ```python
-results = avl_sweep("examples/bd/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="_runs")
+results = avl_sweep(
+    "examples/bd/bd.avl", alpha=[-4, 0, 4], beta=[0], out_dir="_runs", out_format="csv"
+)
 ```
 
 ```{code-block} text
