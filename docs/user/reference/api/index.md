@@ -40,6 +40,8 @@ sequenceDiagram
 | {doc}`avl_rungen` | Builds `.in/reset.run` and `.in/sweep.inp` (the AVL stdin script) | Internal |
 | {doc}`avl_bin` | Locates, verifies, and invokes the AVL Fortran binary via subprocess | Indirect |
 
+`out_format` also accepts `"mat"`/`"h5"` (writing `results_total.mat`/`results_total.h5` alongside — or instead of — the `.csv`/`.json` shown above); the `convert` CLI subcommand adds those formats to an *existing* run directory by re-parsing `.raw/` and is not part of this automatic sweep-time write path. See [`.mat` / `.h5` Export](../../concepts.md#mat-h5-export).
+
 ````
 
 ````{div} full-width mermaid-postsweep
@@ -77,7 +79,7 @@ sequenceDiagram
 | Component | Role | Public? |
 |---|---|---|
 | {doc}`avl_fileplot` | Interactive four-view geometry plot, returns `plotly.Figure` written to `.html` | Yes |
-| {doc}`aero_filewrite` | Exports results to CSV/JSON; pivots `list[StResult]` to `AeroDatabase` | Yes |
+| {doc}`aero_filewrite` | Exports results to CSV/JSON/`.mat`/`.h5`; pivots `list[StResult]` to `AeroDatabase` | Yes |
 | {doc}`aero_fileplot` | Interactive 3-D surface plots, returns `dict[str, plotly.Figure]`, one `.html` per key | Yes |
 
 ````

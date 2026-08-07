@@ -11,7 +11,7 @@ import pytest
 from avl_aero_tables.avl_cli import (
     main,
 )
-from avl_aero_tables.avl_config import ProjectConfig
+from avl_aero_tables.avl_config import OutputSpec, ProjectConfig
 from avl_aero_tables.avl_config import load_config as _load_config
 
 EXAMPLES = Path(__file__).parent.parent / "examples"
@@ -153,6 +153,34 @@ def test_project_config_defaults():
     )
     assert cfg.sweep.ctrl_sweeps == {}
     assert cfg.output.format == "csv"
+
+
+# ---------------------------------------------------------------------------
+# OutputSpec.format — string vs. list, and CLI-default-vs-API-default
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.req("req-cli-46")
+def test_output_spec_format_accepts_string_and_list():
+    assert OutputSpec(format="csv").format == "csv"
+    assert OutputSpec(format="json").format == "json"
+    assert OutputSpec(format="df").format == "df"
+    assert OutputSpec(format=["csv", "mat"]).format == ["csv", "mat"]
+    with pytest.raises(Exception, match="not recognised"):
+        OutputSpec(format="xlsx")
+    with pytest.raises(Exception, match="not recognised"):
+        OutputSpec(format=["csv", "xlsx"])
+
+
+@pytest.mark.req("req-cli-51")
+def test_output_spec_default_differs_from_api_default():
+    """The CLI/YAML default (writes csv) intentionally differs from
+    avl_sweep.run()'s own bare-API default (in-memory only, out_format=None)."""
+    from avl_aero_tables.avl_sweep import _normalize_out_format
+
+    assert OutputSpec().format == "csv"
+    assert _normalize_out_format(None) == []  # run()'s own default
+    assert _normalize_out_format(OutputSpec().format) == ["csv"]  # CLI default
 
 
 # ---------------------------------------------------------------------------
@@ -527,6 +555,102 @@ def test_plot_totals_beta_ref_flag(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# convert — add output format(s) to an existing run dir without re-running AVL
+# ---------------------------------------------------------------------------
+
+
+def _fake_st_result(alpha: float = 5.0, beta: float = 0.0):
+    from avl_aero_tables.avl_fileread import StResult
+
+    r = StResult(filename="case_0001.st")
+    r.data = {"Alpha": alpha, "Beta": beta, "CLtot": 0.5}
+    return r
+
+
+@pytest.mark.req("req-cli-44")
+def test_convert_writes_csv_to_exact_run_dir(tmp_path):
+    run_dir = tmp_path / "2026-01-01-120000"
+    (run_dir / ".raw").mkdir(parents=True)
+
+    with patch(
+        "avl_aero_tables.avl_fileread.st_fileread",
+        return_value=[_fake_st_result()],
+    ):
+        result = main(["convert", str(run_dir), "--format", "csv"])
+
+    assert result == 0
+    assert (run_dir / "results_total.csv").exists()
+    assert (run_dir / "results_deriv_stab.csv").exists()
+    assert (run_dir / "results_deriv_ctrl.csv").exists()
+
+
+@pytest.mark.req("req-cli-48")
+def test_convert_comma_separated_formats(tmp_path):
+    run_dir = tmp_path / "2026-01-01-120000"
+    (run_dir / ".raw").mkdir(parents=True)
+
+    with patch(
+        "avl_aero_tables.avl_fileread.st_fileread",
+        return_value=[_fake_st_result()],
+    ):
+        result = main(["convert", str(run_dir), "--format", "csv,json"])
+
+    assert result == 0
+    assert (run_dir / "results_total.csv").exists()
+    assert (run_dir / "results_total.json").exists()
+
+
+@pytest.mark.req("req-cli-45")
+def test_convert_mat_h5_writes_without_avl(tmp_path):
+    """convert never touches avl_bin — it only re-parses the existing .raw/."""
+    run_dir = tmp_path / "2026-01-01-120000"
+    (run_dir / ".raw").mkdir(parents=True)
+
+    with (
+        patch(
+            "avl_aero_tables.avl_fileread.st_fileread",
+            return_value=[_fake_st_result()],
+        ),
+        patch("avl_aero_tables.avl_bin.run") as mock_avl_run,
+    ):
+        result = main(["convert", str(run_dir), "--format", "mat,h5"])
+
+    assert result == 0
+    assert (run_dir / "results_total.mat").exists()
+    assert (run_dir / "results_total.h5").exists()
+    mock_avl_run.assert_not_called()
+
+
+@pytest.mark.req("req-cli-47")
+def test_convert_resolves_latest_run_dir(tmp_path):
+    runs_base = tmp_path / "_runs" / "bd"
+    runs_base.mkdir(parents=True)
+    old_dir = runs_base / "2026-01-01-120000"
+    new_dir = runs_base / "2026-05-15-093000"
+    (old_dir / ".raw").mkdir(parents=True)
+    (new_dir / ".raw").mkdir(parents=True)
+
+    with patch(
+        "avl_aero_tables.avl_fileread.st_fileread",
+        return_value=[_fake_st_result()],
+    ):
+        result = main(["convert", str(runs_base), "--format", "csv"])
+
+    assert result == 0
+    assert (new_dir / "results_total.csv").exists()
+    assert not (old_dir / "results_total.csv").exists()
+
+
+@pytest.mark.req("req-cli-50")
+def test_convert_no_results_exits(tmp_path):
+    empty_dir = tmp_path / "_runs" / "bd"
+    empty_dir.mkdir(parents=True)
+
+    result = main(["convert", str(empty_dir), "--format", "csv"])
+    assert result == 1
+
+
+# ---------------------------------------------------------------------------
 # plot stab-deriv
 # ---------------------------------------------------------------------------
 
@@ -648,9 +772,15 @@ def test_plot_all_calls_all_three_plotters(tmp_path):
     with (
         patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
-        patch("avl_aero_tables.aero_fileplot.plot_totals", return_value=fake_totals) as mock_totals,
-        patch("avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value=fake_stab) as mock_stab,
-        patch("avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value=fake_ctrl) as mock_ctrl,
+        patch(
+            "avl_aero_tables.aero_fileplot.plot_totals", return_value=fake_totals
+        ) as mock_totals,
+        patch(
+            "avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value=fake_stab
+        ) as mock_stab,
+        patch(
+            "avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value=fake_ctrl
+        ) as mock_ctrl,
         patch("webbrowser.open") as mock_browser,
     ):
         result = main(["plot", "all", str(run_dir)])
@@ -681,7 +811,9 @@ def test_plot_all_beta_ref_forwarded(tmp_path):
     with (
         patch("avl_aero_tables.avl_fileread.st_fileread", return_value=[]),
         patch("avl_aero_tables.aero_filewrite.aero_filewrite", return_value=fake_aero),
-        patch("avl_aero_tables.aero_fileplot.plot_totals", return_value={}) as mock_totals,
+        patch(
+            "avl_aero_tables.aero_fileplot.plot_totals", return_value={}
+        ) as mock_totals,
         patch("avl_aero_tables.aero_fileplot.plot_stab_derivs", return_value={}),
         patch("avl_aero_tables.aero_fileplot.plot_ctrl_derivs", return_value={}),
         patch("webbrowser.open"),

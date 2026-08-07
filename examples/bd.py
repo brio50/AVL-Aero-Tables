@@ -45,6 +45,9 @@ def main(write_docs: bool = False) -> None:
             "rudder":   [-20.0, 0.0, 20.0],
         },
         out_dir=runs_dir,
+        # avl_sweep()'s own default is now in-memory only (no files written) —
+        # pass out_format explicitly here to keep writing results_total.csv etc.
+        out_format="csv",
     )
 
     run_dir = max(runs_dir.glob("bd_*/"))

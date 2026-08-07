@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-07-31
+
+### Added
+- `aero_to_mat(db, path)` — write an `AeroDatabase` to a MATLAB `.mat` file via `scipy.io.savemat`, as a nested struct: top-level `date`/`Sref`/`Cref`/`Bref`/`Xref`/`Yref`/`Zref`, `breakpoints.alpha`/`breakpoints.beta` (shared across all tables), `breakpoints.defl.<surface>` (per control surface), `stab.<coef>`, `ctrl.<surface>.<coef>`, `stab_deriv.<key>`, `ctrl_deriv.<key>` (#6)
+- `aero_to_hdf5(db, path)` — write an `AeroDatabase` to an HDF5 `.h5` file via `h5py`, mirroring the same hierarchy as group paths (e.g. `/stab/CLtot`, `/ctrl/d01_flap/CLtot`, `/breakpoints/alpha`, `/breakpoints/defl/d01_flap`), readable from MATLAB via `h5read` (#6)
+- `avl_sweep.run()`'s `out_format` parameter now accepts a list of formats (e.g. `out_format=["csv", "mat"]`), so a single AVL sweep can write CSV, JSON, `.mat`, and/or `.h5` output together without re-running AVL. A bare string (`"csv"`, `"json"`, `"mat"`, `"h5"`) still works, as does the old `"df"` literal (mapped to the in-memory-only case, same as omitting `out_format`). `.mat`/`.h5` are written to `results_total.mat`/`results_total.h5`, mirroring the existing `results_total.<ext>` convention; when both are requested they share a single `aero_filewrite()` pivot rather than pivoting the results twice (#6)
+- New `avl-aero-tables convert <runs_dir> --format FMT[,FMT...]` CLI subcommand — adds output format(s) (`csv`, `json`, `mat`, `h5`) to an *already-completed* run directory by re-parsing its `.raw/*.st` files, without re-invoking AVL. Accepts the same `runs_dir` convention as `plot totals`/`plot stab-deriv`/etc. (an exact run directory, or a parent directory to use its latest run) (#6)
+- `OutputSpec.format` (the YAML `output.format` field) now accepts a list in addition to a bare string, e.g. `format: [csv, mat]`, validated against the same set of formats as `avl_sweep.run()`'s `out_format` (#6)
+
+### Changed
+- **Increased install footprint:** `scipy` and `h5py` (needed for `aero_to_mat`/`aero_to_hdf5` and `out_format="mat"`/`"h5"`) are now core `dependencies`, not an optional extra — every install now includes both, even for users who only ever use CSV/JSON output. Chosen over lazy-loading with a missing-dependency error, to avoid any surprise at the point of use (#6)
+- **Breaking (direct API callers only):** `avl_sweep.run()`'s own default when `out_format` is omitted is now in-memory only — no files are written unless a format is requested explicitly. Previously the implicit default was `out_format="csv"`, which always wrote `results_total.csv` and friends. Callers that already pass `out_format` explicitly (including every CLI/YAML sweep, which goes through `OutputSpec.format` and still defaults to `"csv"`) are unaffected — this only changes the bare-API default, i.e. `avl_sweep(...)` calls that never mentioned `out_format` at all. `avl_sweep.run()`'s docstring documents this default explicitly; `examples/bd.py`/`examples/b737.py` now pass `out_format="csv"` explicitly to keep their existing output (#6)
+
 ## [2.0.2] - 2026-07-31
 
 ### Fixed

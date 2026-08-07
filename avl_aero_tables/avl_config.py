@@ -5,10 +5,11 @@ from __future__ import annotations
 import sys
 import warnings
 from pathlib import Path
-from typing import Literal
 
 import yaml
 from pydantic import BaseModel, ValidationError, field_validator
+
+from avl_aero_tables.avl_sweep import _normalize_out_format
 
 
 class InputSpec(BaseModel):
@@ -53,7 +54,24 @@ class SweepSpec(BaseModel):
 
 
 class OutputSpec(BaseModel):
-    format: Literal["csv", "json", "df"] = "csv"
+    """``format`` accepts everything ``avl_sweep.run()``'s ``out_format`` does:
+    a bare string (``"csv"``, ``"json"``, ``"mat"``, ``"h5"``, or the
+    backward-compat ``"df"``) or a list of any combination (e.g.
+    ``["csv", "mat"]``).  Stored as-given (not normalized to a list here) so
+    existing ``format: csv``-style project files keep round-tripping as a
+    plain string; ``avl_sweep.run()`` normalizes it the same way regardless
+    of whether it receives a string or a list.  Unlike ``run()``'s own
+    default (empty/in-memory-only), this field still defaults to ``"csv"``
+    — the CLI must not inherit the bare-API default.
+    """
+
+    format: str | list[str] = "csv"
+
+    @field_validator("format")
+    @classmethod
+    def valid_format(cls, v: str | list[str]) -> str | list[str]:
+        _normalize_out_format(v)  # raises ValueError for unrecognised values
+        return v
 
 
 class ProjectConfig(BaseModel):
